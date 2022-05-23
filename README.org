@@ -1,0 +1,10 @@
+* Compiler Generator
+
+Automatically generate a compiler given:
+1) A description of a language syntax compatible with [[https://github.com/egraphs-good/egg][egg]].
+2) An interpreter for the language that defines the semantics of the language.
+3) A cost function that distinguishes a subset of the language to "compile to".
+
+* Credits
+
+Heavily inspired and built from [[https://asplos-conference.org/abstracts/asplos21-paper142-extended_abstract.pdf][Diospyros]] and [[https://github.com/uwplse/ruler][Ruler]]. As well as [[https://github.com/egraphs-good/egg][egg]] for doing equality saturation.
