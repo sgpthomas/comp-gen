@@ -1,4 +1,5 @@
 use egg::rewrite as rw;
+pub use ruler;
 use std::io::Write;
 use std::{
     fs::File,
