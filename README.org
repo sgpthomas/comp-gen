@@ -1,0 +1,4 @@
+* Automatic Compiler Generation using Equality Saturation
+
+Automatically generate equality saturation based compilers using equality saturation and some cleverness.
+
