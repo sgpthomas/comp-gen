@@ -1,0 +1,6 @@
+@mov f #(5);
+@mov d f;
+while d != 0 {
+    @smull e e d;
+    @sub d d #(1);
+};

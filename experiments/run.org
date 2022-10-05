@@ -1,0 +1,18 @@
+* Rule Generation
+
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp1") :results output
+rsync -rv experiments/rule-generation/configs ubuntu@$IP:~/
+#+end_src
+
+#+RESULTS:
+: sending incremental file list
+: configs/all_ops_no_constants.json
+: 
+: sent 363 bytes  received 42 bytes  162.00 bytes/sec
+: total size is 220  speedup is 0.54
+
+
+#+begin_src async-shell :dir (ec2/tramp "exp1") :results silent
+export RUST_LOG=info
+./dios-lang synth out.json --config configs/all_ops_no_constants.json
+#+end_src

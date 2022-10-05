@@ -9,4 +9,4 @@ edition = "2021"
 egg = "0.8.1"
 json = "0.12.4"
 plotlib = "0.5.1"
-ruler = { path = "../diospyros/ruler", default-features = false }
+ruler = { path = "../../diospyros/ruler", default-features = false }

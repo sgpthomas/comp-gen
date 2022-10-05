@@ -1,0 +1,84 @@
+{
+  "params": {
+    "seed": 0,
+    "n_samples": 0,
+    "variables": 3,
+    "abs_timeout": 120,
+    "dios_config": null,
+    "iters": 1,
+    "rules_to_take": 18446744073709551615,
+    "chunk_size": 100000,
+    "minimize": false,
+    "no_constants_above_iter": 999999,
+    "no_conditionals": false,
+    "no_run_rewrites": false,
+    "linear_cvec_matching": false,
+    "outfile": "out.json",
+    "eqsat_node_limit": 300000,
+    "eqsat_iter_limit": 2,
+    "eqsat_time_limit": 60,
+    "important_cvec_offsets": 5,
+    "str_int_variables": 1,
+    "complete_cvec": false,
+    "no_xor": false,
+    "no_shift": false,
+    "num_fuzz": 0,
+    "use_smt": false,
+    "do_final_run": false
+  },
+  "time": 0.649116791,
+  "num_rules": 10,
+  "smt_unknown": 0,
+  "eqs": [
+    {
+      "lhs": "(add ?c ?b ?a)",
+      "rhs": "(add ?c ?a ?b)",
+      "bidirectional": false
+    },
+    {
+      "lhs": "(+ ?b ?a)",
+      "rhs": "(+ ?a ?b)",
+      "bidirectional": false
+    },
+    {
+      "lhs": "(mov ?b ?a)",
+      "rhs": "(:= ?b ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(sub ?b ?a ?a)",
+      "rhs": "(sub ?b ?b ?b)",
+      "bidirectional": false
+    },
+    {
+      "lhs": "(add ?b 0 ?a)",
+      "rhs": "(:= ?b ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(sub ?b ?a 0)",
+      "rhs": "(:= ?b ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "?a",
+      "rhs": "(seq ?a ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "?a",
+      "rhs": "(:= ?a ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(- ?a ?a)",
+      "rhs": "0",
+      "bidirectional": false
+    },
+    {
+      "lhs": "(- ?a 0)",
+      "rhs": "(+ 0 ?a)",
+      "bidirectional": true
+    }
+  ]
+}

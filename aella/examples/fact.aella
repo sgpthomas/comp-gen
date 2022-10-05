@@ -1,0 +1,7 @@
+input := 5;
+Z := input;
+Y := 1;
+while Z != 0 {
+    Y := Y * Z;
+    Z := Z - 1;
+};

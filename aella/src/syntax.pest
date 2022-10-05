@@ -1,0 +1,42 @@
+WHITESPACE = _{ " " | "\t" | "\n" }
+COMMENT = _{ ("//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE) | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+int = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+var = @{ ASCII_ALPHA+ }
+
+// expressions
+atom = { int | var }
+num_expr = { atom ~ (operation ~ atom)* }
+operation = _{ add | subtract | multiply | divide }
+    add      = { "+" }
+    subtract = { "-" }
+    multiply = { "*" }
+    divide   = { "/" }
+
+num_cmp = { num_expr ~ cmp_binop ~ num_expr }
+cmp_binop = { equal | less_than | neq }
+    equal     = _{ "==" }
+    neq       = _{ "!=" }
+    less_than = _{ "<" }
+
+    // and = { "&&" }
+
+// bool_atom = { "true" | "false" }
+// bool_expr = { bool_atom ~ (bool_binop ~ bool_atom)* | bool_unop ~ "(" ~ bool_expr ~ ")" }
+// bool_unop = _{ "!" }
+bool_expr = { num_cmp }
+
+// commands
+assign = { var ~ ":=" ~ num_expr }
+if_cmd = { "if" ~ bool_expr ~ "{" ~ seq ~ "}" ~ "else" ~ "{" ~ seq ~ "}" }
+while_cmd = { "while" ~ bool_expr ~ "{" ~ seq ~ "}" }
+
+// assemby instructions
+asm_expr = { "#(" ~ num_expr ~ ")" | var }
+asm_instr = @{ "@" ~ ASCII_ALPHA+ }
+asm_ops = { asm_instr ~ var ~ asm_expr+ }
+
+cmd = { assign | if_cmd | while_cmd | asm_ops }
+seq = { (cmd ~ ";")* }
+
+file = { SOI ~ seq ~ EOI }

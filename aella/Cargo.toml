@@ -1,0 +1,25 @@
+[package]
+name = "aella"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+env_logger = { version = "0.7", default-features = false }
+argh = "0.1"
+serde = { version = "1.0.137", features = ["derive"] }
+serde_sexpr = "0.1"
+egg = "0.8.1"
+# comp-gen = { git = "https://github.com/sgpthomas/comp-gen.git", branch = "main" }
+comp-gen = { path = "../comp-gen" }
+itertools = "0.10.3"
+rand = { version = "0.7", default-features = false, features = ["std"] }
+rand_pcg = "0.2"
+pest = "2.1"
+lazy_static = "1.4"
+pest_derive = "2.1"
+pest_consume = "1.1.1"
+serde_json = "1.0.81"
+chain-cmp = "0.2.0"

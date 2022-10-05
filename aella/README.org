@@ -1,0 +1,178 @@
+* Arm64 Assembly Notes
+
+Taken from [[https://modexp.wordpress.com/2018/10/30/arm64-assembly/#arch][this]] blog.
+
+| Name | Description              |
+|------+--------------------------|
+| Xn   | General purpose register |
+| XZR  | Zero register            |
+| SP   | Stack pointer            |
+
+Register meanings
+| Name      | Purpose                                    |
+|-----------+--------------------------------------------|
+| X0-X7     | arguments and return value                 |
+| X8-X17    | temporary registers (callee may use these) |
+| X18       | Reserved (in macos, not sure about others) |
+| X19 – X28 | callee-saved registers                     |
+| X29       | frame pointer                              |
+| X30       | link register (??)                         |
+| SP        | Stack pointer                              |
+
+Condition flags
+| Flag | Description                          |
+|------+--------------------------------------|
+| N    | Bit 31. Set when result is negative. |
+|      | Cleared when non-negative.           |
+| Z    | Bit 30. Set if operation is zero.    |
+|      | Cleared when non-zero                |
+| C    | Bit 29. Set for carry / overflow     |
+|      | Cleared when no carry.               |
+| V    | Bit 28. Set for overflow.            |
+|      | Cleared when no overflow.            |
+
+* Simple Imp language: Aella
+
+Aella (meaning "whirlwind")
+
+Imp instructions:
+#+begin_src emacs-lisp
+(assign var expr) ; assign val into the variable var
+(seq cmd1 cmd2)   ; run command1 and then command2
+
+;; nat operations
+(plus a b)
+(minus a b)
+(times a b)
+(div a b)
+
+;; bool operations
+(eq a b)
+(lte a b)
+(not expr)
+(and a b)
+(or a b)
+
+;; control flow
+(if bool-expr true-cmd false-cmd)
+(while bool-expr body-cmd)
+#+end_src
+
+I've left the =seq= implicit here:
+#+begin_src emacs-lisp
+(assign Z X)
+(assign Y 1)
+(while (not (eq Z 0))
+  (assign Y (* Y Z))
+  (assign Z (- Z 1)))
+#+end_src
+
+Assembly instructions:
+#+begin_src emacs-lisp
+(mov rd rn)
+(add rd rn rm)
+(sub rd rn rm)
+(smull rd rn rm)
+(sdiv rd rn rm)
+#+end_src
+
+Getting this to work with ruler will be non-trivial. It's unclear what the "value" (cvec) should be for any given expression.
+
+Consider: =x <- y * 2=. I want this to be able to be rewritten as =x <- y * y=. I suppose this is possible, even with just "normal" rewrite rules. i.e =y * 2 -> y * y=. Ok. but what about translating something to assembly.
+
+#+begin_example
+x <- y * 2   # {x <- cvec[y * 2]}
+ =>
+smull x y #2
+
+x <- y * z * 2  # {x <- cvec[y * z * 2]}
+  =>
+tmp <- y * z;
+x <- tmp * 2    # {x <- cvec[tmp * 2], tmp <- cvec[y * z]}
+#+end_example
+
+What does a variable evaluate to?
+
+Maybe I should distinguish between input variables and body variables? (where body variables are variables that are bound during the course of a program)
+
+The idea is that "free variables" are variables that are bound by some imaginary input to the program. For the case of ruler, this means that we will provide a few sample inputs to test out program on for equivalence. "bound variables" are variables that are introduced in the course of execution.
+
+*Sidenote*: rewrite systems will never be able to fully compile arbitrary programs because they can't mint fresh variables....this seems problematic.
+
+* Imagining Possible Rewrite rules
+
+Consider a very simple expression: =b <- (a * 10) / 2=. There isn't a single assembly instruction that this compiles to, so we need to first compute the =a * 10= bit, store the result in a register and then compute the division.
+
+This could be done with some rules like:
+#+begin_src emacs-lisp
+(:= ?c (/ ?a ?b)) => (seq (:= tmp ?a) (:= ?c (/ tmp ?b))) ; note this rule is worse at first
+(:= ?c (/ ?a ?b)) => (@sdiv ?c ?a ?b) ; this is the rule that we want to apply
+(:= ?c (* ?a ?b)) => (@smull ?c ?a ?b)
+(:= ?b ?a) => (@mov ?b ?a)
+#+end_src
+
+Applying these rules to our sample program:
+#+begin_src emacs-lisp
+        (:= b (/ (* a 10) 2))
+(@sdiv b (* a 10) 2)   (seq (:= tmp (* a 10))
+	 		      (:= b (/ tmp 2)))
+                       (seq (@smull tmp a 10)
+			      (@sdiv b tmp 2))
+#+end_src
+
+You can also imagine a rule that makes tmps for assembly instructions. and then the left hand expression could also expand to the optimal.
+
+What about an expression with depth 3?
+#+begin_src emacs-lisp
+(:= b (+ (/ (* a 10) 2) 1))
+
+(seq (:= tmp (/ (* a 10) 2))
+     (:= b (+ tmp 1)))
+
+(seq (:= tmp1 (* a 10))
+     (:= tmp (/ tmp1 2))
+     (:= b (+ tmp 1)))
+
+(seq (@smull tmp1 a 10)
+     (@sdiv tmp tmp1 2)
+     (@add b tmp 1))
+#+end_src
+
+I wonder if you can get away with just a single =tmp= variable? nah, you probably can't. if you have rules for extracting the right hand side into a tmp I think it would clash with the left hand side rule.
+
+** Figuring out =seq= equality
+
+What should it mean for two seq programs to be equal? Suppose it's that their environments are the same
+#+begin_src emacs-lisp
+
+#+end_src
+
+* Solving the aliasing problem
+
+** The problem
+
+In a rule like:
+#+begin_src emacs-lisp
+(seq (:= ?a ?b) (:= ?c ?d)) <=> (seq (:= ?c ?d) (:= ?a ?b))
+#+end_src
+
+At first blush, this looks like it should work. However, =?a= and =?c=  could potentially refer to the same variable.
+A concrete instantiation of this rule could look like:
+
+#+begin_src emacs-lisp
+(seq (:= x 0) (:= x 1))
+#+end_src
+
+Rewriting this to:
+#+begin_src emacs-lisp
+(seq (:= x 1) (:= x 0))
+#+end_src
+
+which is obviously not equivalent. For the rewrite rule to be correct, we need the side condition that =?a= does not alias =?c=.
+
+Another solution might be to have a language that does not allow aliasing. This seems preferable to me at the moment because learning rules with side conditions seems complicated. I would have to change ruler quite a bit to make that work.
+
+** A language without aliasing
+
+One option is to have something like a stack language.
+
