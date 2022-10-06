@@ -22,7 +22,6 @@ use std::{
 };
 use std::{hash::BuildHasherDefault, sync::Arc};
 
-mod bv;
 mod convert_sexp;
 mod derive;
 mod equality;
@@ -41,7 +40,6 @@ pub type HashSet<K> = rustc_hash::FxHashSet<K>;
 pub type IndexMap<K, V> =
     indexmap::IndexMap<K, V, BuildHasherDefault<rustc_hash::FxHasher>>;
 
-pub use bv::*;
 pub use equality::*;
 pub use util::*;
 
@@ -501,10 +499,8 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
         eprint!("CVec Loop");
         for ids in by_cvec.values() {
-            eprint!("=");
             let mut ids = ids.iter().copied();
             while let Some(id1) = ids.next() {
-                eprint!(".");
                 for id2 in ids.clone() {
                     if compare(
                         &self.egraph[id1].data.cvec,
@@ -603,6 +599,8 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 L::make_layer(self.ids().collect_vec(), &synth_copy, iter)
                     .filter(|n| !n.all(|id| synth_copy.egraph[id].data.exact));
 
+            // using a filter instead of retain, because make_layer returns an iter
+            // and not a vector
             // layer.retain(|n| !n.all(|id| self.egraph[id].data.exact));
 
             // log::info!("{}", iter > self.params.no_constants_above_iter);
@@ -799,7 +797,6 @@ pub struct SynthParams {
     pub n_samples: usize,
     pub variables: usize,
     pub abs_timeout: usize,
-    // pub dios_config: Option<String>,
     pub iters: usize,
     pub rules_to_take: usize,
     pub chunk_size: usize,
@@ -829,7 +826,6 @@ impl Default for SynthParams {
             n_samples: 0,
             variables: 3,
             abs_timeout: 120,
-            // dios_config: None,
             iters: 1,
             rules_to_take: 0,
             chunk_size: 100000,
@@ -851,6 +847,16 @@ impl Default for SynthParams {
             use_smt: false,
             do_final_run: false,
         }
+    }
+}
+
+impl SynthParams {
+    pub fn from_path(
+        path: &std::path::PathBuf,
+    ) -> Result<Self, std::io::Error> {
+        let file = std::fs::File::open(path)?;
+        let config = serde_json::from_reader(file)?;
+        Ok(config)
     }
 }
 
@@ -913,16 +919,16 @@ impl<L: SynthLanguage> Signature<L> {
 impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
     type Data = Signature<L>;
 
-    // fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
-    //     if egraph[id1].data.cvec != egraph[id2].data.cvec {
-    //         let extractor = egg::Extractor::new(egraph, egg::AstSize);
-    //         let (_, prog1) = extractor.find_best(id1);
-    //         let (_, prog2) = extractor.find_best(id2);
-    //         println!("p1: {}\np2: {}", prog1.pretty(80), prog2.pretty(80));
-    //         println!("cvec1: {:?}", egraph[id1].data.cvec);
-    //         println!("cvec2: {:?}", egraph[id2].data.cvec);
-    //     }
-    // }
+    fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
+        if egraph[id1].data.cvec != egraph[id2].data.cvec {
+            let extractor = egg::Extractor::new(egraph, egg::AstSize);
+            let (_, prog1) = extractor.find_best(id1);
+            let (_, prog2) = extractor.find_best(id2);
+            println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+            println!("cvec1: {:?}", egraph[id1].data.cvec);
+            println!("cvec2: {:?}", egraph[id2].data.cvec);
+        }
+    }
 
     fn merge(&mut self, to: &mut Self::Data, from: Self::Data) -> DidMerge {
         let mut changed_a = false;
@@ -1101,12 +1107,10 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 initial_len,
             );
         }
-        if self.params.rules_to_take == usize::MAX {
-            if !new_eqs.is_empty() {
-                // assert!(new_eqs.is_empty());
-                // eprintln!("{:?}", new_eqs);
-                eprintln!("New eqs not empty");
-            }
+        if self.params.rules_to_take == usize::MAX && !new_eqs.is_empty() {
+            // assert!(new_eqs.is_empty());
+            // eprintln!("{:?}", new_eqs);
+            eprintln!("New eqs not empty");
         }
         (keepers, bads)
     }

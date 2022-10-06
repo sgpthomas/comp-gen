@@ -27,21 +27,22 @@ enum Commands {
 pub struct SynthOpts {
     #[argh(positional)]
     output: String,
+
     /// path to a dios configuration file
     #[argh(option)]
     config: Option<PathBuf>,
+
+    /// path to a ruler synthesis configuration file
+    #[argh(option)]
+    ruler: Option<PathBuf>,
 }
 fn synth(synth_opts: SynthOpts) -> Res<()> {
-    let args: ruler::SynthParams = ruler::SynthParams {
-        variables: 6,
-        iters: 2,
-        abs_timeout: 240,
-        do_final_run: true,
-        eqsat_node_limit: 2_000_000,
-        eqsat_iter_limit: 2,
-        eqsat_time_limit: 10,
-        ..ruler::SynthParams::default()
-    };
+    let args = synth_opts
+        .ruler
+        .as_ref()
+        .map(|path| ruler::SynthParams::from_path(&path))
+        .unwrap_or_else(|| Ok(ruler::SynthParams::default()))?;
+
     let report = synthesis::run(args, synth_opts.clone())?;
     let file = std::fs::File::create(&synth_opts.output)
         .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));

@@ -1,18 +1,30 @@
 * Rule Generation
 
+Copy configs over to our server.
 #+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp1") :results output
 rsync -rv experiments/rule-generation/configs ubuntu@$IP:~/
+rsync -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
 
 #+RESULTS:
-: sending incremental file list
-: configs/all_ops_no_constants.json
-: 
-: sent 363 bytes  received 42 bytes  162.00 bytes/sec
-: total size is 220  speedup is 0.54
+#+begin_example
+sending incremental file list
+configs/all_ops_no_constants.json
 
+sent 390 bytes  received 42 bytes  288.00 bytes/sec
+total size is 247  speedup is 0.57
+sending incremental file list
+synth_configs/test.json
+
+sent 133 bytes  received 42 bytes  116.67 bytes/sec
+total size is 639  speedup is 3.65
+#+end_example
 
 #+begin_src async-shell :dir (ec2/tramp "exp1") :results silent
 export RUST_LOG=info
-./dios-lang synth out.json --config configs/all_ops_no_constants.json
+./dios-lang synth out.json \
+	    --config configs/all_ops_no_constants.json \
+	    --ruler synth_configs/test.json
 #+end_src
+
+

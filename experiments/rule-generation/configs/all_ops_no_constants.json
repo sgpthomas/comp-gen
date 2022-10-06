@@ -13,5 +13,6 @@
     "use_vector": true,
     "vector_mac": true,
     "variable_duplication": false,
-    "vector_size": 1
+    "vector_size": 1,
+    "use_smt": true
 }

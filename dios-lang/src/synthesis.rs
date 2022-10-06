@@ -15,7 +15,7 @@ use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::hash::BuildHasherDefault;
 use std::str::FromStr;
-use z3::ast::{Ast, Bool, Datatype};
+use z3::ast::Ast;
 
 use crate::error::Error;
 use crate::Res;
@@ -36,9 +36,9 @@ impl FromStr for Value {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        if s.starts_with("i") {
+        if let Some(stripped) = s.strip_prefix("i") {
             let v: i32 =
-                s[1..].parse().map_err(|_| "Bad integer.".to_string())?;
+                stripped.parse().map_err(|_| "Bad integer.".to_string())?;
             Ok(Value::Int(v))
         } else {
             Err(format!("{} didn't match anything.", s))
@@ -505,6 +505,7 @@ pub struct DiosConfig {
     pub vector_mac: bool,
     pub variable_duplication: bool,
     pub vector_size: usize,
+    pub use_smt: bool,
 }
 
 impl Default for DiosConfig {
@@ -518,6 +519,126 @@ impl Default for DiosConfig {
             vector_mac: false,
             variable_duplication: false,
             vector_size: 1,
+            use_smt: false,
+        }
+    }
+}
+
+impl VecLang {
+    fn fuzz_equals(
+        synth: &mut Synthesizer<Self, ruler::Init>,
+        lhs: &egg::Pattern<Self>,
+        rhs: &egg::Pattern<Self>,
+    ) -> bool {
+        // use fuzzing to determine equality
+
+        // let n = synth.params.num_fuzz;
+        // let n = 10;
+        let mut env = HashMap::default();
+
+        if lhs.vars().sort() != rhs.vars().sort() {
+            eprintln!(
+                "lhs vars != rhs vars: {:?} != {:?}",
+                lhs.vars().sort(),
+                rhs.vars().sort()
+            );
+            return false;
+        }
+
+        for var in lhs.vars() {
+            env.insert(var, vec![]);
+        }
+
+        for var in rhs.vars() {
+            env.insert(var, vec![]);
+        }
+
+        // eprintln!("env: {env:?}");
+
+        let (_n_ints, n_vecs) = split_into_halves(10);
+        // let (n_neg_ints, n_pos_ints) = split_into_halves(n_ints);
+
+        let possibilities = vec![-10, -5, -2, -1, 0, 1, 2, 5, 10];
+        // let possibilities = vec![0, 1, 2];
+        for perms in possibilities.iter().permutations(env.keys().len()) {
+            for (i, cvec) in perms.iter().zip(env.values_mut()) {
+                cvec.push(Some(Value::Int(**i)));
+            }
+        }
+
+        // add some random vectors
+        let mut length = 0;
+        for cvec in env.values_mut() {
+            cvec.extend(
+                Value::sample_vec(
+                    &mut synth.rng,
+                    -100,
+                    100,
+                    synth.lang_config.vector_size,
+                    n_vecs,
+                )
+                .into_iter()
+                .map(Some),
+            );
+            length = cvec.len();
+        }
+
+        // debug(
+        //     "(/ ?b ?a)",
+        //     "(VecMul ?b ?b)",
+        //     length,
+        //     &[("?a", Value::Int(10)), ("?b", Value::Int(20))],
+        // );
+        // panic!();
+
+        let lvec = Self::eval_pattern(lhs, &env, length);
+        let rvec = Self::eval_pattern(rhs, &env, length);
+
+        if lvec != rvec {
+            log::debug!("  env: {:?}", env);
+            log::debug!("  lhs: {}, rhs: {}", lhs, rhs);
+            log::debug!("  lvec: {:?}, rvec: {:?}", lvec, rvec);
+            log::debug!("  eq: {}", vecs_eq(&lvec, &rvec));
+        }
+
+        if format!("{lhs}") == "(VecDiv ?d ?a)"
+            && format!("{rhs}") == "(VecDiv (VecMAC c d b) (VecMul a e))"
+        {
+            log::info!("here! found you you little bugger");
+        }
+
+        vecs_eq(&lvec, &rvec)
+    }
+
+    fn smt_equals(
+        synth: &mut Synthesizer<Self, ruler::Init>,
+        lhs: &egg::Pattern<Self>,
+        rhs: &egg::Pattern<Self>,
+    ) -> bool {
+        let mut cfg = z3::Config::new();
+        cfg.set_timeout_msec(1000);
+        let ctx = z3::Context::new(&cfg);
+        let solver = z3::Solver::new(&ctx);
+
+        let left = egg_to_z3(&ctx, &Self::instantiate(lhs));
+        let right = egg_to_z3(&ctx, &Self::instantiate(rhs));
+
+        // if we can translate egg to z3 for both lhs, and rhs, then
+        // run the z3 solver. otherwise fallback to fuzz_equals
+        if let (Some(lexpr), Some(rexpr)) = (&left, &right) {
+            log::info!("z3 check {} != {}", lexpr, rexpr);
+
+            // check to see if lexpr is NOT equal to rexpr.
+            // if we can't find a counter example to this
+            // then we know that they are equal.
+            solver.assert(&lexpr._eq(rexpr).not());
+
+            match solver.check() {
+                z3::SatResult::Unsat => true,
+                z3::SatResult::Unknown | z3::SatResult::Sat => false,
+            }
+        } else {
+            Self::fuzz_equals(synth, lhs, rhs)
         }
     }
 }
@@ -571,13 +692,7 @@ impl SynthLanguage for VecLang {
                 .map(|tup| match tup {
                     (Some(Value::Int(a)), Some(Value::Int(b))) => {
                         if *b != 0 {
-                            if *a == 0 {
-                                Some(Value::Int(0))
-                            } else if a >= b {
-                                Some(Value::Int(a / b))
-                            } else {
-                                None
-                            }
+                            Some(Value::Int(a / b))
                         } else {
                             None
                         }
@@ -679,12 +794,13 @@ impl SynthLanguage for VecLang {
             VecLang::VecMul([l, r]) => {
                 map!(get, l, r => Value::vec2_op(l, r, |l, r| Value::int2(l, r, |l, r| Value::Int(l * r))))
             }
+            #[rustfmt::skip]
             VecLang::VecDiv([l, r]) => {
                 map!(get, l, r => Value::vec2_op(l, r, |l, r| {
                 match (l, r) {
                     (Value::Int(a), Value::Int(b)) => {
                         if *b != 0 {
-                            Some(Value::Int(a / b))
+			    Some(Value::Int(a / b))
                         } else {
                             None
                         }
@@ -808,7 +924,7 @@ impl SynthLanguage for VecLang {
                     &mut synth.rng,
                     -100,
                     100,
-                    4, // synth.params.vector_size
+                    1, // synth.params.vector_size
                     n_vecs,
                 )
                 .into_iter()
@@ -976,144 +1092,16 @@ impl SynthLanguage for VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
-        let mut cfg = z3::Config::new();
-        cfg.set_timeout_msec(1000);
-        let ctx = z3::Context::new(&cfg);
-        let solver = z3::Solver::new(&ctx);
-
-        let left = egg_to_z3(&ctx, Self::instantiate(lhs).as_ref());
-        let right = egg_to_z3(&ctx, Self::instantiate(rhs).as_ref());
-
-        let ret = if let (Some((lexpr, lasses)), Some((rexpr, rasses))) =
-            (left, right)
-        {
-            solver.reset();
-            let all: Vec<_> =
-                lasses.into_iter().chain(rasses.into_iter()).collect();
-            let qe_eq = &lexpr._eq(&rexpr).not();
-            // log::info!("z3 eq: {} = {}", lhs, rhs);
-            // log::info!("z3 asses: {:?}", all);
-            // for ass in &all {
-            //     solver.reset();
-            //     solver.assert(ass);
-            //     match solver.check() {
-            //         z3::SatResult::Unsat => {
-            //             log::info!("z3 ass was unsat {}", ass);
-            //             return false;
-            //         }
-            //         z3::SatResult::Unknown => {
-            //             log::info!("z3 ass was unknown {}", ass);
-            //             return false;
-            //         }
-            //         z3::SatResult::Sat => {
-            //             continue;
-            //         }
-            //     }
-            // }
-
-            solver.assert(qe_eq);
-            log::debug!("z3 check {} != {}", lhs, rhs);
-
-            match solver.check_assumptions(&all) {
-                z3::SatResult::Sat => {
-                    log::debug!("counter-example: {:?}", solver.get_model());
-                    false
-                }
-                z3::SatResult::Unsat => {
-                    log::debug!(
-                        "z3 validation: success for {} => {}",
-                        lhs,
-                        rhs
-                    );
-                    log::debug!("core: {:?}", solver.get_unsat_core());
-                    true
-                }
-                z3::SatResult::Unknown => {
-                    synth.smt_unknown += 1;
-                    log::debug!(
-                        "z3 validation: unknown for {} => {}",
-                        lhs,
-                        rhs
-                    );
-                    false
-                    // vecs_eq(&lvec, &rvec)
-                }
+        let ret = if synth.lang_config.use_smt {
+            let smt = Self::smt_equals(synth, lhs, rhs);
+            let fuzz = Self::fuzz_equals(synth, lhs, rhs);
+            if smt != fuzz {
+                log::info!("{lhs} <=> {rhs} Found ya!!!");
             }
+            smt
         } else {
-            // use fuzzing to determine equality
-
-            // let n = synth.params.num_fuzz;
-            // let n = 10;
-            let mut env = HashMap::default();
-
-            if lhs.vars().sort() != rhs.vars().sort() {
-                eprintln!(
-                    "lhs vars != rhs vars: {:?} != {:?}",
-                    lhs.vars().sort(),
-                    rhs.vars().sort()
-                );
-                return false;
-            }
-
-            for var in lhs.vars() {
-                env.insert(var, vec![]);
-            }
-
-            for var in rhs.vars() {
-                env.insert(var, vec![]);
-            }
-
-            // eprintln!("env: {env:?}");
-
-            let (_n_ints, n_vecs) = split_into_halves(10);
-            // let (n_neg_ints, n_pos_ints) = split_into_halves(n_ints);
-
-            let possibilities = vec![-5, -2, -1, 0, 1, 2, 5];
-            // let possibilities = vec![0, 1, 2];
-            for perms in possibilities.iter().permutations(env.keys().len()) {
-                for (i, cvec) in perms.iter().zip(env.values_mut()) {
-                    cvec.push(Some(Value::Int(**i)));
-                }
-            }
-
-            // add some random vectors
-            let mut length = 0;
-            for cvec in env.values_mut() {
-                cvec.extend(
-                    Value::sample_vec(
-                        &mut synth.rng,
-                        -100,
-                        100,
-                        synth.lang_config.vector_size,
-                        n_vecs,
-                    )
-                    .into_iter()
-                    .map(Some),
-                );
-                length = cvec.len();
-            }
-
-            // debug(
-            //     "(/ ?b ?a)",
-            //     "(VecMul ?b ?b)",
-            //     length,
-            //     &[("?a", Value::Int(10)), ("?b", Value::Int(20))],
-            // );
-            // panic!();
-
-            let lvec = Self::eval_pattern(lhs, &env, length);
-            let rvec = Self::eval_pattern(rhs, &env, length);
-
-            if lvec != rvec {
-                log::debug!("  env: {:?}", env);
-                log::debug!("  lhs: {}, rhs: {}", lhs, rhs);
-                log::debug!("  lvec: {:?}, rvec: {:?}", lvec, rvec);
-                log::debug!("  eq: {}", vecs_eq(&lvec, &rvec));
-            }
-
-            vecs_eq(&lvec, &rvec)
+            Self::fuzz_equals(synth, lhs, rhs)
         };
-        // only compare values where both sides are defined
         ret
     }
 
@@ -1224,88 +1212,79 @@ pub fn run(
     Ok(VecLang::post_process(&params, report))
 }
 
+/// Translate an egg::RecExpr into an equivalent z3 expression.
+/// This only works for operations on integers for now.
 fn egg_to_z3<'a>(
-    _ctx: &'a z3::Context,
-    _expr: &[VecLang],
-) -> Option<(Datatype<'a>, Vec<Bool<'a>>)> {
-    // let mut buf: Vec<Datatype> = vec![];
-    // let mut assumes: Vec<Bool> = vec![];
+    ctx: &'a z3::Context,
+    expr: &egg::RecExpr<VecLang>,
+) -> Option<z3::ast::Int<'a>> {
+    // This translate works by walking through the RecExpr vector
+    // in order, and translating just that node. We push this
+    // translation into a buffer as we go. Any time we need to
+    // reference a child, we can look up the corresponding index
+    // in the buffer. This works because we have the guarantee that
+    // some element i in RecExpr only ever refers to elements j < i.
+    // By the time we need them, we will have already translated them.
 
-    // // data type representing either ints or bools
-    // let int_bool = DatatypeBuilder::new(&ctx, "Int+Bool")
-    //     .variant(
-    //         "Int",
-    //         vec![("Int.v", DatatypeAccessor::Sort(Sort::int(&ctx)))],
-    //     )
-    //     .variant(
-    //         "Bool",
-    //         vec![("Bool.v", DatatypeAccessor::Sort(Sort::bool(&ctx)))],
-    //     )
-    //     .finish();
+    let mut buf: Vec<z3::ast::Int> = vec![];
 
-    // let int_cons = &int_bool.variants[0].constructor;
-    // let int_get = &int_bool.variants[0].accessors[0];
-    // let bool_cons = &int_bool.variants[1].constructor;
-    // let _bool_get = &int_bool.variants[1].accessors[0];
+    for node in expr.as_ref().iter() {
+        match node {
+            VecLang::Const(Value::Int(i)) => {
+                buf.push(z3::ast::Int::from_i64(&ctx, *i as i64))
+            }
+            VecLang::Symbol(v) => {
+                buf.push(z3::ast::Int::new_const(ctx, v.to_string()))
+            }
+            VecLang::Add([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int + y_int);
+            }
+            VecLang::Mul([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int * y_int);
+            }
+            VecLang::Minus([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int - y_int);
+            }
+            VecLang::Div([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int / y_int);
+            }
+            VecLang::Neg([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(-x_int);
+            }
 
-    // let mut vars: Vec<_> = vec![];
-
-    // for node in expr.as_ref().iter() {
-    //     match node {
-    //         VecLang::Const(Value::Int(i)) => buf.push(
-    //             int_cons
-    //                 .apply(&[&Int::from_i64(&ctx, *i as i64)])
-    //                 .as_datatype()
-    //                 .unwrap(),
-    //         ),
-    //         VecLang::Symbol(v) => {
-    //             let var = Datatype::new_const(&ctx, v.to_string(), &int_bool.sort);
-    //             vars.push(buf.len());
-    //             buf.push(var)
-    //         }
-    //         VecLang::Add([x, y]) => {
-    //             let x_int = int_get.apply(&[&buf[usize::from(*x)]]).as_int().unwrap();
-    //             // println!("buf: {:?}[{}]", buf, y);
-    //             let y_int = int_get.apply(&[&buf[usize::from(*y)]]).as_int().unwrap();
-    //             let res = int_cons.apply(&[&(x_int + y_int)]).as_datatype().unwrap();
-    //             buf.push(res)
-    //         }
-    //         VecLang::Mul([x, y]) => {
-    //             let x_int = int_get.apply(&[&buf[usize::from(*x)]]).as_int().unwrap();
-    //             let y_int = int_get.apply(&[&buf[usize::from(*y)]]).as_int().unwrap();
-    //             let res = int_cons.apply(&[&(x_int * y_int)]).as_datatype().unwrap();
-    //             buf.push(res)
-    //         }
-    //         VecLang::Div([x, y]) => {
-    //             let denom = int_get.apply(&[&buf[usize::from(*y)]]).as_int().unwrap();
-    //             // let eqz = Int::le(&denom, &Int::from_i64(&ctx, 0));
-    //             let lez = Int::le(&denom, &Int::from_i64(&ctx, 0));
-    //             let gez = Int::ge(&denom, &Int::from_i64(&ctx, 0));
-    //             let assume = Bool::not(&Bool::and(&ctx, &[&lez, &gez]));
-    //             assumes.push(assume);
-    //             let x_int = int_get.apply(&[&buf[usize::from(*x)]]).as_int().unwrap();
-    //             let term = Int::div(&x_int, &denom);
-
-    //             buf.push(int_cons.apply(&[&term]).as_datatype().unwrap())
-    //         }
-    //         VecLang::Lt([a, b]) => {
-    //             let a_int = int_get.apply(&[&buf[usize::from(*a)]]).as_int().unwrap();
-    //             let b_int = int_get.apply(&[&buf[usize::from(*b)]]).as_int().unwrap();
-    //             let term = Int::lt(&a_int, &b_int);
-
-    //             // let pattern = z3::Pattern::new(&ctx, &[&term]);
-    //             // let vs: Vec<&dyn Ast> = vars.iter().map(|i| &buf[usize::from(*i)] as _).collect();
-    //             // let forall: Bool = forall_const(&ctx, vs.as_slice(), &[&pattern], &term);
-
-    //             let res = bool_cons.apply(&[&term]).as_datatype().unwrap();
-
-    //             // assumes.push(forall);
-    //             buf.push(res)
-    //         }
-    //         _ => (),
-    //     }
-    // }
-
-    // buf.pop().map(|head| (head, assumes))
-    None
+            // unsupported operations
+            // return early
+            VecLang::Const(_)
+            | VecLang::Or(_)
+            | VecLang::And(_)
+            | VecLang::Ite(_)
+            | VecLang::Lt(_)
+            | VecLang::Sgn(_)
+            | VecLang::Sqrt(_)
+            | VecLang::List(_)
+            | VecLang::Vec(_)
+            | VecLang::Get(_)
+            | VecLang::Concat(_)
+            | VecLang::VecAdd(_)
+            | VecLang::VecMinus(_)
+            | VecLang::VecMul(_)
+            | VecLang::VecDiv(_)
+            | VecLang::VecMulSgn(_)
+            | VecLang::VecNeg(_)
+            | VecLang::VecSqrt(_)
+            | VecLang::VecSgn(_)
+            | VecLang::VecMAC(_) => return None,
+        }
+    }
+    // return the last element
+    buf.pop()
 }
