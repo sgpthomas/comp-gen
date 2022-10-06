@@ -919,16 +919,16 @@ impl<L: SynthLanguage> Signature<L> {
 impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
     type Data = Signature<L>;
 
-    fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
-        if egraph[id1].data.cvec != egraph[id2].data.cvec {
-            let extractor = egg::Extractor::new(egraph, egg::AstSize);
-            let (_, prog1) = extractor.find_best(id1);
-            let (_, prog2) = extractor.find_best(id2);
-            println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-            println!("cvec1: {:?}", egraph[id1].data.cvec);
-            println!("cvec2: {:?}", egraph[id2].data.cvec);
-        }
-    }
+    // fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
+    //     if egraph[id1].data.cvec != egraph[id2].data.cvec {
+    //         let extractor = egg::Extractor::new(egraph, egg::AstSize);
+    //         let (_, prog1) = extractor.find_best(id1);
+    //         let (_, prog2) = extractor.find_best(id2);
+    //         println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+    //         println!("cvec1: {:?}", egraph[id1].data.cvec);
+    //         println!("cvec2: {:?}", egraph[id2].data.cvec);
+    //     }
+    // }
 
     fn merge(&mut self, to: &mut Self::Data, from: Self::Data) -> DidMerge {
         let mut changed_a = false;
