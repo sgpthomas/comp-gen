@@ -10,20 +10,21 @@ rsync -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+begin_example
 sending incremental file list
 configs/all_ops_no_constants.json
+configs/debug.json
 
-sent 390 bytes  received 42 bytes  288.00 bytes/sec
-total size is 247  speedup is 0.57
+sent 515 bytes  received 67 bytes  1,164.00 bytes/sec
+total size is 548  speedup is 0.94
 sending incremental file list
 synth_configs/test.json
 
-sent 133 bytes  received 42 bytes  116.67 bytes/sec
+sent 133 bytes  received 42 bytes  350.00 bytes/sec
 total size is 639  speedup is 3.65
 #+end_example
 
 #+begin_src async-shell :dir (ec2/tramp "exp1") :results silent
 export RUST_LOG=info
 ./dios-lang synth out.json \
-	    --config configs/all_ops_no_constants.json \
+	    --config configs/debug.json \
 	    --ruler synth_configs/test.json
 #+end_src
 

@@ -2,7 +2,7 @@
     "seed": 0,
     "n_samples": 0,
     "variables": 6,
-    "abs_timeout": 240,
+    "abs_timeout": 960,
     "iters": 2,
     "rules_to_take": 18446744073709551615,
     "chunk_size": 100000,

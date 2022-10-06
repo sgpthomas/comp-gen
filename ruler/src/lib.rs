@@ -697,7 +697,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                             log::info!("culprit: {}", bad.0);
                             panic!();
                         }
-                        log::info!("adding {} to poison set", bad.0);
+                        log::debug!("adding {} to poison set", bad.0);
                         poison_rules.insert(bad.1);
                     }
                     if eqs.is_empty() {
@@ -919,16 +919,26 @@ impl<L: SynthLanguage> Signature<L> {
 impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
     type Data = Signature<L>;
 
-    // fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
-    //     if egraph[id1].data.cvec != egraph[id2].data.cvec {
-    //         let extractor = egg::Extractor::new(egraph, egg::AstSize);
-    //         let (_, prog1) = extractor.find_best(id1);
-    //         let (_, prog2) = extractor.find_best(id2);
-    //         println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-    //         println!("cvec1: {:?}", egraph[id1].data.cvec);
-    //         println!("cvec2: {:?}", egraph[id2].data.cvec);
-    //     }
-    // }
+    fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
+        for (val1, val2) in egraph[id1]
+            .data
+            .cvec
+            .iter()
+            .zip(egraph[id2].data.cvec.iter())
+        {
+            match (val1, val2) {
+                (Some(x), Some(y)) if x != y => {
+                    let extractor = egg::Extractor::new(egraph, egg::AstSize);
+                    let (_, prog1) = extractor.find_best(id1);
+                    let (_, prog2) = extractor.find_best(id2);
+                    println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+                    println!("cvec1: {:?}", egraph[id1].data.cvec);
+                    println!("cvec2: {:?}", egraph[id2].data.cvec);
+                }
+                _ => (),
+            }
+        }
+    }
 
     fn merge(&mut self, to: &mut Self::Data, from: Self::Data) -> DidMerge {
         let mut changed_a = false;

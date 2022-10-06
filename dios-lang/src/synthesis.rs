@@ -74,6 +74,24 @@ fn split_into_halves(n: usize) -> (usize, usize) {
     }
 }
 
+/// Perform the integer divison `a / b`.
+/// This is defined to be the `n`
+/// such that `b * n = a`.
+/// If no such `n` exists, then return None.
+/// This is defined when b != 0 and there
+/// exists some n such that b * n = a.
+fn integer_division(a: i32, b: i32) -> Option<i32> {
+    if b == 0 {
+        None
+    } else if a == 0 {
+        Some(0)
+    } else if a / b != 0 {
+        Some(a / b)
+    } else {
+        None
+    }
+}
+
 impl Value {
     fn int1<F>(arg: &Self, f: F) -> Option<Value>
     where
@@ -501,11 +519,13 @@ pub struct DiosConfig {
     pub seed_rules: Vec<DiosSeedRules>,
     pub unops: Vec<String>,
     pub binops: Vec<String>,
+    pub use_scalar: bool,
     pub use_vector: bool,
     pub vector_mac: bool,
     pub variable_duplication: bool,
     pub vector_size: usize,
-    pub use_smt: bool,
+    pub always_smt: bool,
+    pub smt_fallback: bool,
 }
 
 impl Default for DiosConfig {
@@ -515,11 +535,13 @@ impl Default for DiosConfig {
             seed_rules: vec![],
             unops: vec![],
             binops: vec![],
+            use_scalar: false,
             use_vector: false,
             vector_mac: false,
             variable_duplication: false,
             vector_size: 1,
-            use_smt: false,
+            always_smt: false,
+            smt_fallback: true,
         }
     }
 }
@@ -529,6 +551,7 @@ impl VecLang {
         synth: &mut Synthesizer<Self, ruler::Init>,
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
+        debug: bool,
     ) -> bool {
         // use fuzzing to determine equality
 
@@ -583,28 +606,32 @@ impl VecLang {
             length = cvec.len();
         }
 
-        // debug(
-        //     "(/ ?b ?a)",
-        //     "(VecMul ?b ?b)",
-        //     length,
-        //     &[("?a", Value::Int(10)), ("?b", Value::Int(20))],
-        // );
-        // panic!();
-
         let lvec = Self::eval_pattern(lhs, &env, length);
         let rvec = Self::eval_pattern(rhs, &env, length);
 
-        if lvec != rvec {
-            log::debug!("  env: {:?}", env);
+        let debug = false;
+        if lvec != rvec || debug {
+            log::debug!(
+                "  env: {:#?}",
+                env.into_iter()
+                    .map(|(v, env)| (
+                        v,
+                        env.into_iter()
+                            .flat_map(|x| match x {
+                                Some(Value::Vec(v)) => Some(Value::Vec(v)),
+                                _ => None,
+                            })
+                            .collect::<Vec<_>>()
+                    ))
+                    .collect::<Vec<_>>()
+            );
             log::debug!("  lhs: {}, rhs: {}", lhs, rhs);
-            log::debug!("  lvec: {:?}, rvec: {:?}", lvec, rvec);
+            log::debug!(
+                "  lvec: {:#?}, rvec: {:#?}",
+                lvec.iter().flatten().collect_vec(),
+                rvec.iter().flatten().collect_vec()
+            );
             log::debug!("  eq: {}", vecs_eq(&lvec, &rvec));
-        }
-
-        if format!("{lhs}") == "(VecDiv ?d ?a)"
-            && format!("{rhs}") == "(VecDiv (VecMAC c d b) (VecMul a e))"
-        {
-            log::info!("here! found you you little bugger");
         }
 
         vecs_eq(&lvec, &rvec)
@@ -626,19 +653,43 @@ impl VecLang {
         // if we can translate egg to z3 for both lhs, and rhs, then
         // run the z3 solver. otherwise fallback to fuzz_equals
         if let (Some(lexpr), Some(rexpr)) = (&left, &right) {
-            log::info!("z3 check {} != {}", lexpr, rexpr);
+            log::debug!("z3 check {} != {}", lexpr, rexpr);
 
             // check to see if lexpr is NOT equal to rexpr.
             // if we can't find a counter example to this
             // then we know that they are equal.
             solver.assert(&lexpr._eq(rexpr).not());
 
-            match solver.check() {
+            // let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
+            let smt = match solver.check() {
                 z3::SatResult::Unsat => true,
                 z3::SatResult::Unknown | z3::SatResult::Sat => false,
-            }
+            };
+
+            // if smt != fuzz {
+            //     log::info!("{lhs} <=> {rhs} Found ya!!!");
+            //     let mut cfg = z3::Config::new();
+            //     cfg.set_timeout_msec(1000);
+            //     let ctx = z3::Context::new(&cfg);
+            //     log::info!("smt: {smt}, fuzz: {fuzz}");
+            //     log::info!(
+            //         "smt formula: {} = {}",
+            //         egg_to_z3(&ctx, &Self::instantiate(lhs))
+            //             .map(|x| x.to_string())
+            //             .unwrap_or("".to_string()),
+            //         egg_to_z3(&ctx, &Self::instantiate(rhs))
+            //             .map(|x| x.to_string())
+            //             .unwrap_or("".to_string())
+            //     );
+            //     log::info!("{:?}", solver.get_model());
+            //     Self::fuzz_equals(synth, lhs, rhs, true);
+            // } else {
+            //     log::debug!("smt: {smt}, fuzz: {fuzz}")
+            // }
+
+            smt
         } else {
-            Self::fuzz_equals(synth, lhs, rhs)
+            Self::fuzz_equals(synth, lhs, rhs, false)
         }
     }
 }
@@ -691,11 +742,7 @@ impl SynthLanguage for VecLang {
                 .zip(get(r).iter())
                 .map(|tup| match tup {
                     (Some(Value::Int(a)), Some(Value::Int(b))) => {
-                        if *b != 0 {
-                            Some(Value::Int(a / b))
-                        } else {
-                            None
-                        }
+                        integer_division(*a, *b).map(Value::Int)
                     }
                     _ => None,
                 })
@@ -772,89 +819,123 @@ impl SynthLanguage for VecLang {
                 })
                 .collect::<Vec<_>>(),
             // VecLang::LitVec(x) => todo!(),
+            #[rustfmt::skip]
             VecLang::Get([l, i]) => map!(get, l, i => {
                 if let (Value::Vec(v), Value::Int(idx)) = (l, i) {
-            // get index and clone the inner Value if there is one
+                    // get index and clone the inner Value if there is one
                     v.get(*idx as usize).map(|inner| inner.clone())
                 } else {
-            None
-            }
-                }),
-            VecLang::Concat([l, r]) => {
-                map!(get, l, r => Value::vec2(l, r, |l, r| {
-                Some(Value::List(l.iter().chain(r).cloned().collect::<Vec<_>>()))
-                    }))
-            }
-            VecLang::VecAdd([l, r]) => {
-                map!(get, l, r => Value::vec2_op(l, r, |l, r| Value::int2(l, r, |l, r| Value::Int(l + r))))
-            }
-            VecLang::VecMinus([l, r]) => {
-                map!(get, l, r => Value::vec2_op(l, r, |l, r| Value::int2(l, r, |l, r| Value::Int(l - r))))
-            }
-            VecLang::VecMul([l, r]) => {
-                map!(get, l, r => Value::vec2_op(l, r, |l, r| Value::int2(l, r, |l, r| Value::Int(l * r))))
-            }
+                    None
+                }
+            }),
             #[rustfmt::skip]
-            VecLang::VecDiv([l, r]) => {
-                map!(get, l, r => Value::vec2_op(l, r, |l, r| {
-                match (l, r) {
+            VecLang::Concat([l, r]) => map!(get, l, r => {
+                Value::vec2(l, r, |l, r| {
+                    Some(Value::List(
+                        l.iter().chain(r).cloned().collect::<Vec<_>>(),
+                    ))
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecAdd([l, r]) => map!(get, l, r => {
+                Value::vec2_op(l, r, |l, r| {
+                    Value::int2(l, r, |l, r| Value::Int(l + r))
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecMinus([l, r]) => map!(get, l, r => {
+                Value::vec2_op(l, r, |l, r| {
+                    Value::int2(l, r, |l, r| Value::Int(l - r))
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecMul([l, r]) => map!(get, l, r => {
+                Value::vec2_op(l, r, |l, r| {
+                    Value::int2(l, r, |l, r| Value::Int(l * r))
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecDiv([l, r]) => map!(get, l, r => {
+                Value::vec2_op(l, r, |l, r| match (l, r) {
                     (Value::Int(a), Value::Int(b)) => {
-                        if *b != 0 {
-			    Some(Value::Int(a / b))
-                        } else {
-                            None
-                        }
+                        integer_division(*a, *b).map(Value::Int)
                     }
                     _ => None,
-                }
-                }))
-            }
+                })
+            }),
             VecLang::VecMulSgn(_) => todo!(),
-            VecLang::VecNeg([l]) => {
-                map!(get, l => Value::vec1(l, |l| {
-                        if l.iter().all(|x| matches!(x, Value::Int(_))) {
-                        Some(Value::Vec(l.iter().map(|tup| match tup {
-                                Value::Int(a) => Value::Int(-a),
-                                    x => panic!("NEG: Ill-formed: {}", x)
-                                }).collect::<Vec<_>>()))
+            #[rustfmt::skip]
+            VecLang::VecNeg([l]) => map!(get, l => {
+                Value::vec1(l, |l| {
+                    if l.iter().all(|x| matches!(x, Value::Int(_))) {
+                        Some(Value::Vec(
+                            l.iter()
+                                .map(|tup| match tup {
+                                    Value::Int(a) => Value::Int(-a),
+                                    x => panic!("NEG: Ill-formed: {}", x),
+                                })
+                                .collect::<Vec<_>>(),
+                        ))
+                    } else {
+                        None
+                    }
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecSqrt([l]) => map!(get, l => {
+                Value::vec1(l, |l| {
+                    if l.iter().all(|x| {
+                        if let Value::Int(i) = x {
+                            *i >= 0
                         } else {
-                    None
-                }
-                            }))
-            }
-            VecLang::VecSqrt([l]) => {
-                map!(get, l => Value::vec1(l, |l| {
-                    if l.iter().all(|x| {if let Value::Int(i) = x { *i >= 0 } else { false }}) {
-                        Some(Value::Vec(l.iter().map(|tup| match tup {
-                                Value::Int(a) => Value::Int(a.sqrt()),
-                                    x => panic!("SQRT: Ill-formed: {}", x)
-                                }).collect::<Vec<_>>()))
-                        } else {
-                    None
-                }
-                            }))
-            }
-            VecLang::VecSgn([l]) => {
-                map!(get, l => Value::vec1(l, |l| {
-                        if l.iter().all(|x| matches!(x, Value::Int(_))) {
-                        Some(Value::Vec(l.iter().map(|tup| match tup {
-                                Value::Int(a) => Value::Int(sgn(*a)),
-                                    x => panic!("SGN: Ill-formed: {}", x)
-                                }).collect::<Vec<_>>()))
-                        } else {
-                    None
-                }
-                            }))
-            }
-            VecLang::VecMAC([acc, v1, v2]) => {
-                map!(get, v1, v2, acc => Value::vec3(v1, v2, acc, |v1, v2, acc| {
-                            v1.iter().zip(v2.iter()).zip(acc.iter()).map(|tup| match tup {
-                    ((Value::Int(v1), Value::Int(v2)), Value::Int(acc)) => Some(Value::Int((v1 * v2) + acc)),
-                _ => None
-                            }).collect::<Option<Vec<Value>>>()
-                .map(|x| Value::Vec(x))
-                        }))
-            }
+                            false
+                        }
+                    }) {
+                        Some(Value::Vec(
+                            l.iter()
+                                .map(|tup| match tup {
+                                    Value::Int(a) => Value::Int(a.sqrt()),
+                                    x => panic!("SQRT: Ill-formed: {}", x),
+                                })
+                                .collect::<Vec<_>>(),
+                        ))
+                    } else {
+                        None
+                    }
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecSgn([l]) => map!(get, l => {
+                Value::vec1(l, |l| {
+                    if l.iter().all(|x| matches!(x, Value::Int(_))) {
+                        Some(Value::Vec(
+                            l.iter()
+                                .map(|tup| match tup {
+                                    Value::Int(a) => Value::Int(sgn(*a)),
+                                    x => panic!("SGN: Ill-formed: {}", x),
+                                })
+                                .collect::<Vec<_>>(),
+                        ))
+                    } else {
+                        None
+                    }
+                })
+            }),
+            #[rustfmt::skip]
+            VecLang::VecMAC([acc, v1, v2]) => map!(get, v1, v2, acc => {
+                Value::vec3(v1, v2, acc, |v1, v2, acc| {
+                    v1.iter()
+                        .zip(v2.iter())
+                        .zip(acc.iter())
+                        .map(|tup| match tup {
+                            ((Value::Int(v1), Value::Int(v2)), Value::Int(acc))
+				=> Some(Value::Int((v1 * v2) + acc)),
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<Value>>>()
+                        .map(|x| Value::Vec(x))
+                })
+            }),
             VecLang::Symbol(_) => vec![],
         }
     }
@@ -955,7 +1036,7 @@ impl SynthLanguage for VecLang {
         iter = iter - 1; // make iter start at 0
 
         // only do binops for iters < 2
-        let binops = if iter < 2 {
+        let binops = if iter < 2 && synth.lang_config.use_scalar {
             let us = ids
                 .clone()
                 .into_iter()
@@ -1092,17 +1173,32 @@ impl SynthLanguage for VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
-        let ret = if synth.lang_config.use_smt {
-            let smt = Self::smt_equals(synth, lhs, rhs);
-            let fuzz = Self::fuzz_equals(synth, lhs, rhs);
-            if smt != fuzz {
-                log::info!("{lhs} <=> {rhs} Found ya!!!");
-            }
-            smt
+        // debug_rule(
+        //     synth,
+        //     "(VecDiv (VecMAC ?f ?e ?d) (VecMAC ?c ?b ?a))",
+        //     "(VecDiv ?d ?f)",
+        //     1,
+        //     &[
+        //         ("?a", Value::Int(51)),
+        //         ("?b", Value::Int(-15)),
+        //         ("?c", Value::Int(88)),
+        //         ("?d", Value::Int(22)),
+        //         ("?e", Value::Int(79)),
+        //         ("?f", Value::Int(-81)),
+        //     ],
+        // );
+        // panic!();
+
+        if synth.lang_config.always_smt {
+            Self::smt_equals(synth, lhs, rhs)
         } else {
-            Self::fuzz_equals(synth, lhs, rhs)
-        };
-        ret
+            let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
+            if synth.lang_config.smt_fallback && !fuzz {
+                Self::smt_equals(synth, lhs, rhs)
+            } else {
+                fuzz
+            }
+        }
     }
 
     // fn post_process(
@@ -1164,7 +1260,13 @@ fn vecs_eq(lvec: &CVec<VecLang>, rvec: &CVec<VecLang>) -> bool {
 }
 
 #[allow(unused)]
-fn debug(left: &str, right: &str, n: usize, env_pairs: &[(&str, Value)]) {
+fn debug_rule(
+    synth: &mut Synthesizer<VecLang, ruler::Init>,
+    left: &str,
+    right: &str,
+    n: usize,
+    env_pairs: &[(&str, Value)],
+) {
     let mut env: HashMap<
         egg::Var,
         Vec<Option<Value>>,
@@ -1177,15 +1279,18 @@ fn debug(left: &str, right: &str, n: usize, env_pairs: &[(&str, Value)]) {
 
     let pleft: egg::Pattern<VecLang> = left.parse().unwrap();
     let pright: egg::Pattern<VecLang> = right.parse().unwrap();
-    log::info!("left");
+    log::info!("left: {pleft}");
     let lres = VecLang::eval_pattern(&pleft, &env, n);
-    log::info!("right");
+    log::info!("right: {pright}");
     let rres = VecLang::eval_pattern(&pright, &env, n);
     log::info!(
         "TEST:\n  {lres:?}\n    ?= ({})\n  {rres:?}",
         vecs_eq(&lres, &rres),
     );
     log::info!("{} => {}", left, right);
+
+    // try fuzzing
+    VecLang::smt_equals(synth, &pleft, &pright);
 }
 
 pub fn run(
@@ -1261,6 +1366,40 @@ fn egg_to_z3<'a>(
                 buf.push(-x_int);
             }
 
+            // an attempt to support vector operators.
+            // I think I should just be able to map them
+            // on to their scalar counter parts.
+            VecLang::VecAdd([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int + y_int);
+            }
+            VecLang::VecMinus([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int - y_int);
+            }
+            VecLang::VecMul([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int * y_int);
+            }
+            VecLang::VecDiv([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(x_int / y_int);
+            }
+            VecLang::VecNeg([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(-x_int);
+            }
+            VecLang::VecMAC([acc, x, y]) => {
+                let acc_int = &buf[usize::from(*acc)];
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push((x_int * y_int) + acc_int);
+            }
+
             // unsupported operations
             // return early
             VecLang::Const(_)
@@ -1274,15 +1413,9 @@ fn egg_to_z3<'a>(
             | VecLang::Vec(_)
             | VecLang::Get(_)
             | VecLang::Concat(_)
-            | VecLang::VecAdd(_)
-            | VecLang::VecMinus(_)
-            | VecLang::VecMul(_)
-            | VecLang::VecDiv(_)
             | VecLang::VecMulSgn(_)
-            | VecLang::VecNeg(_)
             | VecLang::VecSqrt(_)
-            | VecLang::VecSgn(_)
-            | VecLang::VecMAC(_) => return None,
+            | VecLang::VecSgn(_) => return None,
         }
     }
     // return the last element
