@@ -1,31 +1,58 @@
+* Comp-gen experiments
+
+** Description
+
+Fix a ruleset, vary the following configuration options:
+- rule filtering
+- phase enforcing
+- new egraph for every phase
+- scheduler
+- syntax filtering
+
+For each configuration, I want to measure:
+- rule generation time
+- compile time
+- e-graph cost
+- performance (simulated cycles)
+
+Compare this against, handwritten Diospyros rules
+
+* Aella (simple IMP-like language) experiments
+
+** Description
+
+Compare against handwritten rules. Show that some known, but non-trivial optimizations can be automatically generated.
+
 * Rule Generation
 
-Copy configs over to our server.
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp1") :results output
-rsync -rv experiments/rule-generation/configs ubuntu@$IP:~/
-rsync -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
+** Description
+
+Fix a set of filtering parameters, and play with the following settings:
+- initial seed set
+- how long we run ruler
+
+** Run the experiment
+
+#+begin_src async-shell :dir rule-generation
+./run.py new
+./run.py setup <dir>
+./run.py watch <dir>
 #+end_src
 
-#+RESULTS:
-#+begin_example
-sending incremental file list
-configs/all_ops_no_constants.json
-configs/debug.json
+** Emacs Play zone
 
-sent 515 bytes  received 67 bytes  1,164.00 bytes/sec
-total size is 548  speedup is 0.94
-sending incremental file list
-synth_configs/test.json
-
-sent 133 bytes  received 42 bytes  350.00 bytes/sec
-total size is 639  speedup is 3.65
-#+end_example
+#+begin_src emacs-lisp :results silent
+(setq sgt/elisp-compile-command
+      '(async-shell-command
+        (format "cd %s && cargo build --release --manifest-path dios-lang/Cargo.toml && rsync -vP dios-lang/target/release/dios-lang ubuntu@%s:"
+		(magit-toplevel)
+		(ec2/get-ip "exp1"))))
+#+end_src
 
 #+begin_src async-shell :dir (ec2/tramp "exp1") :results silent
-export RUST_LOG=info
+export RUST_LOG=info,egg=off
 ./dios-lang synth out.json \
 	    --config configs/debug.json \
 	    --ruler synth_configs/test.json
 #+end_src
-
 

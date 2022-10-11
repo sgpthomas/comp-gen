@@ -1,13 +1,9 @@
 {
     "constants": [],
     "seed_rules": [],
-    "unops": [
-	"neg"
-    ],
+    "unops": [],
     "binops": [
 	"+",
-	"-",
-	"*",
 	"/"
     ],
     "use_scalar": true,

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egg = "0.8.1"
+egg = "0.9.1"
 json = "0.12.4"
 plotlib = "0.5.1"
 ruler = { path = "../ruler", default-features = false }

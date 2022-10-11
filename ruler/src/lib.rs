@@ -398,6 +398,11 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             // .with_time_limit(Duration::from_secs(self.params.eqsat_time_limit))
             .with_time_limit(self.time_left())
             .with_scheduler(SimpleScheduler);
+        runner = if self.params.enable_explanations {
+            runner.with_explanations_enabled()
+        } else {
+            runner
+        };
         runner = if self.params.no_conditionals {
             egraph.analysis.cvec_len = 0;
             for c in egraph.classes_mut() {
@@ -497,7 +502,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             count > 0
         };
 
-        eprint!("CVec Loop");
+        log::info!("CVec Loop");
         for ids in by_cvec.values() {
             let mut ids = ids.iter().copied();
             while let Some(id1) = ids.next() {
@@ -517,7 +522,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 }
             }
         }
-        eprintln!("done");
+        log::info!("done");
 
         new_eqs.retain(|k, _v| !self.equalities.contains_key(k));
         new_eqs
@@ -578,7 +583,8 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
     /// Top level function for rule synthesis.
     /// This corresponds to `Figure 4` in the Ruler paper, where
-    /// all the key components of `Ruler` (e.g., `make_layer`, `run_rewrites`, `cvec_match`, `choose_eqs`) are invoked.
+    /// all the key components of `Ruler`
+    /// (e.g., `make_layer`, `run_rewrites`, `cvec_match`, `choose_eqs`) are invoked.
     pub fn run(mut self) -> Report<L> {
         // normalize some params
         if self.params.rules_to_take == 0 {
@@ -817,6 +823,7 @@ pub struct SynthParams {
     pub num_fuzz: usize,
     pub use_smt: bool,
     pub do_final_run: bool,
+    pub enable_explanations: bool,
 }
 
 impl Default for SynthParams {
@@ -846,6 +853,7 @@ impl Default for SynthParams {
             num_fuzz: 0,
             use_smt: false,
             do_final_run: false,
+            enable_explanations: false,
         }
     }
 }
@@ -916,10 +924,21 @@ impl<L: SynthLanguage> Signature<L> {
     }
 }
 
+// unsafe fn very_bad_function<T>(reference: &T) -> &mut T {
+//     let const_ptr = reference as *const T;
+//     let mut_ptr = const_ptr as *mut T;
+//     &mut *mut_ptr
+// }
+
 impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
     type Data = Signature<L>;
 
-    fn pre_union(egraph: &EGraph<L, Self>, id1: Id, id2: Id) {
+    fn pre_union(
+        egraph: &EGraph<L, Self>,
+        id1: Id,
+        id2: Id,
+        justification: &Option<egg::Justification>,
+    ) {
         for (val1, val2) in egraph[id1]
             .data
             .cvec
@@ -931,9 +950,14 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
                     let extractor = egg::Extractor::new(egraph, egg::AstSize);
                     let (_, prog1) = extractor.find_best(id1);
                     let (_, prog2) = extractor.find_best(id2);
-                    println!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-                    println!("cvec1: {:?}", egraph[id1].data.cvec);
-                    println!("cvec2: {:?}", egraph[id2].data.cvec);
+
+                    // let mut_egraph = unsafe { very_bad_function(&egraph) };
+                    // mut_egraph.explain_equivalence(&prog1, &prog2);
+
+                    log::info!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+                    log::info!("cvec1: {:?}", egraph[id1].data.cvec);
+                    log::info!("cvec2: {:?}", egraph[id2].data.cvec);
+                    log::info!("just: {justification:?}");
                 }
                 _ => (),
             }

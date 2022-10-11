@@ -97,6 +97,9 @@ pub struct SynthParamsCli {
     /// For a final round of run_rewrites to remove redundant rules.
     #[clap(long)]
     pub do_final_run: bool,
+    /// Enable explanations in the egraph runners.
+    #[clap(long)]
+    pub enable_explanations: bool,
 }
 
 /// Derivability report.
@@ -162,6 +165,7 @@ impl Into<SynthParams> for SynthParamsCli {
             num_fuzz: self.num_fuzz,
             use_smt: self.use_smt,
             do_final_run: self.do_final_run,
+            enable_explanations: self.enable_explanations,
         }
     }
 }

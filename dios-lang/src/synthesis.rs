@@ -1193,6 +1193,8 @@ impl SynthLanguage for VecLang {
             Self::smt_equals(synth, lhs, rhs)
         } else {
             let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
+            // if fuzz fails and `smt_fallback` is enabled, run
+            // `smt_equals`.
             if synth.lang_config.smt_fallback && !fuzz {
                 Self::smt_equals(synth, lhs, rhs)
             } else {
@@ -1305,6 +1307,10 @@ pub fn run(
                 .map_err(|err| Error::from(err))
         })
         .unwrap_or_else(|| Ok(DiosConfig::default()))?;
+
+    log::info!("running with config: {dios_config:#?}");
+    log::info!("running with synth config {params:#?}");
+
     // create the synthesizer
     let syn = ruler::Synthesizer::<VecLang, _>::new_with_data(
         params.clone(),

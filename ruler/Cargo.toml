@@ -5,9 +5,8 @@ authors = ["Max Willsey <me@mwillsey.com>", "Chandrakana Nandi <cnandi@cs.washin
 edition = "2018"
 
 [features]
-default = ["cli", "z3"]
+default = ["cli"]
 cli = ["dep:clap"]
-z3 = ["dep:z3"]
 
 [dependencies]
 log = "0.4"
@@ -24,22 +23,13 @@ libm = "0.2.1"
 float-cmp = "0.8.0"
 lazy_static = "1.4.0"
 itertools = "0.10"
-z3 = { version = "0.11.2", features = ["static-link-z3"], optional = true }
 rustc-hash = "1"
 symbolic_expressions = "5"
 rayon = "1"
 smallvec = { version = "1.6", features = ["union", "const_generics"] }
 
 [dependencies.egg]
-# git = "https://github.com/egraphs-good/egg"
-# rev = "484fd6eec831a4078455ac47ef1172ede1b03dbf" # send sync
-# rev = "116295f5c5afc58b34c732066c2e533bc4ad2ce8" # latest
-# rev = "483876ffc7e38a3d1e55a1f249dcd7900093b99e" # use more precise analysis rebuild
-# rev = "5d12e81a43d8eb6bfa8c29b62ba766143ba54a79" # Simplify unionfind
-# rev = "e5ded849f55c735b88cc7fd8b74e111dca6685b5" # Use new rebuilding
-# rev = "18e62918ed3c7b30b55a61108f19d405d6b4c3c7" # Don't use cell
-# path = "../egg"
-version = "0.8.1"
+version = "0.9.1"
 
 [dependencies.clap]
 version = "3.0.0-beta.2"
