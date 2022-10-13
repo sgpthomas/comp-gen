@@ -23,16 +23,16 @@ def main():
         [],
         [
             {
-	        "lhs": "(Vec (+ ?a ?b) (+ ?c ?d))",
-	        "rhs": "(VecAdd (Vec ?a ?c) (Vec ?b ?d))"
+	        "lhs": "(Vec (+ ?a) (+ ?b))",
+	        "rhs": "(VecAdd (Vec ?a) (Vec ?b))"
             },
 	    {
-	        "lhs": "(Vec (* ?a ?b) (* ?c ?d))",
-	        "rhs": "(VecMul (Vec ?a ?c) (Vec ?b ?d))"
+	        "lhs": "(Vec (* ?a) (* ?b))",
+	        "rhs": "(VecMul (Vec ?a) (Vec ?b))"
             },
             {
-	        "lhs": "(Vec (- ?a ?b) (- ?c ?d))",
-	        "rhs": "(VecMinus (Vec ?a ?c) (Vec ?b ?d))"
+	        "lhs": "(Vec (- ?a) (- ?b))",
+	        "rhs": "(VecMinus (Vec ?a) (Vec ?b))"
             }
         ]
     ]

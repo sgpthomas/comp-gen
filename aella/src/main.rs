@@ -50,7 +50,7 @@ struct CompileOpts {
 }
 
 fn read_path(path: &str) -> Result<PathBuf, String> {
-    Ok(Path::new(path).into())
+    Ok(PathBuf::from(path))
 }
 
 fn synth(synth_opts: SynthOpts) {
@@ -88,11 +88,15 @@ fn compile(opts: CompileOpts) {
             .output_rule_distribution("rule_distribution.csv", |x| x)
             .dry_run()
             .dump_rules()
-            .add_cutoff_phase("pre compile", |cd, ca| cd.abs() < 1.0 && ca.abs() < 0.5)
+            .add_cutoff_phase("pre compile", |cd, ca| {
+                cd.abs() < 1.0 && ca.abs() < 0.5
+            })
             .add_cutoff_phase("compile", |cd, ca| {
                 chmp!(1.0 < cd.abs() < 3.0) && chmp!(0.5 < ca.abs() < 1.5)
             })
-            .add_cutoff_phase("optimization", |cd, ca| 3.0 < cd.abs() && 1.5 < ca.abs());
+            .add_cutoff_phase("optimization", |cd, ca| {
+                3.0 < cd.abs() && 1.5 < ca.abs()
+            });
 
     let (cost, prog, _eg) = compiler.compile(&expr);
     if let Some(cost) = cost {

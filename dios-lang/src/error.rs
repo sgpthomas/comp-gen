@@ -1,19 +1,13 @@
+use thiserror::Error;
+
 pub type Res<T> = Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    Io(std::io::Error),
-    SerdeJson(serde_json::Error),
-}
-
-impl From<std::io::Error> for Error {
-    fn from(e: std::io::Error) -> Self {
-        Error::Io(e)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self {
-        Error::SerdeJson(e)
-    }
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("json parsing error: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("recexpr parse error: {0}")]
+    RecExprError(#[from] egg::RecExprParseError<egg::FromOpError>),
 }

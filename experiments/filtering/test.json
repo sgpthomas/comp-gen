@@ -1,0 +1,57 @@
+{
+  "total_node_limit": 5000000,
+  "total_iter_limit": 20,
+  "timeout": 120,
+  "dry_run": false,
+  "dump_rules": false,
+  "reuse_egraphs": true,
+  "cd_filter": null,
+  "phases": [
+    {
+      "name": "pre-compile",
+      "cd": [
+        -0.1,
+        25.0
+      ],
+      "ca": [
+        null,
+        8.0
+      ],
+      "phase_node_limit": 10000
+    },
+    {
+      "name": "compile",
+      "cd": [
+        0.0,
+        null
+      ],
+      "ca": [
+        50.0,
+        60.0
+      ]
+    },
+    {
+      "name": "opt",
+      "cd": [
+        null,
+        null
+      ],
+      "ca": [
+        null,
+        null
+      ]
+    },
+    {
+      "name": "all",
+      "cd": [
+        null,
+        null
+      ],
+      "ca": [
+        null,
+        null
+      ],
+      "disabled": true
+    }
+  ]
+}

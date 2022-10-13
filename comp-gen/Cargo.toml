@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 egg = "0.9.1"
+env_logger = "0.9.1"
 json = "0.12.4"
+log = "0.4.17"
 plotlib = "0.5.1"
 ruler = { path = "../ruler", default-features = false }
+serde = "1.0.145"
