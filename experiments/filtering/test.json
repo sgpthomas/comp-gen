@@ -3,48 +3,50 @@
   "total_iter_limit": 20,
   "timeout": 120,
   "dry_run": false,
-  "dump_rules": false,
+  "dump_rules": true,
   "reuse_egraphs": true,
   "cd_filter": null,
+  "require_all_vars": false,
   "phases": [
     {
       "name": "pre-compile",
       "cd": [
         -0.1,
-        25.0
+        25
       ],
       "ca": [
         null,
-        8.0
+        8
       ],
-      "phase_node_limit": 10000
+      "node_limit": 100000,
+      "iter_limit": 20
     },
     {
       "name": "compile",
       "cd": [
-        0.0,
+        0,
         null
       ],
       "ca": [
-        50.0,
-        60.0
+        50,
+        60
       ]
     },
     {
       "name": "opt",
       "cd": [
-        null,
-        null
+        0,
+        25
       ],
       "ca": [
         null,
-        null
+        10
       ]
     },
     {
       "name": "all",
       "cd": [
-        null,
+        0,
         null
       ],
       "ca": [

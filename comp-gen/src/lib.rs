@@ -57,6 +57,96 @@ pub struct CostMetric<
     phantom: PhantomData<N>,
 }
 
+#[derive(Debug, Clone)]
+pub struct Stats {
+    phase_name: String,
+    rules: usize,
+    stop_reason: Option<egg::StopReason>,
+    iterations: usize,
+    egraph_total_nodes: usize,
+    egraph_total_classes: usize,
+    egraph_total_size: usize,
+}
+
+impl Stats {
+    fn from_runner<
+        L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
+        N: egg::Analysis<L> + Default + Clone,
+    >(
+        phase: &Phase<L, N>,
+        runner: &egg::Runner<L, N, ()>,
+    ) -> Self {
+        Self {
+            phase_name: phase.name.to_string(),
+            rules: phase.rules.len(),
+            stop_reason: runner.stop_reason.clone(),
+            iterations: runner.iterations.len(),
+            egraph_total_nodes: runner.egraph.total_number_of_nodes(),
+            egraph_total_classes: runner.egraph.number_of_classes(),
+            egraph_total_size: runner.egraph.total_size(),
+        }
+    }
+
+    fn report(&self) {
+        // let search_time: f64 =
+        //     runner.iterations.iter().map(|i| i.search_time).sum();
+        // let apply_time: f64 =
+        //     runner.iterations.iter().map(|i| i.apply_time).sum();
+        // let rebuild_time: f64 =
+        //     runner.iterations.iter().map(|i| i.rebuild_time).sum();
+        // let total_time: f64 =
+        //     runner.iterations.iter().map(|i| i.total_time).sum();
+
+        // let rebuilds: usize =
+        //     runner.iterations.iter().map(|i| i.n_rebuilds).sum();
+
+        // let eg = &runner.egraph;
+        info!("  Runner report");
+        info!("  =============");
+        info!("    Phase: {} with {} rules", self.phase_name, self.rules);
+        info!("    Stop reason: {:?}", self.stop_reason.as_ref().unwrap());
+        info!("    Iterations: {}", self.iterations);
+        info!(
+            "    Egraph size: {} nodes, {} classes, {} memo",
+            self.egraph_total_nodes,
+            self.egraph_total_classes,
+            self.egraph_total_size
+        );
+        // eprintln!(
+        //     "    Rebuilds: {}, {:.2} per iter",
+        //     rebuilds,
+        //     (rebuilds as f64) / (iters as f64)
+        // );
+        // eprintln!("    Total time: {}", total_time);
+        // eprintln!(
+        //     "      Search:  ({:.2}) {}",
+        //     search_time / total_time,
+        //     search_time
+        // );
+        // eprintln!(
+        //     "      Apply:   ({:.2}) {}",
+        //     apply_time / total_time,
+        //     apply_time
+        // );
+        // eprintln!(
+        //     "      Rebuild: ({:.2}) {}",
+        //     rebuild_time / total_time,
+        //     rebuild_time
+        // );
+    }
+}
+
+pub struct EqSatResult<
+    L: egg::Language + FromPattern,
+    N: egg::Analysis<L>,
+    C: egg::CostFunction<L>,
+> {
+    cost: C::Cost,
+    prog: egg::RecExpr<L>,
+    egraph: egg::EGraph<L, N>,
+    stats: Stats,
+}
+
 /// Structure that defines a rule phase.
 pub struct Phase<
     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
@@ -259,10 +349,6 @@ where
         self.dry_run = config.dry_run;
         self.dump_rules = config.dump_rules;
         self.reuse_egraphs = config.reuse_egraphs;
-        if let Some(cutoff) = &config.cd_filter {
-            let c = cutoff.clone();
-            self.with_filter(move |cm| cm.cd > c);
-        }
         for phase_config in config.phases.clone() {
             // if disabled, skip this phase
             if let Some(true) = phase_config.disabled {
@@ -281,6 +367,7 @@ where
 		    // check ca conditions
                     && ca_low.map(|l| cm.ca > l).unwrap_or(true)
                     && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
+		    && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
             });
             phase.node_limit = phase_config.node_limit;
             phase.iter_limit = phase_config.iter_limit;
@@ -295,7 +382,9 @@ where
         phase: &Phase<L, N>,
         egraph: egg::EGraph<L, N>,
         prog: &egg::RecExpr<L>,
-    ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
+    ) -> EqSatResult<L, N, C>
+// (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>)
+    {
         debug!("Making runner");
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
@@ -327,14 +416,21 @@ where
 
         runner = runner.run(&phase.rules);
 
-        eprintln!("Egraph size: {}", runner.egraph.total_size());
-        self.report(&runner);
-
         // extract the best program
         let extractor =
             egg::Extractor::new(&runner.egraph, self.cost_fn.clone());
         let (cost, prog) = extractor.find_best(runner.roots[0]);
-        (cost, prog, runner.egraph)
+
+        eprintln!("Egraph size: {}", runner.egraph.total_size());
+        let stats = Stats::from_runner(&phase, &runner);
+        stats.report();
+
+        EqSatResult {
+            cost,
+            prog,
+            egraph: runner.egraph,
+            stats,
+        }
     }
 
     pub fn compile(
@@ -349,6 +445,7 @@ where
         let mut cost_fn = self.cost_fn.clone();
         let mut prog = prog.clone();
         let mut cost = None;
+        let mut stats: Vec<Stats> = vec![];
         for phase in &self.phases {
             let msg = format!("Starting Phase {}", &phase.name);
             info!("{}", "=".repeat(msg.len()));
@@ -373,29 +470,36 @@ where
                 continue;
             }
 
-            let (new_cost, new_prog, new_egraph) =
-                self.equality_saturate(&phase, egraph, &prog);
+            // let (new_cost, new_prog, new_egraph) =
+            //     self.equality_saturate(&phase, egraph, &prog);
+            let eq_sat = self.equality_saturate(&phase, egraph, &prog);
+            stats.push(eq_sat.stats.clone());
 
             if let Some(old_cost) = cost {
                 info!(
                     "Cost: {:?} (old: {:?})",
-                    new_cost.clone(),
+                    eq_sat.cost.clone(),
                     // (self.subtract)(old_cost, new_cost.clone())
                     old_cost
                 );
             } else {
-                info!("Cost: {:?}", new_cost);
+                info!("Cost: {:?}", eq_sat.cost);
             }
 
             // update state for next iteration
-            (cost, prog) = (Some(new_cost), new_prog);
+            (cost, prog) = (Some(eq_sat.cost), eq_sat.prog);
 
             // update egraph
             if self.reuse_egraphs {
-                egraph = new_egraph;
+                egraph = eq_sat.egraph;
             } else {
                 egraph = self.new_egraph();
             }
+        }
+
+        // report the total stats
+        for s in stats {
+            s.report()
         }
 
         (cost, prog, egraph)
@@ -408,57 +512,6 @@ where
             egraph.add(node.clone());
         }
         egraph
-    }
-
-    fn report(&self, runner: &egg::Runner<L, N, ()>) {
-        let search_time: f64 =
-            runner.iterations.iter().map(|i| i.search_time).sum();
-        let apply_time: f64 =
-            runner.iterations.iter().map(|i| i.apply_time).sum();
-        let rebuild_time: f64 =
-            runner.iterations.iter().map(|i| i.rebuild_time).sum();
-        let total_time: f64 =
-            runner.iterations.iter().map(|i| i.total_time).sum();
-
-        let iters = runner.iterations.len();
-        let rebuilds: usize =
-            runner.iterations.iter().map(|i| i.n_rebuilds).sum();
-
-        let eg = &runner.egraph;
-        eprintln!("  Runner report");
-        eprintln!("  =============");
-        eprintln!(
-            "    Stop reason: {:?}",
-            runner.stop_reason.as_ref().unwrap()
-        );
-        eprintln!("    Iterations: {}", iters);
-        eprintln!(
-            "    Egraph size: {} nodes, {} classes, {} memo",
-            eg.total_number_of_nodes(),
-            eg.number_of_classes(),
-            eg.total_size()
-        );
-        eprintln!(
-            "    Rebuilds: {}, {:.2} per iter",
-            rebuilds,
-            (rebuilds as f64) / (iters as f64)
-        );
-        eprintln!("    Total time: {}", total_time);
-        eprintln!(
-            "      Search:  ({:.2}) {}",
-            search_time / total_time,
-            search_time
-        );
-        eprintln!(
-            "      Apply:   ({:.2}) {}",
-            apply_time / total_time,
-            apply_time
-        );
-        eprintln!(
-            "      Rebuild: ({:.2}) {}",
-            rebuild_time / total_time,
-            rebuild_time
-        );
     }
 
     fn generate_rule_histogram<F>(&self, path: &PathBuf, f: F)

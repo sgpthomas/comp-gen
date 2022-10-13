@@ -19,22 +19,24 @@ Compare this against, handwritten Diospyros rules
 
 ** Emacs Play zone
 
+Reasonable config
 #+begin_src json :file filtering/test.json :results file silent
 {
     "total_node_limit": 5000000,
     "total_iter_limit": 20,
     "timeout": 120,
     "dry_run": false,
-    "dump_rules": false,
+    "dump_rules": true,
     "reuse_egraphs": true,
     "cd_filter": null, 
+    "require_all_vars": false,
     "phases": [
 	{
 	    "name": "pre-compile",
 	    "cd": [-0.1, 25.0],
 	    "ca": [null, 8.0],
-	    "node_limit": 10000,
-	    "iter_limit": 10
+	    "node_limit": 100000,
+	    "iter_limit": 20
 	},
 	{
 	    "name": "compile",
@@ -43,14 +45,47 @@ Compare this against, handwritten Diospyros rules
 	},
 	{
 	    "name": "opt",
-	    "cd": [null, null],
-	    "ca": [null, null]
+	    "cd": [0.0, 25.0],
+	    "ca": [null, 10.0]
 	},
 	{
 	    "name": "all",
-	    "cd": [null, null],
+	    "cd": [0.0, null],
 	    "ca": [null, null],
 	    "disabled": true
+	}
+    ]
+}
+#+end_src
+
+Wack config (that will probably work)
+#+begin_src json :file filtering/test.json :results file silent
+{
+    "total_node_limit": 5000000,
+    "total_iter_limit": 20,
+    "timeout": 120,
+    "dry_run": false,
+    "dump_rules": false,
+    "reuse_egraphs": true,
+    "cd_filter": 10.0,
+    "require_all_vars": true,
+    "phases": [
+	{
+	    "name": "pre-compile",
+	    "cd": [null, null],
+	    "ca": [null, 10.0],
+	    "node_limit": 100000,
+	    "iter_limit": 10
+	},
+	{
+	    "name": "compile",
+	    "cd": [null, null],
+	    "ca": [10.0, 70.0]
+	},
+	{
+	    "name": "opt",
+	    "cd": [null, null],
+	    "ca": [70.0, null]
 	}
     ]
 }
@@ -60,15 +95,16 @@ Compare this against, handwritten Diospyros rules
 cd dios-lang
     # systemd-run -E RUST_LOG='debug,egg=info' --scope --user -p MemoryMax=4G \
 
-RUST_LOG=debug,egg=info cargo run --release -- compile q-prod \
+# rsync -vP  \ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/rule-generation/data/10-10-2108/58.json 
+
+RUST_LOG=debug,egg=off cargo run --release -- compile q-prod \
       --dios-example-bin ~/Research/diospyros/dios-example-gen \
       --dios-params ~/Research/diospyros/q-prod-params \
       --vector-width 2 \
-      --rules ~/Research/diospyros/vec/test5.json \
+      --rules ../experiments/58.json \
       --config ../experiments/filtering/test.json
 
-
-      # --rules ../experiments/rule-generation/data/10-10-2108/58.json \
+      # --pre-desugared --rules ~/Research/diospyros/t2.json \
 #+end_src
 
 * Aella (simple IMP-like language) experiments

@@ -12,6 +12,7 @@ use crate::desugar::Desugar;
 use argh::FromArgs;
 use comp_gen::ruler;
 pub use error::Res;
+use log::{debug, info};
 use std::{fs, path::PathBuf, process};
 
 /// Generate and run an automatically generated compiler
@@ -70,6 +71,10 @@ struct CompileOpts {
     /// ruleset
     #[argh(option, from_str_fn(read_path))]
     rules: PathBuf,
+
+    /// pre-desugared
+    #[argh(switch)]
+    pre_desugared: bool,
 
     /// config
     #[argh(option, from_str_fn(read_config))]
@@ -132,19 +137,38 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // finally parse into a rec expr
     let prog: egg::RecExpr<lang::VecLang> = concats?.parse()?;
 
-    log::debug!("input: {}", prog.pretty(80));
+    // debug!("input: {}", prog.pretty(80));
+    let prog: egg::RecExpr<lang::VecLang> = "(Vec
+              (+ (* (Get aq 0) (Get bq 1)) (* (Get bq 3) (Get aq 2)))
+              (- (* (Get bq 2) (neg (Get aq 2))) (* (Get bq 0) (Get aq 0))))"
+        .parse()?;
 
     let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
         comp_gen::Compiler::with_cost_fn(cost::VecCostFn::default());
 
     // add rules to compiler
-    compiler
-        .with_init_node(lang::VecLang::Const(lang::Value::Int(0)))
-        .add_processed_external_rules(&opts.rules, |p| {
+    compiler.with_init_node(lang::VecLang::Const(lang::Value::Int(0)));
+
+    // add predesugared rules
+    if opts.pre_desugared {
+        compiler.add_external_rules(&opts.rules);
+    } else {
+        compiler.add_processed_external_rules(&opts.rules, |p| {
             p.desugar(opts.vector_width)
-        })
-        // .with_filter(|cm| cm.cd > 0.0)
-        // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
+        });
+    }
+
+    compiler.add_rules(vec![
+	egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
+	egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))" ),
+	egg::rewrite!("blah"; "0" => "(+ 0 0)"),
+        egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
+	egg::rewrite!("-+neg"; "(- a b)" => "(+ a (neg b))"),
+        egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
+        egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
+    ].into_iter())
+    // .with_filter(|cm| cm.cd > 0.0)
+    // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
         .output_rule_distribution("rule_distribution.csv", |x| x);
 
     // load configuration
@@ -152,12 +176,12 @@ fn compile(opts: CompileOpts) -> Res<()> {
         compiler.with_config(config);
     }
 
-    let (cost, prog, _eg) = compiler.compile(&prog);
+    let (cost, prog, eg) = compiler.compile(&prog);
     if let Some(cost) = cost {
-        log::info!("cost: {cost}");
+        info!("cost: {cost}");
     }
-    // eg.dot().to_png("test.png").expect("failed to create image");
-    log::info!("{}", prog.pretty(80));
+    eg.dot().to_png("test.png").expect("failed to create image");
+    info!("{}", prog.pretty(80));
 
     // cleanup dir
     fs::remove_dir_all(output_dir)?;

@@ -10,6 +10,7 @@ pub struct CompilerConfiguration {
     pub dump_rules: bool,
     pub reuse_egraphs: bool,
     pub cd_filter: Option<f64>,
+    pub require_all_vars: bool,
     pub phases: Vec<PhaseConfiguration>,
 }
 
