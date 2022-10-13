@@ -58,15 +58,14 @@ pub struct CostMetric<
 }
 
 /// Structure that defines a rule phase.
-struct Phase<
+pub struct Phase<
     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
     N: egg::Analysis<L> + Default + Clone,
-    // C: egg::CostFunction<L> + Clone,
 > {
     name: String,
-    // filter: Box<dyn Fn(CostMetric<L, N, C>) -> bool>,
     rules: Vec<egg::Rewrite<L, N>>,
     node_limit: Option<usize>,
+    iter_limit: Option<usize>,
 }
 
 pub struct Compiler<
@@ -199,7 +198,7 @@ where
     /// Define a new phase named `name` using `filter`.
     /// Be careful to call this function after you have added all the rules
     /// to the compiler.
-    pub fn add_phase<F: 'static, S>(&mut self, name: S, filter: F) -> &mut Self
+    pub fn new_phase<F, S>(&mut self, name: S, filter: F) -> Phase<L, N>
     where
         F: Fn(CostMetric<L, N, C>) -> bool,
         S: ToString,
@@ -213,13 +212,12 @@ where
             .collect::<Vec<_>>();
 
         // construct phase
-        self.phases.push(Phase {
+        Phase {
             name: name.to_string(),
             rules: phase_rules,
             node_limit: None,
-        });
-
-        self
+            iter_limit: None,
+        }
     }
 
     pub fn dry_run(&mut self) -> &mut Self {
@@ -271,7 +269,7 @@ where
                 continue;
             }
 
-            self.add_phase(phase_config.name, move |cm| {
+            let mut phase = self.new_phase(phase_config.name, move |cm| {
                 let [cd_low, cd_high] = phase_config.cd;
                 let [ca_low, ca_high] = phase_config.ca;
 
@@ -284,49 +282,31 @@ where
                     && ca_low.map(|l| cm.ca > l).unwrap_or(true)
                     && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
             });
+            phase.node_limit = phase_config.node_limit;
+            phase.iter_limit = phase_config.iter_limit;
+
+            self.phases.push(phase);
         }
         self
     }
 
-    // fn split_rules(&self) -> Vec<(&str, Vec<egg::Rewrite<L, N>>)> {
-    //     // first filter all the rules with self.filter
-    //     let mut cost_fn = self.cost_fn.clone();
-    //     let mut rules = self.rules.clone();
-    //     if let Some(f) = &self.filter {
-    //         rules.retain(|r| f(cost_fn.all(r)));
-    //     }
-
-    //     // then split into phases
-    //     if self.phases.is_empty() {
-    //         vec![("all rules", self.rules.clone())]
-    //     } else {
-    //         self.phases
-    //             .iter()
-    //             .map(|phase| {
-    //                 let rules = rules
-    //                     .iter()
-    //                     .filter(|r| (phase.filter)(cost_fn.all(r)))
-    //                     .cloned()
-    //                     .collect::<Vec<_>>();
-    //                 (phase.name.as_str(), rules)
-    //             })
-    //             .collect::<Vec<_>>()
-    //     }
-    // }
-
     fn equality_saturate(
         &self,
-        rules: &[egg::Rewrite<L, N>],
+        phase: &Phase<L, N>,
         egraph: egg::EGraph<L, N>,
         prog: &egg::RecExpr<L>,
-        node_limit: usize,
     ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
         debug!("Making runner");
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
                 .with_egraph(egraph)
                 .with_expr(prog)
-                .with_node_limit(node_limit)
+                .with_node_limit(
+                    phase.node_limit.unwrap_or(self.total_node_limit),
+                )
+                .with_iter_limit(
+                    phase.iter_limit.unwrap_or(self.total_node_limit),
+                )
                 .with_time_limit(std::time::Duration::from_secs(self.timeout));
 
         // TODO make scheduler an option
@@ -345,7 +325,7 @@ where
         //     );
         // }
 
-        runner = runner.run(rules);
+        runner = runner.run(&phase.rules);
 
         eprintln!("Egraph size: {}", runner.egraph.total_size());
         self.report(&runner);
@@ -393,9 +373,8 @@ where
                 continue;
             }
 
-            let node_limit = phase.node_limit.unwrap_or(self.total_node_limit);
             let (new_cost, new_prog, new_egraph) =
-                self.equality_saturate(&phase.rules, egraph, &prog, node_limit);
+                self.equality_saturate(&phase, egraph, &prog);
 
             if let Some(old_cost) = cost {
                 info!(

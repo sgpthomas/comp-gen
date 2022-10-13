@@ -16,7 +16,8 @@ pub struct CompilerConfiguration {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PhaseConfiguration {
     pub name: String,
-    pub phase_node_limit: Option<usize>,
+    pub node_limit: Option<usize>,
+    pub iter_limit: Option<usize>,
     pub cd: [Option<f64>; 2],
     pub ca: [Option<f64>; 2],
     pub disabled: Option<bool>,

@@ -33,7 +33,8 @@ Compare this against, handwritten Diospyros rules
 	    "name": "pre-compile",
 	    "cd": [-0.1, 25.0],
 	    "ca": [null, 8.0],
-	    "phase_node_limit": 10000
+	    "node_limit": 10000,
+	    "iter_limit": 10
 	},
 	{
 	    "name": "compile",
@@ -57,8 +58,9 @@ Compare this against, handwritten Diospyros rules
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent
 cd dios-lang
-systemd-run -E RUST_LOG='debug,egg=info' --scope --user -p MemoryMax=4G \
-	    cargo run --release -- compile q-prod \
+    # systemd-run -E RUST_LOG='debug,egg=info' --scope --user -p MemoryMax=4G \
+
+RUST_LOG=debug,egg=info cargo run --release -- compile q-prod \
       --dios-example-bin ~/Research/diospyros/dios-example-gen \
       --dios-params ~/Research/diospyros/q-prod-params \
       --vector-width 2 \
