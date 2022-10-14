@@ -2,7 +2,7 @@ use anyhow::Context;
 use comp_gen::ruler;
 use egg::{EGraph, Id, Language};
 use itertools::Itertools;
-use log::debug;
+use log::{debug, warn};
 use num::integer::Roots;
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -39,11 +39,10 @@ fn integer_division(a: i32, b: i32) -> Option<i32> {
         None
     } else if a == 0 {
         Some(0)
-    } else if a / b != 0 {
-        Some(a / b)
     } else {
-        None
+        Some(a / b)
     }
+    // if a / b != 0
 }
 
 impl lang::Value {
@@ -248,8 +247,6 @@ impl lang::VecLang {
         // let n = 10;
         let mut env = HashMap::default();
 
-        debug!("Checking {lhs} => {rhs}");
-
         if lhs.vars().sort() != rhs.vars().sort() {
             eprintln!(
                 "lhs vars != rhs vars: {:?} != {:?}",
@@ -300,29 +297,30 @@ impl lang::VecLang {
         let lvec = Self::eval_pattern(lhs, &env, length);
         let rvec = Self::eval_pattern(rhs, &env, length);
 
-        let debug = false;
-        if lvec != rvec || debug {
-            debug!(
-                "  env: {:?}",
-                env.into_iter()
-                    .map(|(v, env)| (
-                        v,
-                        env.into_iter()
-                            .flat_map(|x| match x {
-                                Some(lang::Value::Vec(v)) =>
-                                    Some(lang::Value::Vec(v)),
-                                _ => None,
-                            })
-                            .collect::<Vec<_>>()
-                    ))
-                    .collect::<Vec<_>>()
-            );
-            debug!("  lhs: {lhs}");
-            debug!("  rhs: {rhs}");
-            debug!("  lvec: {:?}", lvec.iter().flatten().collect_vec(),);
-            debug!("  rvec: {:?}", rvec.iter().flatten().collect_vec());
-            debug!("  eq: {}", vecs_eq(&lvec, &rvec));
-        }
+        debug!("Checking {lhs} => {rhs}: {}", vecs_eq(&lvec, &rvec));
+        // let debug = false;
+        // if lvec != rvec || debug {
+        //     debug!(
+        //         "  env: {:?}",
+        //         env.into_iter()
+        //             .map(|(v, env)| (
+        //                 v,
+        //                 env.into_iter()
+        //                     .flat_map(|x| match x {
+        //                         Some(lang::Value::Vec(v)) =>
+        //                             Some(lang::Value::Vec(v)),
+        //                         _ => None,
+        //                     })
+        //                     .collect::<Vec<_>>()
+        //             ))
+        //             .collect::<Vec<_>>()
+        //     );
+        //     debug!("  lhs: {lhs}");
+        //     debug!("  rhs: {rhs}");
+        //     debug!("  lvec: {:?}", lvec.iter().flatten().collect_vec(),);
+        //     debug!("  rvec: {:?}", rvec.iter().flatten().collect_vec());
+        //     debug!("  eq: {}", vecs_eq(&lvec, &rvec));
+        // }
 
         vecs_eq(&lvec, &rvec)
     }
@@ -343,7 +341,7 @@ impl lang::VecLang {
         // if we can translate egg to z3 for both lhs, and rhs, then
         // run the z3 solver. otherwise fallback to fuzz_equals
         if let (Some(lexpr), Some(rexpr)) = (&left, &right) {
-            log::debug!("z3 check {} != {}", lexpr, rexpr);
+            debug!("z3 check {} != {}", lexpr, rexpr);
 
             // check to see if lexpr is NOT equal to rexpr.
             // if we can't find a counter example to this
@@ -355,6 +353,8 @@ impl lang::VecLang {
                 z3::SatResult::Unsat => true,
                 z3::SatResult::Unknown | z3::SatResult::Sat => false,
             };
+
+            debug!("z3 result: {smt}");
 
             // if smt != fuzz {
             //     log::info!("{lhs} <=> {rhs} Found ya!!!");
@@ -379,6 +379,7 @@ impl lang::VecLang {
 
             smt
         } else {
+            warn!("Couldn't translate {lhs} or {rhs} to smt");
             Self::fuzz_equals(synth, lhs, rhs, false)
         }
     }
@@ -653,6 +654,8 @@ impl SynthLanguage for lang::VecLang {
             .len()
         };
 
+        debug!("cvec size: {cvec_size}");
+
         // read and add seed rules from config
         for rule in &synth.lang_config.seed_rules {
             let rule: Equality<lang::VecLang> = Equality::new(
@@ -871,29 +874,14 @@ impl SynthLanguage for lang::VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
-        // debug_rule(
-        //     synth,
-        //     "(VecDiv (VecMAC ?f ?e ?d) (VecMAC ?c ?b ?a))",
-        //     "(VecDiv ?d ?f)",
-        //     1,
-        //     &[
-        //         ("?a", Value::Int(51)),
-        //         ("?b", Value::Int(-15)),
-        //         ("?c", Value::Int(88)),
-        //         ("?d", Value::Int(22)),
-        //         ("?e", Value::Int(79)),
-        //         ("?f", Value::Int(-81)),
-        //     ],
-        // );
-        // panic!();
-
         if synth.lang_config.always_smt {
             Self::smt_equals(synth, lhs, rhs)
         } else {
             let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
             // if fuzz fails and `smt_fallback` is enabled, run
             // `smt_equals`.
-            if synth.lang_config.smt_fallback && !fuzz {
+            if synth.lang_config.smt_fallback && fuzz {
+                debug!("falling back to smt");
                 Self::smt_equals(synth, lhs, rhs)
             } else {
                 fuzz
@@ -1036,6 +1024,13 @@ fn egg_to_z3<'a>(
     // some element i in RecExpr only ever refers to elements j < i.
     // By the time we need them, we will have already translated them.
 
+    let sqrt_fun = z3::FuncDecl::new(
+        &ctx,
+        "f",
+        &[&z3::Sort::real(&ctx)],
+        &z3::Sort::int(&ctx),
+    );
+
     let mut buf: Vec<z3::ast::Int> = vec![];
 
     for node in expr.as_ref().iter() {
@@ -1069,6 +1064,26 @@ fn egg_to_z3<'a>(
             lang::VecLang::Neg([x]) => {
                 let x_int = &buf[usize::from(*x)];
                 buf.push(-x_int);
+            }
+            lang::VecLang::Sgn([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                let zero = z3::ast::Int::from_i64(&ctx, 0);
+                let one = z3::ast::Int::from_i64(&ctx, 1);
+                let m_one = z3::ast::Int::from_i64(&ctx, -1);
+
+                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
+                let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
+
+                buf.push(sgn);
+            }
+            lang::VecLang::Sqrt([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(
+                    sqrt_fun
+                        .apply(&[x_int])
+                        .as_int()
+                        .expect("z3 Sqrt didn't return an int."),
+                );
             }
 
             // an attempt to support vector operators.
@@ -1104,6 +1119,26 @@ fn egg_to_z3<'a>(
                 let y_int = &buf[usize::from(*y)];
                 buf.push((x_int * y_int) + acc_int);
             }
+            lang::VecLang::VecSgn([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                let zero = z3::ast::Int::from_i64(&ctx, 0);
+                let one = z3::ast::Int::from_i64(&ctx, 1);
+                let m_one = z3::ast::Int::from_i64(&ctx, -1);
+
+                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
+                let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
+
+                buf.push(sgn);
+            }
+            lang::VecLang::VecSqrt([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(
+                    sqrt_fun
+                        .apply(&[x_int])
+                        .as_int()
+                        .expect("z3 Sqrt didn't return an int."),
+                );
+            }
 
             // unsupported operations
             // return early
@@ -1112,15 +1147,11 @@ fn egg_to_z3<'a>(
             | lang::VecLang::And(_)
             | lang::VecLang::Ite(_)
             | lang::VecLang::Lt(_)
-            | lang::VecLang::Sgn(_)
-            | lang::VecLang::Sqrt(_)
             | lang::VecLang::List(_)
             | lang::VecLang::Vec(_)
             | lang::VecLang::Get(_)
             | lang::VecLang::Concat(_)
-            | lang::VecLang::VecMulSgn(_)
-            | lang::VecLang::VecSqrt(_)
-            | lang::VecLang::VecSgn(_) => return None,
+            | lang::VecLang::VecMulSgn(_) => return None,
         }
     }
     // return the last element

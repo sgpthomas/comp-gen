@@ -6,7 +6,7 @@ It uses equality saturation in two novel ways to scale the rule synthesis:
 !*/
 use egg::*;
 use itertools::Itertools;
-use log::info;
+use log::{debug, info, warn};
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use serde::{Deserialize, Serialize};
@@ -770,7 +770,6 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         println!("Learned {} rules in {:?}", num_rules, time);
         Report {
             params: self.params,
-            // lang_config: self.lang_config,
             time,
             num_rules,
             eqs,
@@ -925,12 +924,6 @@ impl<L: SynthLanguage> Signature<L> {
     }
 }
 
-// unsafe fn very_bad_function<T>(reference: &T) -> &mut T {
-//     let const_ptr = reference as *const T;
-//     let mut_ptr = const_ptr as *mut T;
-//     &mut *mut_ptr
-// }
-
 impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
     type Data = Signature<L>;
 
@@ -952,13 +945,10 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
                     let (_, prog1) = extractor.find_best(id1);
                     let (_, prog2) = extractor.find_best(id2);
 
-                    // let mut_egraph = unsafe { very_bad_function(&egraph) };
-                    // mut_egraph.explain_equivalence(&prog1, &prog2);
-
-                    info!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-                    info!("cvec1: {:?}", egraph[id1].data.cvec);
-                    info!("cvec2: {:?}", egraph[id2].data.cvec);
-                    info!("just: {justification:?}");
+                    warn!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+                    warn!("cvec1: {:?}", egraph[id1].data.cvec);
+                    warn!("cvec2: {:?}", egraph[id2].data.cvec);
+                    warn!("just: {justification:?}");
                 }
                 _ => (),
             }

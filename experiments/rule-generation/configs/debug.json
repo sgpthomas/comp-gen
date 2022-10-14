@@ -2,11 +2,15 @@
     "constants": [],
     "seed_rules": [],
     "unops": [
-	"sgn"
+	"sgn",
+	"sqrt",
+	"neg"
     ],
     "binops": [
 	"+",
-	"-"
+	"-",
+	"/",
+	"*"
     ],
     "use_scalar": true,
     "use_vector": true,
@@ -14,5 +18,5 @@
     "variable_duplication": false,
     "vector_size": 1,
     "always_smt": false,
-    "smt_fallback": false
+    "smt_fallback": true
 }
