@@ -104,6 +104,7 @@ blah2,average,4.002
 blah,average,1.0014999999999998
 vec-neg,average,52.55200000000001
 -+neg,average,3.002
+-+neg-rev,average,3.002
 vec-neg0-l,average,51.55200000000001
 vec-neg0-r,average,51.55200000000001
 ruler_0_r,differential,0
@@ -211,5 +212,6 @@ blah2,differential,0
 blah,differential,-2.001
 vec-neg,differential,102.9
 -+neg,differential,-2
+-+neg-rev,differential,2
 vec-neg0-l,differential,100.9
 vec-neg0-r,differential,100.9

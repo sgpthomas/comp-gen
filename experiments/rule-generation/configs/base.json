@@ -2,7 +2,9 @@
     "constants": [],
     "seed_rules": [],
     "unops": [
-	"neg"
+	"neg",
+	"sqrt",
+	"sgn"
     ],
     "binops": [
 	"+",

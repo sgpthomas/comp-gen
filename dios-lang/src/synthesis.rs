@@ -1,3 +1,4 @@
+use anyhow::Context;
 use comp_gen::ruler;
 use egg::{EGraph, Id, Language};
 use itertools::Itertools;
@@ -16,7 +17,7 @@ use std::hash::BuildHasherDefault;
 use std::str::FromStr;
 use z3::ast::Ast;
 
-use crate::{error::Error, lang, Res};
+use crate::{lang, Res};
 
 fn split_into_halves(n: usize) -> (usize, usize) {
     if n % 2 == 0 {
@@ -989,14 +990,15 @@ pub fn run(
     params: ruler::SynthParams,
     opts: crate::SynthOpts,
 ) -> Res<ruler::Report<lang::VecLang>> {
-    // parse the configuration
-    let dios_config: DiosConfig = opts
-        .config
-        .map(|config| {
-            serde_json::from_reader(File::open(config)?)
-                .map_err(|err| Error::from(err))
-        })
-        .unwrap_or_else(|| Ok(DiosConfig::default()))?;
+    let dios_config = if let Some(config) = opts.config {
+        let config_file =
+            File::open(config.clone()).context("open config path")?;
+        let parsed: DiosConfig = serde_json::from_reader(config_file)
+            .context(format!("parse {config:?} as dios_config"))?;
+        parsed
+    } else {
+        DiosConfig::default()
+    };
 
     log::info!("running with config: {dios_config:#?}");
     log::info!("running with synth config {params:#?}");

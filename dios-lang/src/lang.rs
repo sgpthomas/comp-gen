@@ -114,6 +114,8 @@ pub enum VecAst {
     Ite(Box<VecAst>, Box<VecAst>, Box<VecAst>),
     Lt(Box<VecAst>, Box<VecAst>),
 
+    Sqrt(Box<VecAst>),
+    Sgn(Box<VecAst>),
     Neg(Box<VecAst>),
 
     Vec(Vec<VecAst>),
@@ -137,7 +139,7 @@ pub enum VecAst {
 
 impl VecAst {
     fn to_recexpr(&self, expr: &mut egg::RecExpr<VecLang>) -> Id {
-        match &self {
+        match self {
             VecAst::Add(left, right) => {
                 let left_id = left.to_recexpr(expr);
                 let right_id = right.to_recexpr(expr);
@@ -194,6 +196,14 @@ impl VecAst {
                 expr.add(VecLang::VecDiv([left_id, right_id]))
             }
             VecAst::Ite(_, _, _) => todo!(),
+            VecAst::Sqrt(inner) => {
+                let id = inner.to_recexpr(expr);
+                expr.add(VecLang::Sqrt([id]))
+            }
+            VecAst::Sgn(inner) => {
+                let id = inner.to_recexpr(expr);
+                expr.add(VecLang::Sgn([id]))
+            }
             VecAst::Neg(inner) => {
                 let id = inner.to_recexpr(expr);
                 expr.add(VecLang::Neg([id]))
@@ -267,8 +277,12 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
                 Box::new(subtree(&expr, *left).into()),
                 Box::new(subtree(&expr, *right).into()),
             ),
-            VecLang::Sgn(_) => todo!(),
-            VecLang::Sqrt(_) => todo!(),
+            VecLang::Sgn([inner]) => {
+                VecAst::Sgn(Box::new(subtree(&expr, *inner).into()))
+            }
+            VecLang::Sqrt([inner]) => {
+                VecAst::Sqrt(Box::new(subtree(&expr, *inner).into()))
+            }
             VecLang::Neg([inner]) => {
                 VecAst::Neg(Box::new(subtree(&expr, *inner).into()))
             }
@@ -301,8 +315,12 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
             VecLang::VecNeg([inner]) => {
                 VecAst::VecNeg(Box::new(subtree(&expr, *inner).into()))
             }
-            VecLang::VecSqrt(_) => todo!(),
-            VecLang::VecSgn(_) => todo!(),
+            VecLang::VecSqrt([inner]) => {
+                VecAst::VecSqrt(Box::new(subtree(&expr, *inner).into()))
+            }
+            VecLang::VecSgn([inner]) => {
+                VecAst::VecSgn(Box::new(subtree(&expr, *inner).into()))
+            }
             VecLang::VecMAC([a, b, c]) => VecAst::VecMAC(
                 Box::new(subtree(&expr, *a).into()),
                 Box::new(subtree(&expr, *b).into()),

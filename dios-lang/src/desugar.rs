@@ -74,6 +74,12 @@ impl Desugar for lang::VecAst {
                 Box::new(left.desugar(n_lanes)),
                 Box::new(right.desugar(n_lanes)),
             ),
+            lang::VecAst::Sqrt(inner) => {
+                lang::VecAst::Sqrt(Box::new(inner.desugar(n_lanes)))
+            }
+            lang::VecAst::Sgn(inner) => {
+                lang::VecAst::Sgn(Box::new(inner.desugar(n_lanes)))
+            }
             lang::VecAst::Neg(inner) => {
                 lang::VecAst::Neg(Box::new(inner.desugar(n_lanes)))
             }
@@ -154,6 +160,12 @@ impl AlphaRenamable for lang::VecAst {
                 Box::new(x.rename(suffix)),
                 Box::new(y.rename(suffix)),
             ),
+            lang::VecAst::Sqrt(x) => {
+                lang::VecAst::Sqrt(Box::new(x.rename(suffix)))
+            }
+            lang::VecAst::Sgn(x) => {
+                lang::VecAst::Sgn(Box::new(x.rename(suffix)))
+            }
             lang::VecAst::Neg(x) => {
                 lang::VecAst::Neg(Box::new(x.rename(suffix)))
             }

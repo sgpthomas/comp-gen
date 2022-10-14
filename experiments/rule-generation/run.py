@@ -222,7 +222,8 @@ def watch():
     assert(data.exists())
 
     config = json.load(open(data / "status.json"))
-    while len(config["remaining"]) != 0:
+    while len(config["remaining"]) != 0 \
+          or any([m["experiment"] is not None for m in config["machines"]]):
         print("Trying check...")
         check()
         print("Trying run...")

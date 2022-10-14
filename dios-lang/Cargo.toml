@@ -22,3 +22,4 @@ rustc-hash = "1"
 z3 = { version = "0.11.2", features = ["static-link-z3"] }
 lexpr = "0.2.6"
 thiserror = "1.0.37"
+anyhow = "1.0.65"

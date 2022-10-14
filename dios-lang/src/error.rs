@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-pub type Res<T> = Result<T, Error>;
+pub type Res<T> = anyhow::Result<T>;
 
 #[derive(Error, Debug)]
 pub enum Error {

@@ -17,22 +17,31 @@ def main():
         [
             {"kind": "int", "value": 0},
 	    {"kind": "int", "value": 1}
+        ],
+        [
+            {"kind": "int", "value": -1},
+            {"kind": "int", "value": 0},
+	    {"kind": "int", "value": 1}
         ]
     ]
     seed_rules = [
         [],
         [
             {
-	        "lhs": "(Vec (+ ?a) (+ ?b))",
+	        "lhs": "(Vec (+ ?a ?b))",
 	        "rhs": "(VecAdd (Vec ?a) (Vec ?b))"
             },
 	    {
-	        "lhs": "(Vec (* ?a) (* ?b))",
+	        "lhs": "(Vec (* ?a ?b))",
 	        "rhs": "(VecMul (Vec ?a) (Vec ?b))"
             },
             {
-	        "lhs": "(Vec (- ?a) (- ?b))",
+	        "lhs": "(Vec (- ?a ?b))",
 	        "rhs": "(VecMinus (Vec ?a) (Vec ?b))"
+            },
+            {
+	        "lhs": "(Vec (/ ?a ?b))",
+	        "rhs": "(VecDiv (Vec ?a) (Vec ?b))"
             }
         ]
     ]

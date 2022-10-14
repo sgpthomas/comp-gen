@@ -20,11 +20,11 @@ Compare this against, handwritten Diospyros rules
 ** Emacs Play zone
 
 Reasonable config
-#+begin_src json :file filtering/test.json :results file silent
+#+begin_src json :file (ec2/tramp "west" "test.json") :results file silent
 {
-    "total_node_limit": 5000000,
+    "total_node_limit": 50000000,
     "total_iter_limit": 20,
-    "timeout": 120,
+    "timeout": 240,
     "dry_run": false,
     "dump_rules": true,
     "reuse_egraphs": true,
@@ -33,10 +33,12 @@ Reasonable config
     "phases": [
 	{
 	    "name": "pre-compile",
-	    "cd": [-0.1, 25.0],
+	    "cd": [null, 25.0],
 	    "ca": [null, 8.0],
-	    "node_limit": 100000,
-	    "iter_limit": 20
+	    "cd_": [null, null],
+	    "ca_": [null, null],
+	    "node_limit": 1000000,
+	    "iter_limit_": 20
 	},
 	{
 	    "name": "compile",
@@ -45,12 +47,13 @@ Reasonable config
 	},
 	{
 	    "name": "opt",
-	    "cd": [0.0, 25.0],
-	    "ca": [null, 10.0]
+	    "cd": [null, null],
+	    "ca": [null, null],
+	    "fresh_egraph": true
 	},
 	{
 	    "name": "all",
-	    "cd": [0.0, null],
+	    "cd": [null, null],
 	    "ca": [null, null],
 	    "disabled": true
 	}
@@ -91,17 +94,39 @@ Wack config (that will probably work)
 }
 #+end_src
 
+Setup a remote machine
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent
+rsync -vp dios-lang/target/release/dios-lang \
+      ~/Research/diospyros/*-params \
+      experiments/rule-generation/data/10-10-2108/58.json \
+      ubuntu@$IP:
+
+      # experiments/rule-generation/configs/config_c2_sr0_usFalse_sfFalse.json \
+      # experiments/rule-generation/synth_configs/abs_timeout_60.json \
+#+end_src
+
+#+begin_src async-shell :dir (ec2/tramp "west") :results silent
+# mat-mul, q-prod, 2d-conv, *qr-decomp*
+RUST_LOG='debug,egg=info' time ./dios-lang compile 2d-conv \
+	    --dios-example-bin diospyros/dios-example-gen \
+	    --dios-params 2d-conv-params \
+	    --vector-width 2 \
+	    --rules 58.json \
+	    --config test.json
+#+end_src
+
 #+begin_src async-shell :dir (magit-toplevel) :results silent
 cd dios-lang
-    # systemd-run -E RUST_LOG='debug,egg=info' --scope --user -p MemoryMax=4G \
 
 # rsync -vP  \ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/rule-generation/data/10-10-2108/58.json 
+# RUST_LOG=debug,egg=off \
 
-RUST_LOG=debug,egg=off cargo run --release -- compile q-prod \
+systemd-run -E RUST_LOG='debug,egg=off' --scope --user -p MemoryMax=4G \
+	    cargo run --release -- compile q-prod \
       --dios-example-bin ~/Research/diospyros/dios-example-gen \
       --dios-params ~/Research/diospyros/q-prod-params \
       --vector-width 2 \
-      --rules ../experiments/58.json \
+      --rules ~/Research/comp-gen/experiments/rule-generation/data/10-10-2108/58.json \
       --config ../experiments/filtering/test.json
 
       # --pre-desugared --rules ~/Research/diospyros/t2.json \
@@ -120,6 +145,8 @@ Compare against handwritten rules. Show that some known, but non-trivial optimiz
 Fix a set of filtering parameters, and play with the following settings:
 - initial seed set
 - how long we run ruler
+
+** TODO add sqrt, and sgn to ruler generation
 
 ** Run the experiment
 

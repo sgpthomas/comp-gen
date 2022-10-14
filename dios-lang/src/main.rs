@@ -12,7 +12,7 @@ use crate::desugar::Desugar;
 use argh::FromArgs;
 use comp_gen::ruler;
 pub use error::Res;
-use log::{debug, info};
+use log::info;
 use std::{fs, path::PathBuf, process};
 
 /// Generate and run an automatically generated compiler
@@ -136,12 +136,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
         rewriteconcats::list_to_concats(opts.vector_width, &converted);
     // finally parse into a rec expr
     let prog: egg::RecExpr<lang::VecLang> = concats?.parse()?;
-
     // debug!("input: {}", prog.pretty(80));
-    let prog: egg::RecExpr<lang::VecLang> = "(Vec
-              (+ (* (Get aq 0) (Get bq 1)) (* (Get bq 3) (Get aq 2)))
-              (- (* (Get bq 2) (neg (Get aq 2))) (* (Get bq 0) (Get aq 0))))"
-        .parse()?;
 
     let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
         comp_gen::Compiler::with_cost_fn(cost::VecCostFn::default());
@@ -158,17 +153,35 @@ fn compile(opts: CompileOpts) -> Res<()> {
         });
     }
 
-    compiler.add_rules(vec![
-	egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
-	egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))" ),
-	egg::rewrite!("blah"; "0" => "(+ 0 0)"),
-        egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
-	egg::rewrite!("-+neg"; "(- a b)" => "(+ a (neg b))"),
-        egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
-        egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
-    ].into_iter())
-    // .with_filter(|cm| cm.cd > 0.0)
-    // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
+    compiler
+        .add_rules(
+            vec![
+                    // egg::rewrite!("sqrt-1-inv"; "1" => "(sqrt 1)"),
+                    // egg::rewrite!("sqrt-1-inv-rev"; "(sqrt 1)" => "1"),
+            // egg::rewrite!("div-1"; "(/ ?a 1)" => "?a"),
+            // egg::rewrite!("div-1-inv"; "?a" => "(/ ?a 1)"),
+            // egg::rewrite!("neg-sgn"; "(neg (sgn ?a))" => "(sgn (neg ?a))"),
+            // egg::rewrite!("neg-sgn-rev"; "(sgn (neg ?a))" => "(neg (sgn ?a))"),
+                    // egg::rewrite!("sqrt-vec"; "(Vec (sqrt ?a))" => "(VecSqrt ?a)"),
+                    // egg::rewrite!("sqrt-vec-rev"; "(VecSqrt ?a)" => "(Vec (sqrt ?a))"),
+                    // egg::rewrite!("sgn-vec"; "(Vec (sgn ?a))" => "(VecSgn ?a)"),
+                    // egg::rewrite!("sgn-vec-rev"; "(VecSgn ?a)" => "(Vec (sgn ?a))"),
+                    // egg::rewrite!("div"; "(Vec (/ ?a ?b) (/ ?c ?d))" => "(VecDiv (Vec ?a ?c) (Vec ?b ?d))"),
+                    // egg::rewrite!("div-rev"; "(VecDiv (Vec ?a ?c) (Vec ?b ?d))" => "(Vec (/ ?a ?b) (/ ?c ?d))"),
+
+                    // egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
+                    // egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))"),
+                    // egg::rewrite!("blah"; "0" => "(+ 0 0)"),
+                    // egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
+                    // egg::rewrite!("-+neg"; "(- ?a ?b)" => "(+ ?a (neg ?b))"),
+                    // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
+                    // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
+                    // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
+                ]
+            .into_iter(),
+        )
+        // .with_filter(|cm| cm.cd > 0.0)
+        // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
         .output_rule_distribution("rule_distribution.csv", |x| x);
 
     // load configuration
@@ -176,11 +189,9 @@ fn compile(opts: CompileOpts) -> Res<()> {
         compiler.with_config(config);
     }
 
-    let (cost, prog, eg) = compiler.compile(&prog);
-    if let Some(cost) = cost {
-        info!("cost: {cost}");
-    }
-    eg.dot().to_png("test.png").expect("failed to create image");
+    let (cost, prog, _eg) = compiler.compile(&prog);
+    info!("cost: {cost}");
+    // eg.dot().to_png("test.png").expect("failed to create image");
     info!("{}", prog.pretty(80));
 
     // cleanup dir

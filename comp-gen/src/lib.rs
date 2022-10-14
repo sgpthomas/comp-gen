@@ -58,7 +58,7 @@ pub struct CostMetric<
 }
 
 #[derive(Debug, Clone)]
-pub struct Stats {
+pub struct Stats<L: egg::Language, C: egg::CostFunction<L>> {
     phase_name: String,
     rules: usize,
     stop_reason: Option<egg::StopReason>,
@@ -66,13 +66,16 @@ pub struct Stats {
     egraph_total_nodes: usize,
     egraph_total_classes: usize,
     egraph_total_size: usize,
+    old_cost: Option<C::Cost>,
+    cost: Option<C::Cost>,
 }
 
-impl Stats {
-    fn from_runner<
-        L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
-        N: egg::Analysis<L> + Default + Clone,
-    >(
+impl<L, C> Stats<L, C>
+where
+    L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
+    C: egg::CostFunction<L>,
+{
+    fn from_runner<N: egg::Analysis<L> + Default + Clone>(
         phase: &Phase<L, N>,
         runner: &egg::Runner<L, N, ()>,
     ) -> Self {
@@ -84,6 +87,8 @@ impl Stats {
             egraph_total_nodes: runner.egraph.total_number_of_nodes(),
             egraph_total_classes: runner.egraph.number_of_classes(),
             egraph_total_size: runner.egraph.total_size(),
+            old_cost: None,
+            cost: None,
         }
     }
 
@@ -106,6 +111,11 @@ impl Stats {
         info!("    Phase: {} with {} rules", self.phase_name, self.rules);
         info!("    Stop reason: {:?}", self.stop_reason.as_ref().unwrap());
         info!("    Iterations: {}", self.iterations);
+        info!(
+            "    Cost: {:?} (old: {:?})",
+            self.cost.as_ref().unwrap(),
+            self.old_cost.as_ref()
+        );
         info!(
             "    Egraph size: {} nodes, {} classes, {} memo",
             self.egraph_total_nodes,
@@ -144,7 +154,7 @@ pub struct EqSatResult<
     cost: C::Cost,
     prog: egg::RecExpr<L>,
     egraph: egg::EGraph<L, N>,
-    stats: Stats,
+    stats: Stats<L, C>,
 }
 
 /// Structure that defines a rule phase.
@@ -154,8 +164,9 @@ pub struct Phase<
 > {
     name: String,
     rules: Vec<egg::Rewrite<L, N>>,
-    node_limit: Option<usize>,
-    iter_limit: Option<usize>,
+    fresh_egraph: bool,
+    node_limit: usize,
+    iter_limit: usize,
 }
 
 pub struct Compiler<
@@ -174,6 +185,7 @@ pub struct Compiler<
     cost_fn: C,
     init_node: Option<L>,
     total_node_limit: usize,
+    total_iter_limit: usize,
     timeout: u64,
     dry_run: bool,
     dump_rules: bool,
@@ -206,6 +218,7 @@ where
             cost_fn,
             init_node: None,
             total_node_limit: 1_000_000,
+            total_iter_limit: 30,
             timeout: 120,
             dry_run: false,
             dump_rules: false,
@@ -272,6 +285,11 @@ where
         self
     }
 
+    pub fn with_total_iter_limit(&mut self, iter_limit: usize) -> &mut Self {
+        self.total_iter_limit = iter_limit;
+        self
+    }
+
     pub fn with_timeout(&mut self, timeout: u64) -> &mut Self {
         self.timeout = timeout;
         self
@@ -305,8 +323,9 @@ where
         Phase {
             name: name.to_string(),
             rules: phase_rules,
-            node_limit: None,
-            iter_limit: None,
+            fresh_egraph: false,
+            node_limit: self.total_node_limit,
+            iter_limit: self.total_iter_limit,
         }
     }
 
@@ -369,8 +388,15 @@ where
                     && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
 		    && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
             });
-            phase.node_limit = phase_config.node_limit;
-            phase.iter_limit = phase_config.iter_limit;
+            if let Some(l) = phase_config.node_limit {
+                phase.node_limit = l;
+            }
+            if let Some(l) = phase_config.iter_limit {
+                phase.iter_limit = l;
+            }
+            if let Some(true) = phase_config.fresh_egraph {
+                phase.fresh_egraph = true;
+            }
 
             self.phases.push(phase);
         }
@@ -382,20 +408,14 @@ where
         phase: &Phase<L, N>,
         egraph: egg::EGraph<L, N>,
         prog: &egg::RecExpr<L>,
-    ) -> EqSatResult<L, N, C>
-// (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>)
-    {
+    ) -> EqSatResult<L, N, C> {
         debug!("Making runner");
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
                 .with_egraph(egraph)
                 .with_expr(prog)
-                .with_node_limit(
-                    phase.node_limit.unwrap_or(self.total_node_limit),
-                )
-                .with_iter_limit(
-                    phase.iter_limit.unwrap_or(self.total_node_limit),
-                )
+                .with_node_limit(phase.node_limit)
+                .with_iter_limit(phase.iter_limit)
                 .with_time_limit(std::time::Duration::from_secs(self.timeout));
 
         // TODO make scheduler an option
@@ -414,6 +434,7 @@ where
         //     );
         // }
 
+        debug!("Starting equality saturation");
         runner = runner.run(&phase.rules);
 
         // extract the best program
@@ -421,8 +442,9 @@ where
             egg::Extractor::new(&runner.egraph, self.cost_fn.clone());
         let (cost, prog) = extractor.find_best(runner.roots[0]);
 
-        eprintln!("Egraph size: {}", runner.egraph.total_size());
-        let stats = Stats::from_runner(&phase, &runner);
+        debug!("Egraph size: {}", runner.egraph.total_size());
+        let mut stats = Stats::from_runner(&phase, &runner);
+        stats.cost = Some(cost.clone());
         stats.report();
 
         EqSatResult {
@@ -434,9 +456,9 @@ where
     }
 
     pub fn compile(
-        &self,
+        &mut self,
         prog: &egg::RecExpr<L>,
-    ) -> (Option<C::Cost>, egg::RecExpr<L>, egg::EGraph<L, N>) {
+    ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
         self.rule_distribution.iter().for_each(|(path, conv)| {
             self.generate_rule_histogram(path, conv);
         });
@@ -444,8 +466,9 @@ where
         let mut egraph = self.new_egraph();
         let mut cost_fn = self.cost_fn.clone();
         let mut prog = prog.clone();
-        let mut cost = None;
-        let mut stats: Vec<Stats> = vec![];
+        let mut cost = self.cost_fn.cost_rec(&prog);
+
+        let mut stats: Vec<Stats<L, C>> = vec![];
         for phase in &self.phases {
             let msg = format!("Starting Phase {}", &phase.name);
             info!("{}", "=".repeat(msg.len()));
@@ -470,31 +493,22 @@ where
                 continue;
             }
 
+            // update egraph
+            if phase.fresh_egraph || !self.reuse_egraphs {
+                debug!("Using a fresh egraph for this phase");
+                egraph = self.new_egraph();
+            }
             // let (new_cost, new_prog, new_egraph) =
             //     self.equality_saturate(&phase, egraph, &prog);
             let eq_sat = self.equality_saturate(&phase, egraph, &prog);
-            stats.push(eq_sat.stats.clone());
+            let mut stat = eq_sat.stats.clone();
+            stat.old_cost = Some(cost.clone());
+            stats.push(stat);
 
-            if let Some(old_cost) = cost {
-                info!(
-                    "Cost: {:?} (old: {:?})",
-                    eq_sat.cost.clone(),
-                    // (self.subtract)(old_cost, new_cost.clone())
-                    old_cost
-                );
-            } else {
-                info!("Cost: {:?}", eq_sat.cost);
-            }
+            info!("Cost: {:?} (old: {:?})", eq_sat.cost.clone(), cost);
 
             // update state for next iteration
-            (cost, prog) = (Some(eq_sat.cost), eq_sat.prog);
-
-            // update egraph
-            if self.reuse_egraphs {
-                egraph = eq_sat.egraph;
-            } else {
-                egraph = self.new_egraph();
-            }
+            (cost, prog, egraph) = (eq_sat.cost, eq_sat.prog, eq_sat.egraph);
         }
 
         // report the total stats
