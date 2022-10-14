@@ -90,7 +90,7 @@ def launch():
             break
         else:
             time.sleep(2)
-        
+
 
 def reset_machines():
     data = Path(sys.argv[2])

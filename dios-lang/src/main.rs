@@ -9,6 +9,7 @@ mod stringconversion;
 mod synthesis;
 
 use crate::desugar::Desugar;
+use anyhow::Context;
 use argh::FromArgs;
 use comp_gen::ruler;
 pub use error::Res;
@@ -99,7 +100,8 @@ fn synth(synth_opts: SynthOpts) -> Res<()> {
         .ruler
         .as_ref()
         .map(|path| ruler::SynthParams::from_path(&path))
-        .unwrap_or_else(|| Ok(ruler::SynthParams::default()))?;
+        .unwrap_or_else(|| Ok(ruler::SynthParams::default()))
+        .context("Failed to open synth config")?;
 
     let report = synthesis::run(args, synth_opts.clone())?;
     let file = std::fs::File::create(&synth_opts.output)

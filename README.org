@@ -2,3 +2,5 @@
 
 Automatically generate equality saturation based compilers using equality saturation and some cleverness.
 
+[[file:experiments/README.org][Experiments]]
+

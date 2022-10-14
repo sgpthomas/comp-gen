@@ -95,15 +95,49 @@ Wack config (that will probably work)
 #+end_src
 
 Setup a remote machine
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent
-rsync -vp dios-lang/target/release/dios-lang \
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results output
+rule_config="comp-gen/experiments/rule-generation/data/10-10-2108/58.json"
+# rsync -v samthomas@sgt.csres.utexas.edu:~/Research/$rule_config /tmp/ruler.json
+rsync -v /tmp/ruler.json ubuntu@$IP:~/ruler.json
+
+rsync -v dios-lang/target/release/dios-lang \
       ~/Research/diospyros/*-params \
-      experiments/rule-generation/data/10-10-2108/58.json \
       ubuntu@$IP:
 
-      # experiments/rule-generation/configs/config_c2_sr0_usFalse_sfFalse.json \
-      # experiments/rule-generation/synth_configs/abs_timeout_60.json \
+rsync -rv experiments/rule-generation/configs ubuntu@$IP:~/
+rsync -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
+
+#+RESULTS:
+#+begin_example
+ruler.json
+
+sent 8582 bytes  received 42 bytes  5749.33 bytes/sec
+total size is 8491  speedup is 0.98
+2d-conv-params
+dios-lang
+mat-mul-params
+q-prod-params
+qr-decomp-params
+
+sent 18399 bytes  received 27214 bytes  18245.20 bytes/sec
+total size is 20274719  speedup is 444.49
+building file list ... done
+configs/.gitignore
+configs/base.json
+configs/debug.json
+configs/make_configs.py
+
+sent 323 bytes  received 144 bytes  311.33 bytes/sec
+total size is 2629  speedup is 5.63
+building file list ... done
+synth_configs/.gitignore
+synth_configs/base.json
+synth_configs/make_configs.py
+
+sent 266 bytes  received 110 bytes  250.67 bytes/sec
+total size is 1457  speedup is 3.88
+#+end_example
 
 #+begin_src async-shell :dir (ec2/tramp "west") :results silent
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
@@ -130,6 +164,14 @@ systemd-run -E RUST_LOG='debug,egg=off' --scope --user -p MemoryMax=4G \
       --config ../experiments/filtering/test.json
 
       # --pre-desugared --rules ~/Research/diospyros/t2.json \
+#+end_src
+
+Debug =sgn= ruler synthesis.
+#+begin_src async-shell :dir (concat (magit-toplevel) "dios-lang") :results silent
+RUST_LOG="debug,egg=off,ruler=debug" cargo run --release -- synth \
+      ../experiments/debug_sgn.json \
+      --config ../experiments/rule-generation/configs/debug.json \
+      --ruler ../experiments/rule-generation/synth_configs/debug.json
 #+end_src
 
 * Aella (simple IMP-like language) experiments

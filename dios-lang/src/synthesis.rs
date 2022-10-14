@@ -2,6 +2,7 @@ use anyhow::Context;
 use comp_gen::ruler;
 use egg::{EGraph, Id, Language};
 use itertools::Itertools;
+use log::debug;
 use num::integer::Roots;
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -235,17 +236,19 @@ impl Default for DiosConfig {
 }
 
 impl lang::VecLang {
+    /// use fuzzing to decide equality between VecLang patterns
+    /// this of course is approximate
     fn fuzz_equals(
         synth: &mut ruler::Synthesizer<Self, ruler::Init>,
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
         _debug: bool,
     ) -> bool {
-        // use fuzzing to determine equality
-
         // let n = synth.params.num_fuzz;
         // let n = 10;
         let mut env = HashMap::default();
+
+        debug!("Checking {lhs} => {rhs}");
 
         if lhs.vars().sort() != rhs.vars().sort() {
             eprintln!(
@@ -299,8 +302,8 @@ impl lang::VecLang {
 
         let debug = false;
         if lvec != rvec || debug {
-            log::debug!(
-                "  env: {:#?}",
+            debug!(
+                "  env: {:?}",
                 env.into_iter()
                     .map(|(v, env)| (
                         v,
@@ -314,13 +317,11 @@ impl lang::VecLang {
                     ))
                     .collect::<Vec<_>>()
             );
-            log::debug!("  lhs: {}, rhs: {}", lhs, rhs);
-            log::debug!(
-                "  lvec: {:#?}, rvec: {:#?}",
-                lvec.iter().flatten().collect_vec(),
-                rvec.iter().flatten().collect_vec()
-            );
-            log::debug!("  eq: {}", vecs_eq(&lvec, &rvec));
+            debug!("  lhs: {lhs}");
+            debug!("  rhs: {rhs}");
+            debug!("  lvec: {:?}", lvec.iter().flatten().collect_vec(),);
+            debug!("  rvec: {:?}", rvec.iter().flatten().collect_vec());
+            debug!("  eq: {}", vecs_eq(&lvec, &rvec));
         }
 
         vecs_eq(&lvec, &rvec)
@@ -668,6 +669,12 @@ impl SynthLanguage for lang::VecLang {
             cvec_len: cvec_size,
         });
 
+        ////// HACK
+        if synth.params.enable_explanations {
+            egraph = egraph.with_explanations_enabled();
+        }
+        ////// HACK
+
         // add constants to egraph
         for v in consts {
             egraph.add(lang::VecLang::Const(v));
@@ -855,7 +862,7 @@ impl SynthLanguage for lang::VecLang {
             (_, Some(i), _) => Box::new(i),
             (_, _, Some(i)) => Box::new(i),
             // none are defined
-            (_, _, _) => panic!(),
+            (_, _, _) => panic!("No binops or vector ops defined."),
         }
     }
 
@@ -1000,8 +1007,8 @@ pub fn run(
         DiosConfig::default()
     };
 
-    log::info!("running with config: {dios_config:#?}");
-    log::info!("running with synth config {params:#?}");
+    debug!("running with config: {dios_config:#?}");
+    debug!("running with synth config {params:#?}");
 
     // create the synthesizer
     let syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(

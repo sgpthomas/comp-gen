@@ -6,6 +6,7 @@ It uses equality saturation in two novel ways to scale the rule synthesis:
 !*/
 use egg::*;
 use itertools::Itertools;
+use log::info;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use serde::{Deserialize, Serialize};
@@ -954,10 +955,10 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
                     // let mut_egraph = unsafe { very_bad_function(&egraph) };
                     // mut_egraph.explain_equivalence(&prog1, &prog2);
 
-                    log::info!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-                    log::info!("cvec1: {:?}", egraph[id1].data.cvec);
-                    log::info!("cvec2: {:?}", egraph[id2].data.cvec);
-                    log::info!("just: {justification:?}");
+                    info!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
+                    info!("cvec1: {:?}", egraph[id1].data.cvec);
+                    info!("cvec2: {:?}", egraph[id2].data.cvec);
+                    info!("just: {justification:?}");
                 }
                 _ => (),
             }
