@@ -100,7 +100,7 @@ pub fn egg_to_z3<'a>(
     for node in expr.as_ref().iter() {
         match node {
             lang::VecLang::Const(lang::Value::Int(i)) => {
-                buf.push(z3::ast::Int::from_i64(&ctx, *i as i64))
+                buf.push(z3::ast::Int::from_i64(ctx, *i as i64))
             }
             lang::VecLang::Symbol(v) => {
                 buf.push(z3::ast::Int::new_const(ctx, v.to_string()))
@@ -131,9 +131,9 @@ pub fn egg_to_z3<'a>(
             }
             lang::VecLang::Sgn([x]) => {
                 let x_int = &buf[usize::from(*x)];
-                let zero = z3::ast::Int::from_i64(&ctx, 0);
-                let one = z3::ast::Int::from_i64(&ctx, 1);
-                let m_one = z3::ast::Int::from_i64(&ctx, -1);
+                let zero = z3::ast::Int::from_i64(ctx, 0);
+                let one = z3::ast::Int::from_i64(ctx, 1);
+                let m_one = z3::ast::Int::from_i64(ctx, -1);
 
                 let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
                 let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
@@ -185,9 +185,9 @@ pub fn egg_to_z3<'a>(
             }
             lang::VecLang::VecSgn([x]) => {
                 let x_int = &buf[usize::from(*x)];
-                let zero = z3::ast::Int::from_i64(&ctx, 0);
-                let one = z3::ast::Int::from_i64(&ctx, 1);
-                let m_one = z3::ast::Int::from_i64(&ctx, -1);
+                let zero = z3::ast::Int::from_i64(ctx, 0);
+                let one = z3::ast::Int::from_i64(ctx, 1);
+                let m_one = z3::ast::Int::from_i64(ctx, -1);
 
                 let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
                 let sgn = (x_int._eq(&zero)).ite(&zero, &inner);

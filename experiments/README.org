@@ -156,9 +156,9 @@ Run things on remote machine.
 
 dir="experiments/rule-generation"
 RUST_BACTRACE=1 RUST_LOG='debug,egg=info,ruler=info,z3=off' time \
-	cargo run --release --manifest-path dios-lang/Cargo.toml \
-	-- synth debug_sgn.json \
-	--config $dir/configs/debug.json
+		cargo run --release --manifest-path dios-lang/Cargo.toml \
+		-- synth debug_sgn.json \
+		--config $dir/configs/debug.json
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
 # BENCH=q-prod

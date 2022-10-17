@@ -3,8 +3,8 @@ use std::io;
 
 // Rewrite a list of expressions to a nested concatenation of fixed-width
 // vectors, based on the configuration's vector width
-pub fn list_to_concats(vec_width: usize, input: &String) -> io::Result<String> {
-    let v = lexpr::from_str(&input)?;
+pub fn list_to_concats(vec_width: usize, input: &str) -> io::Result<String> {
+    let v = lexpr::from_str(input)?;
     if let lexpr::Value::Cons(c) = v {
         let (mut list, _) = c.into_vec();
         // Remove the "list" from the start of the vec.

@@ -18,7 +18,7 @@ impl Desugar for egg::Pattern<lang::VecLang> {
         // map symbols to vars, everything else to enodes
         let p: egg::RecExpr<egg::ENodeOrVar<lang::VecLang>> = vl
             .as_ref()
-            .into_iter()
+            .iter()
             .map(|l: &lang::VecLang| match l {
                 lang::VecLang::Symbol(s) => egg::ENodeOrVar::Var(
                     egg::Var::from_str(s.as_str()).unwrap(),

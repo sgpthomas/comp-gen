@@ -11,7 +11,7 @@ use ruler::{
 };
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::BuildHasherDefault;
 use std::str::FromStr;
 
@@ -135,7 +135,7 @@ impl lang::Value {
                 .zip(rhs)
                 .map(|(l, r)| f(l, r))
                 .collect::<Option<Vec<lang::Value>>>()
-                .map(|v| lang::Value::Vec(v))
+                .map(lang::Value::Vec)
         })
     }
 
@@ -143,7 +143,7 @@ impl lang::Value {
     fn int_range(min: i32, max: i32, num_samples: usize) -> Vec<lang::Value> {
         (min..=max)
             .step_by(((max - min) as usize) / num_samples)
-            .map(|x| lang::Value::Int(x))
+            .map(lang::Value::Int)
             .collect::<Vec<_>>()
     }
 
@@ -176,12 +176,10 @@ impl lang::Value {
 }
 
 fn sgn(x: i32) -> i32 {
-    if x > 0 {
-        1
-    } else if x == 0 {
-        0
-    } else {
-        -1
+    match x.cmp(&0) {
+        std::cmp::Ordering::Less => -1,
+        std::cmp::Ordering::Equal => 0,
+        std::cmp::Ordering::Greater => 1,
     }
 }
 
@@ -328,13 +326,7 @@ impl SynthLanguage for lang::VecLang {
                     acc
                 })
                 .into_iter()
-                .map(|acc| {
-                    if let Some(x) = acc {
-                        Some(lang::Value::List(x))
-                    } else {
-                        None
-                    }
-                })
+                .map(|acc| acc.map(lang::Value::List))
                 .collect::<Vec<_>>(),
             lang::VecLang::Vec(l) => l
                 .iter()
@@ -349,20 +341,14 @@ impl SynthLanguage for lang::VecLang {
                     acc
                 })
                 .into_iter()
-                .map(|acc| {
-                    if let Some(x) = acc {
-                        Some(lang::Value::Vec(x))
-                    } else {
-                        None
-                    }
-                })
+                .map(|acc| acc.map(lang::Value::Vec))
                 .collect::<Vec<_>>(),
             // lang::VecLang::LitVec(x) => todo!(),
             #[rustfmt::skip]
             lang::VecLang::Get([l, i]) => map!(get, l, i => {
                 if let (lang::Value::Vec(v), lang::Value::Int(idx)) = (l, i) {
                     // get index and clone the inner lang::Value if there is one
-                    v.get(*idx as usize).map(|inner| inner.clone())
+                    v.get(*idx as usize).cloned()
                 } else {
                     None
                 }
@@ -472,7 +458,7 @@ impl SynthLanguage for lang::VecLang {
                             _ => None,
                         })
                         .collect::<Option<Vec<lang::Value>>>()
-                        .map(|x| lang::Value::Vec(x))
+                        .map(lang::Value::Vec)
                 })
             }),
             lang::VecLang::Symbol(_) => vec![],
@@ -580,7 +566,7 @@ impl SynthLanguage for lang::VecLang {
         let vd = synth.lang_config.variable_duplication;
 
         // if iter % 2 == 0 {
-        iter = iter - 1; // make iter start at 0
+        iter -= 1; // make iter start at 0
 
         // only do binops for iters < 2
         let binops = if iter < 2 && synth.lang_config.use_scalar {
@@ -588,7 +574,7 @@ impl SynthLanguage for lang::VecLang {
                 .clone()
                 .into_iter()
                 .filter(move |x| !synth.egraph[*x].data.exact)
-                .map(move |x| {
+                .flat_map(move |x| {
                     synth
                         .lang_config
                         .unops
@@ -600,8 +586,7 @@ impl SynthLanguage for lang::VecLang {
                             _ => panic!("Unknown vec unop"),
                         })
                         .collect_vec()
-                })
-                .flatten();
+                });
             let bs = (0..2)
                 .map(|_| ids.clone())
                 .multi_cartesian_product()
@@ -609,7 +594,7 @@ impl SynthLanguage for lang::VecLang {
                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
                 })
                 .map(|ids| [ids[0], ids[1]])
-                .map(move |x| {
+                .flat_map(move |x| {
                     synth
                         .lang_config
                         .binops
@@ -626,7 +611,6 @@ impl SynthLanguage for lang::VecLang {
                         })
                         .collect::<Vec<_>>()
                 })
-                .flatten()
                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
             Some(us.chain(bs))
         } else {
@@ -638,7 +622,7 @@ impl SynthLanguage for lang::VecLang {
                 .clone()
                 .into_iter()
                 .filter(move |x| !synth.egraph[*x].data.exact)
-                .map(move |x| {
+                .flat_map(move |x| {
                     let mut v = synth
                         .lang_config
                         .unops
@@ -654,8 +638,7 @@ impl SynthLanguage for lang::VecLang {
                         vec![x].into_boxed_slice(),
                     )]);
                     v
-                })
-                .flatten();
+                });
 
             let vec_binops = (0..2)
                 .map(|_| ids.clone())
@@ -664,7 +647,7 @@ impl SynthLanguage for lang::VecLang {
                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
                 })
                 .map(|ids| [ids[0], ids[1]])
-                .map(move |x| {
+                .flat_map(move |x| {
                     synth
                         .lang_config
                         .binops
@@ -678,7 +661,6 @@ impl SynthLanguage for lang::VecLang {
                         })
                         .collect::<Vec<_>>()
                 })
-                .flatten()
                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
 
             Some(vec_unops.chain(vec_binops))
@@ -694,7 +676,7 @@ impl SynthLanguage for lang::VecLang {
                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
                 })
                 .map(|ids| [ids[0], ids[1], ids[2]])
-                .map(move |x| lang::VecLang::VecMAC(x))
+                .map(lang::VecLang::VecMAC)
                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
             Some(vec_mac)
         } else {
@@ -764,13 +746,17 @@ impl SynthLanguage for lang::VecLang {
 fn get_vars(
     node: &lang::VecLang,
     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
+    seen: &mut HashSet<egg::Id>,
 ) -> Vec<egg::Symbol> {
     node.fold(vec![], |mut acc, id| {
-        let node = &egraph[id].nodes[0];
-        if node.is_leaf() {
-            acc.extend(egraph[id].data.vars.iter());
-        } else {
-            acc.extend(get_vars(node, egraph));
+        // if we haven't already seen this id, gather vars from children
+        if seen.insert(id) {
+            let node = &egraph[id].nodes[0];
+            if node.is_leaf() {
+                acc.extend(egraph[id].data.vars.iter());
+            } else {
+                acc.extend(get_vars(node, egraph, seen));
+            }
         }
         acc
     })
@@ -780,7 +766,8 @@ fn unique_vars(
     node: &lang::VecLang,
     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
 ) -> bool {
-    let vars: Vec<egg::Symbol> = get_vars(node, egraph);
+    let mut seen: HashSet<egg::Id> = HashSet::default();
+    let vars: Vec<egg::Symbol> = get_vars(node, egraph, &mut seen);
     vars.iter().all_unique()
 }
 
@@ -848,7 +835,7 @@ pub fn run(
     debug!("running with config: {dios_config:#?}");
 
     // create the synthesizer
-    let mut syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
+    let syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
         dios_config.ruler_config.clone(),
         dios_config.clone(),
     )

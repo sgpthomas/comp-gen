@@ -45,10 +45,10 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             // VecLang::LitVec(..) => LITERAL,
 
             // But scalar and vector ops cost something
-            VecLang::Add(vals) => OP * (vals.iter().count() as f64 - 1.),
-            VecLang::Mul(vals) => OP * (vals.iter().count() as f64 - 1.),
-            VecLang::Minus(vals) => OP * (vals.iter().count() as f64 - 1.),
-            VecLang::Div(vals) => OP * (vals.iter().count() as f64 - 1.),
+            VecLang::Add(vals) => OP * (vals.len() as f64 - 1.),
+            VecLang::Mul(vals) => OP * (vals.len() as f64 - 1.),
+            VecLang::Minus(vals) => OP * (vals.len() as f64 - 1.),
+            VecLang::Div(vals) => OP * (vals.len() as f64 - 1.),
 
             VecLang::Sgn(..) => OP,
             VecLang::Neg(..) => OP,
@@ -150,7 +150,7 @@ fn match_recexpr(
             egg::ENodeOrVar::ENode(VecLang::VecSgn(lefts)),
             VecLang::VecSgn(rights),
         ) => lefts.iter().zip(rights.iter()).all(|(l, r)| {
-            match_recexpr(&pattern, &pattern[*l], &expr, &expr[*r])
+            match_recexpr(pattern, &pattern[*l], expr, &expr[*r])
         }),
 
         // 2 children
@@ -185,7 +185,7 @@ fn match_recexpr(
             egg::ENodeOrVar::ENode(VecLang::VecDiv(lefts)),
             VecLang::VecDiv(rights),
         ) => lefts.iter().zip(rights.iter()).all(|(l, r)| {
-            match_recexpr(&pattern, &pattern[*l], &expr, &expr[*r])
+            match_recexpr(pattern, &pattern[*l], expr, &expr[*r])
         }),
 
         // 3 children
@@ -194,7 +194,7 @@ fn match_recexpr(
             egg::ENodeOrVar::ENode(VecLang::VecMAC(lefts)),
             VecLang::VecMAC(rights),
         ) => lefts.iter().zip(rights.iter()).all(|(l, r)| {
-            match_recexpr(&pattern, &pattern[*l], &expr, &expr[*r])
+            match_recexpr(pattern, &pattern[*l], expr, &expr[*r])
         }),
 
         // n childen
@@ -208,7 +208,7 @@ fn match_recexpr(
         //     VecLang::LitVec(rights),
         // )
 	    => lefts.iter().zip(rights.iter()).all(|(l, r)| {
-            match_recexpr(&pattern, &pattern[*l], &expr, &expr[*r])
+            match_recexpr(pattern, &pattern[*l], expr, &expr[*r])
         }),
 
         // else, we checked everything, return false

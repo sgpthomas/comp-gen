@@ -73,7 +73,7 @@ impl<L: egg::Language + Display> LanguageHelpers<L> for L {
         // inductive case
         let map: HashMap<_, _> = self
             .children()
-            .into_iter()
+            .iter()
             .map(|&child_id| {
                 let next_node = get_node(root_id, child_id);
                 // eprintln!("  ({root_id}, {child_id}) -> ");
@@ -83,8 +83,6 @@ impl<L: egg::Language + Display> LanguageHelpers<L> for L {
             })
             .collect();
 
-        let expr = self.join_recexprs(|id| map[&id].clone());
-        // eprintln!("{self:?} done: {}", expr.pretty(80));
-        expr
+        self.join_recexprs(|id| map[&id].clone())
     }
 }

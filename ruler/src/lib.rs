@@ -379,8 +379,14 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
     ) -> Runner<L, SynthAnalysis, ()> {
         let node_limit = self.params.eqsat_node_limit;
 
+        // the time limit for this runner is `params.eqsat_time_limit`
+        // or `self.time_left()` if that is smaller.
+        let time_limit = self
+            .time_left()
+            .min(Duration::from_secs(self.params.eqsat_time_limit));
+
+        // make the runner
         let mut runner = Runner::default()
-            .with_node_limit(usize::MAX)
             .with_hook(move |r| {
                 let size = r.egraph.total_number_of_nodes();
                 if size > node_limit {
@@ -391,14 +397,20 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             })
             .with_node_limit(self.params.eqsat_node_limit)
             .with_iter_limit(self.params.eqsat_iter_limit)
-            .with_time_limit(Duration::from_secs(self.params.eqsat_time_limit))
-            // .with_time_limit(self.time_left())
+            .with_time_limit(time_limit)
             .with_scheduler(SimpleScheduler);
+
+        log::debug!("Making runner with:");
+        log::debug!("  node_limit({})", self.params.eqsat_node_limit);
+        log::debug!("  iter_limit({})", self.params.eqsat_iter_limit);
+        log::debug!("  time_limit({time_limit:?})");
+
         runner = if self.params.enable_explanations {
             runner.with_explanations_enabled()
         } else {
             runner
         };
+
         runner = if self.params.no_conditionals {
             egraph.analysis.cvec_len = 0;
             for c in egraph.classes_mut() {
@@ -415,6 +427,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         } else {
             runner.with_egraph(egraph)
         };
+
         runner
     }
 
@@ -632,11 +645,13 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 self.params.chunk_size
             );
             for chunk in &layer.chunks(self.params.chunk_size) {
+                eprintln!("Test");
                 log::info!(
                     "egraph n={}, e={}",
                     self.egraph.total_size(),
                     self.egraph.number_of_classes(),
                 );
+                eprintln!("Adding nodes in this chunk to the egraph.");
                 for node in chunk {
                     if self.check_time() {
                         break 'outer;
@@ -644,6 +659,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     self.egraph.add(node);
                 }
                 'inner: loop {
+                    debug!("Starting inner loop");
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
                         break 'outer;

@@ -34,10 +34,7 @@ impl Display for Value {
                 write!(
                     f,
                     "(Vec {})",
-                    v.into_iter()
-                        .map(|x| format!("{}", x))
-                        .collect_vec()
-                        .join(" ")
+                    v.iter().map(|x| format!("{}", x)).collect_vec().join(" ")
                 )
             }
         }
@@ -332,10 +329,10 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
     }
 }
 
-impl Into<egg::RecExpr<VecLang>> for VecAst {
-    fn into(self) -> egg::RecExpr<VecLang> {
+impl From<VecAst> for egg::RecExpr<VecLang> {
+    fn from(ast: VecAst) -> Self {
         let mut expr = egg::RecExpr::default();
-        self.to_recexpr(&mut expr);
+        ast.to_recexpr(&mut expr);
         expr
     }
 }

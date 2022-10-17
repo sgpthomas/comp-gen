@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use comp_gen::{ruler, ruler::SynthLanguage};
 use itertools::Itertools;
-use log::debug;
 
 use crate::{
     lang,
@@ -29,11 +28,19 @@ impl FuzzEquals for lang::VecLang {
         // let n = 10;
         let mut env = HashMap::default();
 
-        if lhs.vars().sort() != rhs.vars().sort() {
-            eprintln!(
+        let lhs_vars = lhs.vars();
+        let lhs_sorted = lhs_vars.iter().sorted().collect_vec();
+        let rhs_vars = rhs.vars();
+        let rhs_sorted = rhs_vars.iter().sorted().collect_vec();
+
+        // TODO: I'm not sure that I actually want this constraint?
+        // won't this prevent rules like (+ a a) => 0? Though I already
+        // prevent that with variable duplication
+        if lhs_sorted != rhs_sorted {
+            log::debug!(
                 "lhs vars != rhs vars: {:?} != {:?}",
-                lhs.vars().sort(),
-                rhs.vars().sort()
+                lhs_sorted,
+                rhs_sorted
             );
             return false;
         }
