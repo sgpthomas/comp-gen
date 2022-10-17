@@ -1,8 +1,7 @@
-use anyhow::Context;
 use comp_gen::ruler;
 use egg::{EGraph, Id, Language};
 use itertools::Itertools;
-use log::{debug, warn};
+use log::debug;
 use num::integer::Roots;
 use rand::Rng;
 use rand_pcg::Pcg64;
@@ -13,14 +12,12 @@ use ruler::{
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
 use std::hash::BuildHasherDefault;
 use std::str::FromStr;
-use z3::ast::Ast;
 
-use crate::{lang, Res};
+use crate::{fuzz::FuzzEquals, lang, smt::SmtEquals, Res};
 
-fn split_into_halves(n: usize) -> (usize, usize) {
+pub fn split_into_halves(n: usize) -> (usize, usize) {
     if n % 2 == 0 {
         (n / 2, n / 2)
     } else {
@@ -161,7 +158,7 @@ impl lang::Value {
             .collect::<Vec<_>>()
     }
 
-    fn sample_vec(
+    pub fn sample_vec(
         rng: &mut Pcg64,
         min: i32,
         max: i32,
@@ -214,6 +211,7 @@ pub struct DiosConfig {
     pub vector_size: usize,
     pub always_smt: bool,
     pub smt_fallback: bool,
+    pub ruler_config: ruler::SynthParams,
 }
 
 impl Default for DiosConfig {
@@ -230,157 +228,7 @@ impl Default for DiosConfig {
             vector_size: 1,
             always_smt: false,
             smt_fallback: true,
-        }
-    }
-}
-
-impl lang::VecLang {
-    /// use fuzzing to decide equality between VecLang patterns
-    /// this of course is approximate
-    fn fuzz_equals(
-        synth: &mut ruler::Synthesizer<Self, ruler::Init>,
-        lhs: &egg::Pattern<Self>,
-        rhs: &egg::Pattern<Self>,
-        _debug: bool,
-    ) -> bool {
-        // let n = synth.params.num_fuzz;
-        // let n = 10;
-        let mut env = HashMap::default();
-
-        if lhs.vars().sort() != rhs.vars().sort() {
-            eprintln!(
-                "lhs vars != rhs vars: {:?} != {:?}",
-                lhs.vars().sort(),
-                rhs.vars().sort()
-            );
-            return false;
-        }
-
-        for var in lhs.vars() {
-            env.insert(var, vec![]);
-        }
-
-        for var in rhs.vars() {
-            env.insert(var, vec![]);
-        }
-
-        // eprintln!("env: {env:?}");
-
-        let (_n_ints, n_vecs) = split_into_halves(10);
-        // let (n_neg_ints, n_pos_ints) = split_into_halves(n_ints);
-
-        let possibilities = vec![-10, -5, -2, -1, 0, 1, 2, 5, 10];
-        // let possibilities = vec![0, 1, 2];
-        for perms in possibilities.iter().permutations(env.keys().len()) {
-            for (i, cvec) in perms.iter().zip(env.values_mut()) {
-                cvec.push(Some(lang::Value::Int(**i)));
-            }
-        }
-
-        // add some random vectors
-        let mut length = 0;
-        for cvec in env.values_mut() {
-            cvec.extend(
-                lang::Value::sample_vec(
-                    &mut synth.rng,
-                    -100,
-                    100,
-                    synth.lang_config.vector_size,
-                    n_vecs,
-                )
-                .into_iter()
-                .map(Some),
-            );
-            length = cvec.len();
-        }
-
-        let lvec = Self::eval_pattern(lhs, &env, length);
-        let rvec = Self::eval_pattern(rhs, &env, length);
-
-        debug!("Checking {lhs} => {rhs}: {}", vecs_eq(&lvec, &rvec));
-        // let debug = false;
-        // if lvec != rvec || debug {
-        //     debug!(
-        //         "  env: {:?}",
-        //         env.into_iter()
-        //             .map(|(v, env)| (
-        //                 v,
-        //                 env.into_iter()
-        //                     .flat_map(|x| match x {
-        //                         Some(lang::Value::Vec(v)) =>
-        //                             Some(lang::Value::Vec(v)),
-        //                         _ => None,
-        //                     })
-        //                     .collect::<Vec<_>>()
-        //             ))
-        //             .collect::<Vec<_>>()
-        //     );
-        //     debug!("  lhs: {lhs}");
-        //     debug!("  rhs: {rhs}");
-        //     debug!("  lvec: {:?}", lvec.iter().flatten().collect_vec(),);
-        //     debug!("  rvec: {:?}", rvec.iter().flatten().collect_vec());
-        //     debug!("  eq: {}", vecs_eq(&lvec, &rvec));
-        // }
-
-        vecs_eq(&lvec, &rvec)
-    }
-
-    fn smt_equals(
-        synth: &mut Synthesizer<Self, ruler::Init>,
-        lhs: &egg::Pattern<Self>,
-        rhs: &egg::Pattern<Self>,
-    ) -> bool {
-        let mut cfg = z3::Config::new();
-        cfg.set_timeout_msec(1000);
-        let ctx = z3::Context::new(&cfg);
-        let solver = z3::Solver::new(&ctx);
-
-        let left = egg_to_z3(&ctx, &Self::instantiate(lhs));
-        let right = egg_to_z3(&ctx, &Self::instantiate(rhs));
-
-        // if we can translate egg to z3 for both lhs, and rhs, then
-        // run the z3 solver. otherwise fallback to fuzz_equals
-        if let (Some(lexpr), Some(rexpr)) = (&left, &right) {
-            debug!("z3 check {} != {}", lexpr, rexpr);
-
-            // check to see if lexpr is NOT equal to rexpr.
-            // if we can't find a counter example to this
-            // then we know that they are equal.
-            solver.assert(&lexpr._eq(rexpr).not());
-
-            // let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
-            let smt = match solver.check() {
-                z3::SatResult::Unsat => true,
-                z3::SatResult::Unknown | z3::SatResult::Sat => false,
-            };
-
-            debug!("z3 result: {smt}");
-
-            // if smt != fuzz {
-            //     log::info!("{lhs} <=> {rhs} Found ya!!!");
-            //     let mut cfg = z3::Config::new();
-            //     cfg.set_timeout_msec(1000);
-            //     let ctx = z3::Context::new(&cfg);
-            //     log::info!("smt: {smt}, fuzz: {fuzz}");
-            //     log::info!(
-            //         "smt formula: {} = {}",
-            //         egg_to_z3(&ctx, &Self::instantiate(lhs))
-            //             .map(|x| x.to_string())
-            //             .unwrap_or("".to_string()),
-            //         egg_to_z3(&ctx, &Self::instantiate(rhs))
-            //             .map(|x| x.to_string())
-            //             .unwrap_or("".to_string())
-            //     );
-            //     log::info!("{:?}", solver.get_model());
-            //     Self::fuzz_equals(synth, lhs, rhs, true);
-            // } else {
-            //     log::debug!("smt: {smt}, fuzz: {fuzz}")
-            // }
-
-            smt
-        } else {
-            warn!("Couldn't translate {lhs} or {rhs} to smt");
-            Self::fuzz_equals(synth, lhs, rhs, false)
+            ruler_config: ruler::SynthParams::default(),
         }
     }
 }
@@ -652,7 +500,7 @@ impl SynthLanguage for lang::VecLang {
                 synth.params.variables,
             )
             .len()
-        };
+        } * 10;
 
         debug!("cvec size: {cvec_size}");
 
@@ -874,19 +722,20 @@ impl SynthLanguage for lang::VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
-        if synth.lang_config.always_smt {
+        let x = if synth.lang_config.always_smt {
             Self::smt_equals(synth, lhs, rhs)
         } else {
             let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
-            // if fuzz fails and `smt_fallback` is enabled, run
-            // `smt_equals`.
+            // if fuzz succeeds and `smt_fallback` is enabled, run `smt_equals`.
             if synth.lang_config.smt_fallback && fuzz {
                 debug!("falling back to smt");
                 Self::smt_equals(synth, lhs, rhs)
             } else {
-                fuzz
+                false
             }
-        }
+        };
+        debug!("Checking {lhs} => {rhs}: {x}");
+        x
     }
 
     // fn post_process(
@@ -935,7 +784,7 @@ fn unique_vars(
     vars.iter().all_unique()
 }
 
-fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
+pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
     if lvec.iter().all(|x| x.is_none()) && rvec.iter().all(|x| x.is_none()) {
         false
     } else {
@@ -982,178 +831,44 @@ fn debug_rule(
 }
 
 pub fn run(
-    params: ruler::SynthParams,
-    opts: crate::SynthOpts,
+    // params: ruler::SynthParams,
+    dios_config: DiosConfig,
+    // _opts: crate::SynthOpts,
 ) -> Res<ruler::Report<lang::VecLang>> {
-    let dios_config = if let Some(config) = opts.config {
-        let config_file =
-            File::open(config.clone()).context("open config path")?;
-        let parsed: DiosConfig = serde_json::from_reader(config_file)
-            .context(format!("parse {config:?} as dios_config"))?;
-        parsed
-    } else {
-        DiosConfig::default()
-    };
+    // let dios_config = if let Some(config) = opts.config {
+    //     let config_file =
+    //         File::open(config.clone()).context("open config path")?;
+    //     let parsed: DiosConfig = serde_json::from_reader(config_file)
+    //         .context(format!("parse {config:?} as dios_config"))?;
+    //     parsed
+    // } else {
+    //     DiosConfig::default()
+    // };
 
     debug!("running with config: {dios_config:#?}");
-    debug!("running with synth config {params:#?}");
 
     // create the synthesizer
-    let syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
-        params.clone(),
-        dios_config,
+    let mut syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
+        dios_config.ruler_config.clone(),
+        dios_config.clone(),
     )
     .init();
+
+    // debug
+    // let res = lang::VecLang::smt_equals(
+    //     &mut syn,
+    //     &"(VecMul (VecDiv ?d ?c) (VecDiv ?b ?a))".parse().unwrap(),
+    //     &"(VecDiv (VecSqrt ?a) (VecMinus ?d ?b))".parse().unwrap(),
+    // );
+    // debug!("res: {res}");
+    // panic!();
+    // debug
+
     // run the synthesizer
     let report = syn.run();
 
-    Ok(lang::VecLang::post_process(&params, report))
-}
-
-/// Translate an egg::RecExpr into an equivalent z3 expression.
-/// This only works for operations on integers for now.
-fn egg_to_z3<'a>(
-    ctx: &'a z3::Context,
-    expr: &egg::RecExpr<lang::VecLang>,
-) -> Option<z3::ast::Int<'a>> {
-    // This translate works by walking through the RecExpr vector
-    // in order, and translating just that node. We push this
-    // translation into a buffer as we go. Any time we need to
-    // reference a child, we can look up the corresponding index
-    // in the buffer. This works because we have the guarantee that
-    // some element i in RecExpr only ever refers to elements j < i.
-    // By the time we need them, we will have already translated them.
-
-    let sqrt_fun = z3::FuncDecl::new(
-        &ctx,
-        "f",
-        &[&z3::Sort::real(&ctx)],
-        &z3::Sort::int(&ctx),
-    );
-
-    let mut buf: Vec<z3::ast::Int> = vec![];
-
-    for node in expr.as_ref().iter() {
-        match node {
-            lang::VecLang::Const(lang::Value::Int(i)) => {
-                buf.push(z3::ast::Int::from_i64(&ctx, *i as i64))
-            }
-            lang::VecLang::Symbol(v) => {
-                buf.push(z3::ast::Int::new_const(ctx, v.to_string()))
-            }
-            lang::VecLang::Add([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int + y_int);
-            }
-            lang::VecLang::Mul([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int * y_int);
-            }
-            lang::VecLang::Minus([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int - y_int);
-            }
-            lang::VecLang::Div([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int / y_int);
-            }
-            lang::VecLang::Neg([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                buf.push(-x_int);
-            }
-            lang::VecLang::Sgn([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                let zero = z3::ast::Int::from_i64(&ctx, 0);
-                let one = z3::ast::Int::from_i64(&ctx, 1);
-                let m_one = z3::ast::Int::from_i64(&ctx, -1);
-
-                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
-                let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
-
-                buf.push(sgn);
-            }
-            lang::VecLang::Sqrt([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                buf.push(
-                    sqrt_fun
-                        .apply(&[x_int])
-                        .as_int()
-                        .expect("z3 Sqrt didn't return an int."),
-                );
-            }
-
-            // an attempt to support vector operators.
-            // I think I should just be able to map them
-            // on to their scalar counter parts.
-            lang::VecLang::VecAdd([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int + y_int);
-            }
-            lang::VecLang::VecMinus([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int - y_int);
-            }
-            lang::VecLang::VecMul([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int * y_int);
-            }
-            lang::VecLang::VecDiv([x, y]) => {
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push(x_int / y_int);
-            }
-            lang::VecLang::VecNeg([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                buf.push(-x_int);
-            }
-            lang::VecLang::VecMAC([acc, x, y]) => {
-                let acc_int = &buf[usize::from(*acc)];
-                let x_int = &buf[usize::from(*x)];
-                let y_int = &buf[usize::from(*y)];
-                buf.push((x_int * y_int) + acc_int);
-            }
-            lang::VecLang::VecSgn([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                let zero = z3::ast::Int::from_i64(&ctx, 0);
-                let one = z3::ast::Int::from_i64(&ctx, 1);
-                let m_one = z3::ast::Int::from_i64(&ctx, -1);
-
-                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
-                let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
-
-                buf.push(sgn);
-            }
-            lang::VecLang::VecSqrt([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                buf.push(
-                    sqrt_fun
-                        .apply(&[x_int])
-                        .as_int()
-                        .expect("z3 Sqrt didn't return an int."),
-                );
-            }
-
-            // unsupported operations
-            // return early
-            lang::VecLang::Const(_)
-            | lang::VecLang::Or(_)
-            | lang::VecLang::And(_)
-            | lang::VecLang::Ite(_)
-            | lang::VecLang::Lt(_)
-            | lang::VecLang::List(_)
-            | lang::VecLang::Vec(_)
-            | lang::VecLang::Get(_)
-            | lang::VecLang::Concat(_)
-            | lang::VecLang::VecMulSgn(_) => return None,
-        }
-    }
-    // return the last element
-    buf.pop()
+    Ok(lang::VecLang::post_process(
+        &dios_config.ruler_config,
+        report,
+    ))
 }

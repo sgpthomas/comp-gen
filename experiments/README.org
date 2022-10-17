@@ -145,20 +145,31 @@ sent 693 bytes  received 248 bytes  627.33 bytes/sec
 total size is 5,255  speedup is 5.58
 #+end_example
 
-Run things on remote machine.
-#+begin_src async-shell :dir (ec2/tramp "west") :results silent
+Just send everything to the remote machine.
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results output
+rsync -rvp --exclude='.git*' --filter="dir-merge,- .gitignore" . \
+      ubuntu@$IP:
+#+end_src
 
-RUST_LOG='debug,egg=info,ruler=info,z3=off' time ./dios-lang synth debug_sgn.json \
-	--config configs/debug.json \
-	--ruler synth_configs/debug.json
+Run things on remote machine.
+#+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent
+
+dir="experiments/rule-generation"
+RUST_BACTRACE=1 RUST_LOG='debug,egg=info,ruler=info,z3=off' time \
+	cargo run --release --manifest-path dios-lang/Cargo.toml \
+	-- synth debug_sgn.json \
+	--config $dir/configs/debug.json
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
-# RUST_LOG='debug,egg=info' time ./dios-lang compile 2d-conv \
-# 	    --dios-example-bin diospyros/dios-example-gen \
-# 	    --dios-params 2d-conv-params \
-# 	    --vector-width 2 \
-# 	    --rules 58.json \
-# 	    --config test.json
+# BENCH=q-prod
+# RUST_LOG='debug,egg=info' time \
+    # 	cargo run --release --manifest-path dios-lang/Cargo.toml -- \
+    # 	compile $BENCH \
+    # 	    --dios-example-bin diospyros/dios-example-gen \
+    # 	    --dios-params $BENCH-params \
+    # 	    --vector-width 2 \
+    # 	    --rules debug_sgn.json \
+    # 	    --config experiments/filtering/test.json
 #+end_src
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent

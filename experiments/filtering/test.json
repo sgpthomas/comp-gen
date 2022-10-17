@@ -1,59 +1,35 @@
 {
-  "total_node_limit": 5000000,
-  "total_iter_limit": 20,
-  "timeout": 120,
-  "dry_run": false,
-  "dump_rules": true,
-  "reuse_egraphs": true,
-  "cd_filter": null,
-  "require_all_vars": false,
-  "phases": [
-    {
-      "name": "pre-compile",
-      "cd": [
-        null,
-        25.0
-      ],
-      "ca": [
-        null,
-        8.0
-      ],
-      "node_limit": 100000,
-      "iter_limit": 20
-    },
-    {
-      "name": "compile",
-      "cd": [
-        -0.1,
-        null
-      ],
-      "ca": [
-        50.0,
-        60.0
-      ]
-    },
-    {
-      "name": "opt",
-      "cd": [
-        0.0,
-        25.0
-      ],
-      "ca": [
-        null,
-        10.0
-      ]
-    },
-    {
-      "name": "all",
-      "cd": [
-        0.0,
-        null
-      ],
-      "ca": [
-        null,
-        null
-      ],
-      "disabled": true
-    }
-  ]
+    "total_node_limit": 5000000,
+    "total_iter_limit": 20,
+    "timeout": 120,
+    "dry_run": false,
+    "dump_rules": true,
+    "reuse_egraphs": true,
+    "cd_filter": null,
+    "require_all_vars": false,
+    "phases": [
+	{
+	    "name": "pre-compile",
+	    "cd": [null, 25.0],
+	    "ca": [null, 8.0],
+	    "node_limit": 100000,
+	    "iter_limit": 20
+	},
+	{
+	    "name": "compile",
+	    "cd": [-0.1, null],
+	    "ca": [50.0, 60.0]
+	},
+	{
+	    "name": "opt",
+	    "cd": [0.0, 25.0],
+	    "ca": [null, 10.0]
+	},
+	{
+	    "name": "all",
+	    "cd": [null, null],
+	    "ca": [null, null],
+	    "disabled": true
+	}
+    ]
 }

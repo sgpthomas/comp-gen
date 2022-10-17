@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["Max Willsey <me@mwillsey.com>", "Chandrakana Nandi <cnandi@cs.washington.edu>"]
 edition = "2018"
 
-[features]
-default = ["cli"]
-cli = ["dep:clap"]
-
 [dependencies]
 log = "0.4"
 env_logger = { version = "0.7", default-features = false }
@@ -30,7 +26,3 @@ smallvec = { version = "1.6", features = ["union", "const_generics"] }
 
 [dependencies.egg]
 version = "0.9.1"
-
-[dependencies.clap]
-version = "3.0.0-beta.2"
-optional = true

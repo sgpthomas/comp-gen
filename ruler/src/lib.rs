@@ -10,11 +10,8 @@ use log::{debug, info, warn};
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use serde::{Deserialize, Serialize};
+use std::borrow::{Borrow, Cow};
 use std::hash::Hash;
-use std::{
-    borrow::{Borrow, Cow},
-    collections::VecDeque,
-};
 use std::{
     fmt::{Debug, Display},
     marker::PhantomData,
@@ -27,9 +24,6 @@ mod convert_sexp;
 mod derive;
 mod equality;
 mod util;
-
-#[cfg(feature = "cli")]
-pub mod cli;
 
 /// Faster hashMap implementation used in rustc
 pub type HashMap<K, V> = rustc_hash::FxHashMap<K, V>;
@@ -362,6 +356,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             && t.elapsed() > Duration::from_secs(self.params.abs_timeout as u64)
     }
 
+    #[allow(unused)]
     fn time_left(&self) -> Duration {
         let limit = Duration::from_secs(self.params.abs_timeout as u64);
         if self.start_time.elapsed() > limit {
@@ -394,10 +389,10 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     Ok(())
                 }
             })
-            .with_node_limit(self.params.eqsat_node_limit * 2)
+            .with_node_limit(self.params.eqsat_node_limit)
             .with_iter_limit(self.params.eqsat_iter_limit)
-            // .with_time_limit(Duration::from_secs(self.params.eqsat_time_limit))
-            .with_time_limit(self.time_left())
+            .with_time_limit(Duration::from_secs(self.params.eqsat_time_limit))
+            // .with_time_limit(self.time_left())
             .with_scheduler(SimpleScheduler);
         runner = if self.params.enable_explanations {
             runner.with_explanations_enabled()
@@ -483,7 +478,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             by_cvec.entry(cvec).or_default().push(class.id);
         }
 
-        log::info!("(cvec_match_pair_wise) # unique cvecs: {}", by_cvec.len());
+        info!("(cvec_match_pair_wise) # unique cvecs: {}", by_cvec.len());
 
         let mut new_eqs = EqualityMap::default();
         let extract = Extractor::new(&self.egraph, AstSize);
@@ -503,7 +498,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             count > 0
         };
 
-        log::info!("CVec Loop");
+        info!("CVec Loop");
         for ids in by_cvec.values() {
             let mut ids = ids.iter().copied();
             while let Some(id1) = ids.next() {
@@ -515,7 +510,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                         let (_, e1) = extract.find_best(id1);
                         let (_, e2) = extract.find_best(id2);
                         if let Some(mut eq) = Equality::new(&e1, &e2) {
-                            log::debug!("  Candidate {}", eq);
+                            debug!("  Candidate {}", eq);
                             eq.ids = Some((id1, id2));
                             new_eqs.insert(eq.name.clone(), eq);
                         }
@@ -523,7 +518,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 }
             }
         }
-        log::info!("done");
+        info!("done");
 
         new_eqs.retain(|k, _v| !self.equalities.contains_key(k));
         new_eqs
@@ -687,12 +682,9 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     );
 
                     let rule_minimize_before = Instant::now();
-                    let (eqs, bads) = if self.params.minimize {
-                        self.minimize(new_eqs)
-                    } else {
-                        log::info!("choose_eqs: {}", new_eqs.len());
-                        self.choose_eqs(new_eqs)
-                    };
+
+                    let (eqs, bads) = self.choose_eqs(new_eqs);
+                    log::info!("choose_eqs: {}", eqs.len());
 
                     let rule_minimize =
                         rule_minimize_before.elapsed().as_secs_f64();
@@ -714,7 +706,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
                     log::info!("Chose {} good rules", eqs.len());
                     for eq in eqs.values() {
-                        log::debug!("  {}", eq);
+                        info!("  {}", eq);
                         if !self.params.no_run_rewrites {
                             assert!(!self.equalities.contains_key(&eq.name));
                             if let Some((i, j)) = eq.ids {
@@ -731,9 +723,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     // For the no-conditional case which returns
                     // a non-empty list of ids that have the same cvec,
                     // won't this cause eclasses to merge even if the rule is actually not valid?
-                    if self.params.minimize
-                        || self.params.rules_to_take == usize::MAX
-                    {
+                    if self.params.rules_to_take == usize::MAX {
                         log::info!("Stopping early, took all eqs");
                         break 'inner;
                     }
@@ -806,7 +796,6 @@ pub struct SynthParams {
     pub iters: usize,
     pub rules_to_take: usize,
     pub chunk_size: usize,
-    pub minimize: bool,
     pub no_constants_above_iter: usize,
     pub no_conditionals: bool,
     pub no_run_rewrites: bool,
@@ -816,12 +805,7 @@ pub struct SynthParams {
     pub eqsat_iter_limit: usize,
     pub eqsat_time_limit: u64,
     pub important_cvec_offsets: u32,
-    pub str_int_variables: usize,
     pub complete_cvec: bool,
-    pub no_xor: bool,
-    pub no_shift: bool,
-    pub num_fuzz: usize,
-    pub use_smt: bool,
     pub do_final_run: bool,
     pub enable_explanations: bool,
 }
@@ -836,7 +820,6 @@ impl Default for SynthParams {
             iters: 1,
             rules_to_take: 0,
             chunk_size: 100000,
-            minimize: false,
             no_constants_above_iter: 999999,
             no_conditionals: false,
             no_run_rewrites: false,
@@ -846,12 +829,7 @@ impl Default for SynthParams {
             eqsat_iter_limit: 2,
             eqsat_time_limit: 60,
             important_cvec_offsets: 5,
-            str_int_variables: 1,
             complete_cvec: false,
-            no_xor: false,
-            no_shift: false,
-            num_fuzz: 0,
-            use_smt: false,
             do_final_run: false,
             enable_explanations: false,
         }
@@ -949,6 +927,7 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
                     warn!("cvec1: {:?}", egraph[id1].data.cvec);
                     warn!("cvec2: {:?}", egraph[id2].data.cvec);
                     warn!("just: {justification:?}");
+                    panic!("This is going to cause problems. Let's just stop here.");
                 }
                 _ => (),
             }
@@ -1170,122 +1149,6 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             }
         }
         (new_eqs, bads)
-    }
-
-    /// Alternate minimization algorithm which is currently not used.
-    #[inline(never)]
-    fn minimize(
-        &mut self,
-        new_eqs: EqualityMap<L>,
-    ) -> (EqualityMap<L>, EqualityMap<L>) {
-        assert!(self.params.minimize);
-
-        let t = Instant::now();
-
-        let rule_validation = Instant::now();
-        let (new_eqs, bads): (EqualityMap<L>, EqualityMap<L>) = new_eqs
-            .into_iter()
-            .partition(|(_name, eq)| L::is_valid(self, &eq.lhs, &eq.rhs));
-
-        log::debug!(
-            "Time taken in validation: {}",
-            rule_validation.elapsed().as_secs_f64()
-        );
-
-        let n_new_eqs = new_eqs.len();
-        log::info!("Minimizing {} rules...", n_new_eqs);
-        let mut flat: VecDeque<Equality<L>> =
-            new_eqs.into_iter().map(|(_, eq)| eq).collect();
-        let mut test = vec![];
-
-        for mut n_chunks in (2..).map(|i| 1 << i) {
-            if n_chunks > flat.len() {
-                if n_chunks >= flat.len() * 2 {
-                    break;
-                }
-                n_chunks = flat.len();
-            }
-
-            log::info!("n chunks {}", n_chunks);
-
-            let mut chunk_sizes = vec![flat.len() / n_chunks; n_chunks];
-            for i in 0..(flat.len() % n_chunks) {
-                chunk_sizes[i] += 1;
-            }
-            assert_eq!(flat.len(), chunk_sizes.iter().sum::<usize>());
-
-            for size in chunk_sizes {
-                let n_new_eqs_this_loop = flat.len();
-                test.clear();
-                for _ in 0..size {
-                    test.push(flat.pop_front().unwrap());
-                }
-                assert_eq!(test.len(), size);
-
-                log::info!("chunk size {}, flat {}", size, flat.len());
-
-                let mut rewrites: Vec<_> = self
-                    .equalities
-                    .values()
-                    .flat_map(|eq| &eq.rewrites)
-                    .chain(flat.iter().flat_map(|eq| &eq.rewrites))
-                    .collect();
-
-                rewrites.sort_by_key(|rw| rw.name);
-                rewrites.dedup_by_key(|rw| rw.name);
-
-                let mut runner = self.mk_runner(self.initial_egraph.clone());
-
-                for candidate_eq in &test {
-                    runner =
-                        runner.with_expr(&L::instantiate(&candidate_eq.lhs));
-                    runner =
-                        runner.with_expr(&L::instantiate(&candidate_eq.rhs));
-                }
-
-                runner = runner.run(rewrites);
-
-                let extract = Extractor::new(&runner.egraph, AstSize);
-                flat.extend(runner.roots.chunks(2).zip(&test).filter_map(
-                    |(ids, eq)| {
-                        if runner.egraph.find(ids[0])
-                            == runner.egraph.find(ids[1])
-                        {
-                            None
-                        } else {
-                            let lhs = extract.find_best(ids[0]).1;
-                            let rhs = extract.find_best(ids[1]).1;
-                            // TODO get ids so they can be unioned by `run`
-                            if let Some(mut eq2) = Equality::new(&lhs, &rhs) {
-                                eq2.ids = eq.ids;
-                                Some(eq2)
-                            } else {
-                                None
-                            }
-                        }
-                    },
-                ));
-
-                log::info!(
-                    "Minimizing... threw away {} rules, {} / {} remain",
-                    n_new_eqs_this_loop - flat.len(),
-                    flat.len(),
-                    n_new_eqs
-                );
-            }
-        }
-
-        log::info!(
-            "Minimized {}->{} rules in {:?}",
-            n_new_eqs,
-            flat.len(),
-            t.elapsed()
-        );
-
-        (
-            flat.into_iter().map(|eq| (eq.name.clone(), eq)).collect(),
-            bads,
-        )
     }
 }
 

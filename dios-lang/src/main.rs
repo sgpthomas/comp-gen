@@ -1,17 +1,18 @@
 mod cost;
 mod desugar;
 mod error;
+mod fuzz;
 mod lang;
 #[allow(unused)]
 mod recexpr_helpers;
 mod rewriteconcats;
+mod smt;
 mod stringconversion;
 mod synthesis;
 
 use crate::desugar::Desugar;
 use anyhow::Context;
 use argh::FromArgs;
-use comp_gen::ruler;
 pub use error::Res;
 use log::info;
 use std::{fs, path::PathBuf, process};
@@ -41,12 +42,18 @@ pub struct SynthOpts {
     output: String,
 
     /// path to a dios configuration file
-    #[argh(option)]
-    config: Option<PathBuf>,
+    #[argh(option, from_str_fn(read_synth_config))]
+    config: Option<synthesis::DiosConfig>,
+}
 
-    /// path to a ruler synthesis configuration file
-    #[argh(option)]
-    ruler: Option<PathBuf>,
+fn read_synth_config(path: &str) -> Result<synthesis::DiosConfig, String> {
+    let config_file = fs::File::open(path)
+        .context("open config path")
+        .map_err(|e| e.to_string())?;
+    let parsed: synthesis::DiosConfig = serde_json::from_reader(config_file)
+        .context(format!("parse {path:?} as dios_config"))
+        .map_err(|e| e.to_string())?;
+    Ok(parsed)
 }
 
 #[derive(Debug, FromArgs)]
@@ -78,7 +85,7 @@ struct CompileOpts {
     pre_desugared: bool,
 
     /// config
-    #[argh(option, from_str_fn(read_config))]
+    #[argh(option, from_str_fn(read_compiler_config))]
     config: Option<comp_gen::config::CompilerConfiguration>,
 }
 
@@ -86,7 +93,7 @@ fn read_path(path: &str) -> Result<PathBuf, String> {
     Ok(PathBuf::from(path))
 }
 
-fn read_config(
+fn read_compiler_config(
     path: &str,
 ) -> Result<comp_gen::config::CompilerConfiguration, String> {
     let file = fs::File::open(path).map_err(|e| format!("{e}"))?;
@@ -96,14 +103,7 @@ fn read_config(
 }
 
 fn synth(synth_opts: SynthOpts) -> Res<()> {
-    let args = synth_opts
-        .ruler
-        .as_ref()
-        .map(|path| ruler::SynthParams::from_path(&path))
-        .unwrap_or_else(|| Ok(ruler::SynthParams::default()))
-        .context("Failed to open synth config")?;
-
-    let report = synthesis::run(args, synth_opts.clone())?;
+    let report = synthesis::run(synth_opts.config.unwrap_or_default())?;
     let file = std::fs::File::create(&synth_opts.output)
         .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
     serde_json::to_writer_pretty(file, &report).expect("failed to write json");
