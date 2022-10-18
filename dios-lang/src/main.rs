@@ -206,9 +206,6 @@ fn main() -> Res<()> {
     let _ = env_logger::builder().format_timestamp(None).try_init();
 
     let args: Cmdline = argh::from_env();
-    log::info!("hi there");
-    log::debug!("debug!!");
-    panic!("oh no");
 
     match args.nested {
         Commands::Synth(opts) => synth(opts),

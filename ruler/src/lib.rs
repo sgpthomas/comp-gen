@@ -645,13 +645,11 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 self.params.chunk_size
             );
             for chunk in &layer.chunks(self.params.chunk_size) {
-                eprintln!("Test");
                 log::info!(
                     "egraph n={}, e={}",
                     self.egraph.total_size(),
                     self.egraph.number_of_classes(),
                 );
-                eprintln!("Adding nodes in this chunk to the egraph.");
                 for node in chunk {
                     if self.check_time() {
                         break 'outer;
