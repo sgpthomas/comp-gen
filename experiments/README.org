@@ -146,12 +146,15 @@ total size is 5,255  speedup is 5.58
 #+end_example
 
 Just send everything to the remote machine.
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results output
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent
 rsync -rvp --exclude='.git*' --filter="dir-merge,- .gitignore" . \
       ubuntu@$IP:
 #+end_src
 
 Look at this insidious rule: =(/ (/ ?b ?b) (- ?a 1)) -> (* (+ ?a ?a) (/ 1 ?a))=
+
+(ite (= (* a a) 0) 0 (ite (> (* a a) 0) 1 (- 1))) != (- (div a a) (div 0 a))
+(sgn (* ?a ?a)) => (- (/ ?a ?a) (/ 0 ?a))
 
 Run things on remote machine.
 #+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent :ansi t :name "hi"
@@ -172,6 +175,8 @@ RUST_BACTRACE=1 RUST_LOG='debug,egg=info,ruler=info,z3=off' time \
     # 	    --rules debug_sgn.json \
     # 	    --config experiments/filtering/test.json
 #+end_src
+
+The money question is why we are using rules that are never explicitly checked by =L::is_valid=.
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent
 cd dios-lang

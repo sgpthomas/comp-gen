@@ -835,21 +835,27 @@ pub fn run(
     debug!("running with config: {dios_config:#?}");
 
     // create the synthesizer
-    let syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
+    let /*mut*/ syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
         dios_config.ruler_config.clone(),
         dios_config.clone(),
     )
     .init();
 
-    // debug
+    // // debug
     // let res = lang::VecLang::smt_equals(
     //     &mut syn,
-    //     &"(VecMul (VecDiv ?d ?c) (VecDiv ?b ?a))".parse().unwrap(),
-    //     &"(VecDiv (VecSqrt ?a) (VecMinus ?d ?b))".parse().unwrap(),
+    //     &"(- (/ ?a ?a) (/ 0 ?a))".parse().unwrap(),
+    //     &"(sgn (* ?a ?a))".parse().unwrap(),
+    // );
+    // debug!("res: {res}");
+    // let res = lang::VecLang::smt_equals(
+    //     &mut syn,
+    //     &"(/ 0 ?a)".parse().unwrap(),
+    //     &"0".parse().unwrap(),
     // );
     // debug!("res: {res}");
     // panic!();
-    // debug
+    // // debug
 
     // run the synthesizer
     let report = syn.run();

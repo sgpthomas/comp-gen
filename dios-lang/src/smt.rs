@@ -21,7 +21,7 @@ impl SmtEquals for lang::VecLang {
         let mut cfg = z3::Config::new();
         cfg.set_timeout_msec(1000);
         let ctx = z3::Context::new(&cfg);
-        let solver = z3::Solver::new(&ctx);
+        let mut solver = z3::Solver::new(&ctx);
 
         let sqrt_fun: z3::FuncDecl = z3::FuncDecl::new(
             &ctx,
@@ -30,8 +30,10 @@ impl SmtEquals for lang::VecLang {
             &z3::Sort::int(&ctx),
         );
 
-        let left = egg_to_z3(&ctx, &Self::instantiate(lhs), &sqrt_fun);
-        let right = egg_to_z3(&ctx, &Self::instantiate(rhs), &sqrt_fun);
+        let left =
+            egg_to_z3(&ctx, &mut solver, &Self::instantiate(lhs), &sqrt_fun);
+        let right =
+            egg_to_z3(&ctx, &mut solver, &Self::instantiate(rhs), &sqrt_fun);
 
         // if we can translate egg to z3 for both lhs, and rhs, then
         // run the z3 solver. otherwise fallback to fuzz_equals
@@ -49,6 +51,7 @@ impl SmtEquals for lang::VecLang {
                 z3::SatResult::Unknown | z3::SatResult::Sat => false,
             };
 
+            // debug!("model: {:?}", solver.get_model());
             debug!("z3 result: {smt}");
 
             // if smt != fuzz {
@@ -84,6 +87,7 @@ impl SmtEquals for lang::VecLang {
 /// This only works for operations on integers for now.
 pub fn egg_to_z3<'a>(
     ctx: &'a z3::Context,
+    solver: &mut z3::Solver,
     expr: &egg::RecExpr<lang::VecLang>,
     sqrt_fun: &'a z3::FuncDecl,
 ) -> Option<z3::ast::Int<'a>> {
@@ -123,6 +127,8 @@ pub fn egg_to_z3<'a>(
             lang::VecLang::Div([x, y]) => {
                 let x_int = &buf[usize::from(*x)];
                 let y_int = &buf[usize::from(*y)];
+                // let zero = z3::ast::Int::from_i64(ctx, 0);
+                // solver.assert(&y_int._eq(&zero).not());
                 buf.push(x_int / y_int);
             }
             lang::VecLang::Neg([x]) => {

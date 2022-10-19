@@ -6,7 +6,6 @@ It uses equality saturation in two novel ways to scale the rule synthesis:
 !*/
 use egg::*;
 use itertools::Itertools;
-use log::{debug, info, warn};
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use serde::{Deserialize, Serialize};
@@ -491,7 +490,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             by_cvec.entry(cvec).or_default().push(class.id);
         }
 
-        info!("(cvec_match_pair_wise) # unique cvecs: {}", by_cvec.len());
+        log::info!("(cvec_match_pair_wise) # unique cvecs: {}", by_cvec.len());
 
         let mut new_eqs = EqualityMap::default();
         let extract = Extractor::new(&self.egraph, AstSize);
@@ -511,7 +510,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             count > 0
         };
 
-        info!("CVec Loop");
+        log::info!("CVec Loop");
         for ids in by_cvec.values() {
             let mut ids = ids.iter().copied();
             while let Some(id1) = ids.next() {
@@ -523,7 +522,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                         let (_, e1) = extract.find_best(id1);
                         let (_, e2) = extract.find_best(id2);
                         if let Some(mut eq) = Equality::new(&e1, &e2) {
-                            debug!("  Candidate {}", eq);
+                            log::debug!("  Candidate {}", eq);
                             eq.ids = Some((id1, id2));
                             new_eqs.insert(eq.name.clone(), eq);
                         }
@@ -531,7 +530,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 }
             }
         }
-        info!("done");
+        log::info!("done");
 
         new_eqs.retain(|k, _v| !self.equalities.contains_key(k));
         new_eqs
@@ -618,6 +617,8 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             // and not a vector
             // layer.retain(|n| !n.all(|id| self.egraph[id].data.exact));
 
+            // we are using that if we want this behavior, this is implemented
+            // in L::make_layer(). this behavior is filtering out constants
             // log::info!("{}", iter > self.params.no_constants_above_iter);
             // if iter > self.params.no_constants_above_iter {
             //     let mut extract = Extractor::new(&self.egraph, NumberOfOps);
@@ -657,7 +658,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     self.egraph.add(node);
                 }
                 'inner: loop {
-                    debug!("Starting inner loop");
+                    log::debug!("Starting inner loop");
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
                         break 'outer;
@@ -707,7 +708,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                         let s = format!("{}", bad.0);
                         // make sure that none of the rules contain a quote
                         if s.contains("!!!") || s.contains("\"") {
-                            log::info!("culprit: {}", bad.0);
+                            log::error!("culprit: {}", bad.0);
                             panic!();
                         }
                         log::debug!("adding {} to poison set", bad.0);
@@ -720,7 +721,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
                     log::info!("Chose {} good rules", eqs.len());
                     for eq in eqs.values() {
-                        info!("  {}", eq);
+                        log::info!("  {}", eq);
                         if !self.params.no_run_rewrites {
                             assert!(!self.equalities.contains_key(&eq.name));
                             if let Some((i, j)) = eq.ids {
@@ -937,10 +938,14 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
                     let (_, prog1) = extractor.find_best(id1);
                     let (_, prog2) = extractor.find_best(id2);
 
-                    warn!("{} <=> {}", prog1.pretty(80), prog2.pretty(80));
-                    warn!("cvec1: {:?}", egraph[id1].data.cvec);
-                    warn!("cvec2: {:?}", egraph[id2].data.cvec);
-                    warn!("just: {justification:?}");
+                    log::error!(
+                        "{} <=> {}",
+                        prog1.pretty(80),
+                        prog2.pretty(80)
+                    );
+                    log::error!("cvec1: {:?}", egraph[id1].data.cvec);
+                    log::error!("cvec2: {:?}", egraph[id2].data.cvec);
+                    log::error!("just: {justification:?}");
                     panic!("This is going to cause problems. Let's just stop here.");
                 }
                 _ => (),
@@ -1026,6 +1031,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         step: usize,
         should_validate: bool,
     ) -> (EqualityMap<L>, EqualityMap<L>) {
+        log::info!("Entering shrink: should_validate: {should_validate}");
         let mut keepers = EqualityMap::default();
         let mut bads = EqualityMap::default();
         let initial_len = new_eqs.len();
@@ -1044,6 +1050,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     break;
                 }
 
+                // Call `L::is_valid` on `eq`. If valid, add to `keepers`
                 if should_validate {
                     let rule_validation = Instant::now();
                     let valid = L::is_valid(self, &eq.lhs, &eq.rhs);
@@ -1063,15 +1070,19 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     took += old.is_none() as usize;
                 }
 
+                // break if we have taken more than our step size
                 if took >= step {
                     break;
                 }
             }
 
+            // stop if we didn't take any equations
             if new_eqs.is_empty() {
                 break;
             }
 
+            // only keep as many rules as `self.params.rules_to_take`
+            // if we have exceeded that, truncate and then break.
             if keepers.len() >= self.params.rules_to_take {
                 keepers.truncate(self.params.rules_to_take);
                 break;
@@ -1079,6 +1090,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
             log::info!("Shrinking with {} keepers", keepers.len());
 
+            // gather up all the equalities that we know about so far
             let rewrites = self
                 .equalities
                 .values()
@@ -1090,12 +1102,16 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             //     log::info!("rewrites: {}", eq.name);
             // }
 
+            // make a runner to minimize the set of candidate equations
             let mut runner = self.mk_runner(self.initial_egraph.clone());
+
+            // add all candidates to the egraph
             for candidate_eq in new_eqs.values() {
                 runner = runner.with_expr(&L::instantiate(&candidate_eq.lhs));
                 runner = runner.with_expr(&L::instantiate(&candidate_eq.rhs));
             }
 
+            // perform the rewriting
             runner = runner.run(rewrites);
             log::info!(
                 "Stopping {:?}, {:?}",
@@ -1103,6 +1119,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 runner.iterations.len()
             );
 
+            // extract the smallest rules
             let old_len = new_eqs.len();
             let extract = Extractor::new(&runner.egraph, AstSize);
             new_eqs.clear();
@@ -1140,7 +1157,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         mut new_eqs: EqualityMap<L>,
     ) -> (EqualityMap<L>, EqualityMap<L>) {
         let mut bads = EqualityMap::default();
-        let mut should_validate = true;
+        let should_validate = true;
         for step in vec![100, 10, 1] {
             if self.check_time() {
                 break;
@@ -1157,10 +1174,11 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             new_eqs = n;
             bads.extend(b);
 
+            // WHY IS THIS HEREERERER!!!!
             // if we taking all the rules, we don't need to validate anymore
-            if self.params.rules_to_take == usize::MAX {
-                should_validate = false;
-            }
+            // if self.params.rules_to_take == usize::MAX {
+            //     should_validate = false;
+            // }
         }
         (new_eqs, bads)
     }
