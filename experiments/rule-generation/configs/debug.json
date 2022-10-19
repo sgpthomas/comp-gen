@@ -32,7 +32,7 @@
 	"seed": 0,
 	"n_samples": 0,
 	"variables": 6,
-	"abs_timeout": 1000,
+	"abs_timeout": 2000,
 	"iters": 3,
 	"rules_to_take": 18446744073709551615,
 	"chunk_size": 100000,

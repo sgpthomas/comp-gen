@@ -135,7 +135,7 @@ pub fn egg_to_z3<'a>(
                 let one = z3::ast::Int::from_i64(ctx, 1);
                 let m_one = z3::ast::Int::from_i64(ctx, -1);
 
-                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&m_one, &one);
+                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(&one, &m_one);
                 let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
 
                 buf.push(sgn);
