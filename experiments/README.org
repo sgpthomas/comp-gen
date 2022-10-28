@@ -146,23 +146,35 @@ total size is 5,255  speedup is 5.58
 #+end_example
 
 Just send everything to the remote machine.
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent output
 rsync -rvp --exclude='.git*' --filter="dir-merge,- .gitignore" . \
       ubuntu@$IP:
 #+end_src
 
 Look at this insidious rule: =(/ (/ ?b ?b) (- ?a 1)) -> (* (+ ?a ?a) (/ 1 ?a))=
 
-(ite (= (* a a) 0) 0 (ite (> (* a a) 0) 1 (- 1))) != (- (div a a) (div 0 a))
-(sgn (* ?a ?a)) => (- (/ ?a ?a) (/ 0 ?a))
+I'm trying to merge the following two classes. These should be the same:
+=(sgn (* a a)) <-> (sgn (* (* (* a a) (* a a)) (* (* a a) (* a a))))=
+
+The left hand side looks right. All the values are either 1 or 0. The right hand side however, is wack. Some of the values are -1.
+
+The justification that I'm given looks like: =Some(Rule("(- (/ ?a ?a) (/ 0 ?a)) -> (sgn (* ?a ?a))"))=. Depending on what you want to do with division by zero, this rule seems correct.
+
+Firstly, why does this rule cause these two things to get merged? It must be because =(- (/ ?a ?a) (/ 0 ?a))= is in the equivalence class of =(sgn (* a a))= right? I think that's right. Can I verify this?
+
+#+begin_example
+(VecDiv (VecDiv ?d ?c) (VecMul ?b ?a)) => (VecDiv (VecSqrt ?c) (VecMinus ?d ?a))
+(VecDiv (VecSqrt ?c) (VecMinus ?d ?a)) => (VecDiv (VecDiv ?d ?c) (VecMul ?b ?a))
+#+end_example
 
 Run things on remote machine.
-#+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent :ansi t :name "hi"
+#+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent :ansi t
 dir="experiments/rule-generation"
-RUST_BACTRACE=1 RUST_LOG='debug,egg=info,ruler=info,z3=off' time \
-		cargo run --release --manifest-path dios-lang/Cargo.toml \
-		-- synth debug_sgn.json \
-		--config $dir/configs/debug.json
+export RUST_BACKTRACE=full
+export RUST_LOG='info,egg=info,ruler=info,z3=off'
+time cargo run --release --manifest-path dios-lang/Cargo.toml \
+    -- synth debug_sgn.json \
+    --config $dir/configs/debug.json #2>stderr.log
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
 # BENCH=q-prod
@@ -177,6 +189,7 @@ RUST_BACTRACE=1 RUST_LOG='debug,egg=info,ruler=info,z3=off' time \
 #+end_src
 
 The money question is why we are using rules that are never explicitly checked by =L::is_valid=.
+This was not the money question :(
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent
 cd dios-lang

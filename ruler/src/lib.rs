@@ -7,10 +7,13 @@ It uses equality saturation in two novel ways to scale the rule synthesis:
 use egg::*;
 use itertools::Itertools;
 use rand::SeedableRng;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg32;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
+use std::fs;
 use std::hash::Hash;
+use std::io::Read;
 use std::{
     fmt::{Debug, Display},
     marker::PhantomData,
@@ -45,7 +48,7 @@ pub fn letter(i: usize) -> &'static str {
 
 /// Properties of cvecs in `Ruler`; currently onyl their length.
 /// cvecs are stored as [eclass analysis data](https://docs.rs/egg/0.7.1/egg/trait.Analysis.html).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SynthAnalysis {
     /// Length of cvec or characteristic vector.
     /// All cvecs have the same length.    
@@ -64,10 +67,23 @@ impl Default for SynthAnalysis {
 /// `eval` implements an interpreter for the domain. It returns a `Cvec` of length `cvec_len`
 /// where each cvec element is computed using `eval`.
 pub trait SynthLanguage:
-    egg::Language + Send + Sync + Display + FromOp + 'static
+    egg::Language
+    + Send
+    + Sync
+    + Display
+    + FromOp
+    + 'static
+    + Serialize
+    + DeserializeOwned
 {
-    type Constant: Clone + Hash + Eq + Debug + Display;
-    type Config: Clone;
+    type Constant: Clone
+        + Hash
+        + Eq
+        + Debug
+        + Display
+        + Serialize
+        + DeserializeOwned;
+    type Config: Clone + Serialize + DeserializeOwned;
 
     fn eval<'a, F>(&'a self, cvec_len: usize, f: F) -> CVec<Self>
     where
@@ -248,6 +264,16 @@ pub trait SynthLanguage:
         let r = Self::convert_parse(&list[2].to_string());
         Equality::new(&l, &r)
     }
+
+    /// debug pre-union function.
+    fn debug_pre_union(
+        _egraph: &EGraph<Self, SynthAnalysis>,
+        _id1: Id,
+        _id2: Id,
+        _justification: &Option<egg::Justification>,
+    ) {
+        // empty implementation by default
+    }
 }
 
 #[cfg(feature = "cli")]
@@ -286,29 +312,57 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Uninit;
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Init;
 
 /// A synthesizer for a given [SynthLanguage].
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(bound = "L: SynthLanguage")]
 pub struct Synthesizer<L: SynthLanguage, State> {
     pub params: SynthParams,
     pub lang_config: L::Config,
-    pub rng: Pcg64,
+    pub rng: Pcg32,
     pub egraph: EGraph<L, SynthAnalysis>,
     initial_egraph: EGraph<L, SynthAnalysis>,
     pub equalities: EqualityMap<L>,
     pub smt_unknown: usize,
+    #[serde(serialize_with = "start_time_serialize")]
+    #[serde(deserialize_with = "start_time_deserialize")]
     start_time: Instant,
     phantom_state: PhantomData<State>,
 }
 
-impl<L: SynthLanguage> Synthesizer<L, Uninit> {
+pub fn start_time_serialize<S>(
+    instant: &Instant,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    let duration = instant.elapsed();
+    duration.serialize(serializer)
+}
+
+pub fn start_time_deserialize<'de, D>(
+    deserializer: D,
+) -> Result<Instant, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let duration = Duration::deserialize(deserializer)?;
+    let now = Instant::now();
+    let instant = now
+        .checked_sub(duration)
+        .ok_or_else(|| serde::de::Error::custom("Error checked_add"))?;
+    Ok(instant)
+}
+
+impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
     pub fn new_with_data(params: SynthParams, data: L::Config) -> Self {
         Synthesizer {
-            rng: Pcg64::seed_from_u64(params.seed),
+            rng: Pcg32::seed_from_u64(params.seed),
             egraph: Default::default(),
             initial_egraph: Default::default(),
             equalities: Default::default(),
@@ -338,7 +392,7 @@ impl<L: SynthLanguage> Synthesizer<L, Uninit> {
     }
 }
 
-impl<L: SynthLanguage> Synthesizer<L, Uninit>
+impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit>
 where
     L::Config: Default,
 {
@@ -348,7 +402,7 @@ where
     }
 }
 
-impl<L: SynthLanguage> Synthesizer<L, Init> {
+impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
     fn check_time(&self) -> bool {
         let t = self.start_time;
         self.params.abs_timeout > 0
@@ -364,6 +418,28 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             Duration::from_secs(self.params.abs_timeout as u64)
                 - self.start_time.elapsed()
         }
+    }
+
+    fn save_checkpoint(&self, outer_index: usize, inner_index: usize) {
+        log::info!("Starting a checkpoint!");
+        let mut s = flexbuffers::FlexbufferSerializer::new();
+        self.serialize(&mut s).unwrap();
+        fs::write(format!("ruler_{outer_index}_{inner_index}.chkpt"), s.view())
+            .expect("Write failed");
+        log::info!("Finished writing a checkpoint.");
+    }
+
+    #[allow(unused)]
+    fn load_checkpoint(&mut self, filename: &str) {
+        let mut chkpt_file = fs::File::open(filename).expect("File not found");
+        let metadata =
+            fs::metadata(&filename).expect("Unable to read metadata");
+        let mut buffer = vec![0; metadata.len() as usize];
+        chkpt_file.read(&mut buffer).expect("Failed to read file");
+        let reader = flexbuffers::Reader::get_root(buffer.as_slice())
+            .expect("Failed to make reader.");
+        let copy = Self::deserialize(reader).expect("Failed to deserialize!");
+        *self = copy;
     }
 
     /// Get the eclass ids for all eclasses in the egraph.
@@ -522,7 +598,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                         let (_, e1) = extract.find_best(id1);
                         let (_, e2) = extract.find_best(id2);
                         if let Some(mut eq) = Equality::new(&e1, &e2) {
-                            log::debug!("  Candidate {}", eq);
+                            // log::debug!("  Candidate {}", eq);
                             eq.ids = Some((id1, id2));
                             new_eqs.insert(eq.name.clone(), eq);
                         }
@@ -564,7 +640,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 let ((_c1, e1), id1) = terms_ids.remove(0);
                 for ((_c2, e2), id2) in terms_ids {
                     if let Some(mut eq) = Equality::new(&e1, &e2) {
-                        log::debug!("  Candidate {}", eq);
+                        // log::debug!("  Candidate {}", eq);
                         eq.ids = Some((id1, id2));
                         new_eqs.insert(eq.name.clone(), eq);
                     }
@@ -576,7 +652,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     for &id2 in id_iter.clone() {
                         let (_, e2) = extract.find_best(id2);
                         if let Some(mut eq) = Equality::new(&e1, &e2) {
-                            log::debug!("  Candidate {}", eq);
+                            // log::debug!("  Candidate {}", eq);
                             eq.ids = Some((id1, id2));
                             new_eqs.insert(eq.name.clone(), eq);
                         }
@@ -645,6 +721,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                 "Made layer! Using chunk size: {}",
                 self.params.chunk_size
             );
+            let mut inner_i = 0;
             for chunk in &layer.chunks(self.params.chunk_size) {
                 log::info!(
                     "egraph n={}, e={}",
@@ -661,6 +738,8 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     log::debug!("Starting inner loop");
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
+                        // we doing another loop save a checkpoint
+                        self.save_checkpoint(iter, inner_i);
                         break 'outer;
                     }
 
@@ -676,16 +755,17 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                         "cvec matching... (no_conditionals: {})",
                         self.params.no_conditionals
                     );
-                    let (new_eqs, _) = if self.params.no_conditionals {
+                    let (candidates, _) = if self.params.no_conditionals {
                         self.cvec_match()
                     } else {
                         (self.cvec_match_pair_wise(), vec![])
                     };
                     let rule_discovery =
                         rule_discovery_before.elapsed().as_secs_f64();
-                    log::info!("{} candidate eqs", new_eqs.len());
+                    log::info!("{} candidate eqs", candidates.len());
 
-                    let new_eqs: EqualityMap<L> = new_eqs
+                    // remove any known bad rules from the candiate set
+                    let candidates: EqualityMap<L> = candidates
                         .into_iter()
                         .filter(|eq| !poison_rules.contains(&eq.1))
                         .collect();
@@ -698,7 +778,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
                     let rule_minimize_before = Instant::now();
 
-                    let (eqs, bads) = self.choose_eqs(new_eqs);
+                    let (eqs, bads) = self.choose_eqs(candidates);
                     log::info!("choose_eqs: {}", eqs.len());
 
                     let rule_minimize =
@@ -711,11 +791,15 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                             log::error!("culprit: {}", bad.0);
                             panic!();
                         }
-                        log::debug!("adding {} to poison set", bad.0);
+                        // log::debug!("adding {} to poison set", bad.0);
                         poison_rules.insert(bad.1);
                     }
+
                     if eqs.is_empty() {
                         log::info!("Stopping early, no eqs");
+                        // we doing another loop save a checkpoint
+                        self.save_checkpoint(iter, inner_i);
+                        inner_i += 1;
                         break 'inner;
                     }
 
@@ -740,8 +824,16 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     // won't this cause eclasses to merge even if the rule is actually not valid?
                     if self.params.rules_to_take == usize::MAX {
                         log::info!("Stopping early, took all eqs");
+
+                        // we doing another loop save a checkpoint
+                        self.save_checkpoint(iter, inner_i);
+                        inner_i += 1;
                         break 'inner;
                     }
+
+                    // we doing another loop save a checkpoint
+                    self.save_checkpoint(iter, inner_i);
+                    inner_i += 1;
                 }
             }
         }
@@ -903,7 +995,8 @@ macro_rules! map {
 }
 
 /// The Signature represents eclass analysis data.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(bound = "L: SynthLanguage")]
 pub struct Signature<L: SynthLanguage> {
     pub cvec: CVec<L>,
     pub exact: bool,
@@ -926,31 +1019,7 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
         id2: Id,
         justification: &Option<egg::Justification>,
     ) {
-        for (val1, val2) in egraph[id1]
-            .data
-            .cvec
-            .iter()
-            .zip(egraph[id2].data.cvec.iter())
-        {
-            match (val1, val2) {
-                (Some(x), Some(y)) if x != y => {
-                    let extractor = egg::Extractor::new(egraph, egg::AstSize);
-                    let (_, prog1) = extractor.find_best(id1);
-                    let (_, prog2) = extractor.find_best(id2);
-
-                    log::error!(
-                        "{} <=> {}",
-                        prog1.pretty(80),
-                        prog2.pretty(80)
-                    );
-                    log::error!("cvec1: {:?}", egraph[id1].data.cvec);
-                    log::error!("cvec2: {:?}", egraph[id2].data.cvec);
-                    log::error!("just: {justification:?}");
-                    panic!("This is going to cause problems. Let's just stop here.");
-                }
-                _ => (),
-            }
-        }
+        L::debug_pre_union(egraph, id1, id2, justification);
     }
 
     fn merge(&mut self, to: &mut Self::Data, from: Self::Data) -> DidMerge {
@@ -1027,25 +1096,25 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
     #[inline(never)]
     fn shrink(
         &mut self,
-        mut new_eqs: EqualityMap<L>,
+        mut candidates: EqualityMap<L>,
         step: usize,
         should_validate: bool,
     ) -> (EqualityMap<L>, EqualityMap<L>) {
         log::info!("Entering shrink: should_validate: {should_validate}");
         let mut keepers = EqualityMap::default();
         let mut bads = EqualityMap::default();
-        let initial_len = new_eqs.len();
-        while !new_eqs.is_empty() {
+        let initial_len = candidates.len();
+        while !candidates.is_empty() {
             if self.check_time() {
                 break;
             }
 
             // best are last
-            new_eqs.sort_by(|_, eq1, _, eq2| eq1.score().cmp(&eq2.score()));
+            candidates.sort_by(|_, eq1, _, eq2| eq1.score().cmp(&eq2.score()));
 
-            // take step valid rules from the end of new_eqs
+            // take `step` valid rules from the end of new_eqs
             let mut took = 0;
-            while let Some((name, eq)) = new_eqs.pop() {
+            while let Some((name, eq)) = candidates.pop() {
                 if self.check_time() {
                     break;
                 }
@@ -1060,6 +1129,24 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     );
 
                     if valid {
+                        // DEBUG
+                        // ok so this is not working :(. Not exactly sure why not
+                        // I was trying to figure out why, these terms are in the candidate set
+                        // if eq.to_string() == "(VecDiv (VecDiv d c) (VecMul b a)) => (VecDiv (VecSqrt c) (VecMinus d a))"
+                        //         || eq.to_string() == "(VecDiv (VecSqrt c) (VecMinus d a)) => (VecDiv (VecDiv d c) (VecMul b a))"
+                        //     {
+                        //         let mut eg = runner.egraph.clone();
+                        //         log::error!(
+                        //             "left expl: {}",
+                        //             eg.explain_existance(&left)
+                        //         );
+                        //         log::error!(
+                        //             "right expl: {}",
+                        //             eg.explain_existance(&right)
+                        //         );
+                        //     }
+                        log::info!("inserting {}", eq);
+                        // DEBUG
                         let old = keepers.insert(name, eq);
                         took += old.is_none() as usize;
                     } else {
@@ -1077,7 +1164,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             }
 
             // stop if we didn't take any equations
-            if new_eqs.is_empty() {
+            if candidates.is_empty() {
                 break;
             }
 
@@ -1103,10 +1190,28 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             // }
 
             // make a runner to minimize the set of candidate equations
-            let mut runner = self.mk_runner(self.initial_egraph.clone());
 
+            // let mut egraph = self.initial_egraph.clone();
+            // let mut roots: HashMap<egg::Id, egg::RecExpr<L>> =
+            //     HashMap::default();
+
+            // manaully keep track of the root sets, so that we
+            // can see into it. This is a debugging measure for now.
+            // I'll probably revert this change.
+            // for candidate_eq in new_eqs.values() {
+            //     let lhs_id =
+            //         egraph.add_expr(&L::instantiate(&candidate_eq.lhs));
+            //     roots.insert(lhs_id, L::instantiate(&candidate_eq.lhs));
+
+            //     let rhs_id =
+            //         egraph.add_expr(&L::instantiate(&candidate_eq.rhs));
+            //     roots.insert(rhs_id, L::instantiate(&candidate_eq.rhs));
+            // }
+            // let mut runner = self.mk_runner(egraph);
+
+            let mut runner = self.mk_runner(self.initial_egraph.clone());
             // add all candidates to the egraph
-            for candidate_eq in new_eqs.values() {
+            for candidate_eq in candidates.values() {
                 runner = runner.with_expr(&L::instantiate(&candidate_eq.lhs));
                 runner = runner.with_expr(&L::instantiate(&candidate_eq.rhs));
             }
@@ -1120,16 +1225,19 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             );
 
             // extract the smallest rules
-            let old_len = new_eqs.len();
+            let old_len = candidates.len();
             let extract = Extractor::new(&runner.egraph, AstSize);
-            new_eqs.clear();
-            for ids in runner.roots.chunks(2) {
-                if runner.egraph.find(ids[0]) != runner.egraph.find(ids[1]) {
-                    let left = extract.find_best(ids[0]).1;
-                    let right = extract.find_best(ids[1]).1;
+            candidates.clear();
+            // for ((id0, _expr0), (id1, _expr1)) in
+            // for (id0, id1) in runner.roots.into_iter().tuples() {
+            for (id0, id1) in runner.roots.into_iter().tuples() {
+                // if our roots are in different eclasses
+                if runner.egraph.find(id0) != runner.egraph.find(id1) {
+                    let left = extract.find_best(id0).1;
+                    let right = extract.find_best(id1).1;
                     if let Some(eq) = Equality::new(&left, &right) {
                         if !self.equalities.contains_key(&eq.name) {
-                            new_eqs.insert(eq.name.clone(), eq);
+                            candidates.insert(eq.name.clone(), eq);
                         }
                     }
                 }
@@ -1137,15 +1245,15 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
 
             log::info!(
                 "Minimizing... threw away {} rules, {} / {} remain",
-                old_len - new_eqs.len(),
-                new_eqs.len(),
+                old_len - candidates.len(),
+                candidates.len(),
                 initial_len,
             );
         }
-        if self.params.rules_to_take == usize::MAX && !new_eqs.is_empty() {
-            // assert!(new_eqs.is_empty());
-            // eprintln!("{:?}", new_eqs);
+        if self.params.rules_to_take == usize::MAX && !candidates.is_empty() {
             eprintln!("New eqs not empty");
+            assert!(candidates.is_empty());
+            // eprintln!("{:?}", new_eqs);
         }
         (keepers, bads)
     }
@@ -1157,7 +1265,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         mut new_eqs: EqualityMap<L>,
     ) -> (EqualityMap<L>, EqualityMap<L>) {
         let mut bads = EqualityMap::default();
-        let should_validate = true;
+        let /* mut */ should_validate = true;
         for step in vec![100, 10, 1] {
             if self.check_time() {
                 break;
@@ -1175,7 +1283,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             bads.extend(b);
 
             // WHY IS THIS HEREERERER!!!!
-            // if we taking all the rules, we don't need to validate anymore
+            // guess: if we taking all the rules, we don't need to validate anymore
             // if self.params.rules_to_take == usize::MAX {
             //     should_validate = false;
             // }

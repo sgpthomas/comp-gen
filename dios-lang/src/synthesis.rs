@@ -4,14 +4,14 @@ use itertools::Itertools;
 use log::debug;
 use num::integer::Roots;
 use rand::Rng;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg32;
 use ruler::{
     letter, map, self_product, CVec, Equality, SynthAnalysis, SynthLanguage,
     Synthesizer,
 };
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::str::FromStr;
 
@@ -31,7 +31,7 @@ pub fn split_into_halves(n: usize) -> (usize, usize) {
 /// If no such `n` exists, then return None.
 /// This is defined when b != 0 and there
 /// exists some n such that b * n = a.
-fn integer_division(a: i32, b: i32) -> Option<i32> {
+fn integer_division(a: i64, b: i64) -> Option<i64> {
     if b == 0 {
         None
     } else if a == 0 {
@@ -45,7 +45,7 @@ fn integer_division(a: i32, b: i32) -> Option<i32> {
 impl lang::Value {
     fn int1<F>(arg: &Self, f: F) -> Option<lang::Value>
     where
-        F: Fn(i32) -> lang::Value,
+        F: Fn(i64) -> lang::Value,
     {
         if let lang::Value::Int(val) = arg {
             Some(f(*val))
@@ -56,7 +56,7 @@ impl lang::Value {
 
     fn int2<F>(lhs: &Self, rhs: &Self, f: F) -> Option<lang::Value>
     where
-        F: Fn(i32, i32) -> lang::Value,
+        F: Fn(i64, i64) -> lang::Value,
     {
         if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (lhs, rhs) {
             Some(f(*lv, *rv))
@@ -140,7 +140,7 @@ impl lang::Value {
     }
 
     #[allow(unused)]
-    fn int_range(min: i32, max: i32, num_samples: usize) -> Vec<lang::Value> {
+    fn int_range(min: i64, max: i64, num_samples: usize) -> Vec<lang::Value> {
         (min..=max)
             .step_by(((max - min) as usize) / num_samples)
             .map(lang::Value::Int)
@@ -148,9 +148,9 @@ impl lang::Value {
     }
 
     fn sample_int(
-        rng: &mut Pcg64,
-        min: i32,
-        max: i32,
+        rng: &mut Pcg32,
+        min: i64,
+        max: i64,
         num_samples: usize,
     ) -> Vec<lang::Value> {
         (0..num_samples)
@@ -159,9 +159,9 @@ impl lang::Value {
     }
 
     pub fn sample_vec(
-        rng: &mut Pcg64,
-        min: i32,
-        max: i32,
+        rng: &mut Pcg32,
+        min: i64,
+        max: i64,
         list_size: usize,
         num_samples: usize,
     ) -> Vec<lang::Value> {
@@ -175,7 +175,7 @@ impl lang::Value {
     }
 }
 
-fn sgn(x: i32) -> i32 {
+fn sgn(x: i64) -> i64 {
     match x.cmp(&0) {
         std::cmp::Ordering::Less => -1,
         std::cmp::Ordering::Equal => 0,
@@ -186,7 +186,7 @@ fn sgn(x: i32) -> i32 {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiosConstant {
     pub kind: String,
-    pub value: i32,
+    pub value: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -265,15 +265,15 @@ impl SynthLanguage for lang::VecLang {
     {
         match self {
             lang::VecLang::Const(i) => vec![Some(i.clone()); cvec_len],
-            lang::VecLang::Add([l, r]) => {
-                map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r)))
-            }
-            lang::VecLang::Mul([l, r]) => {
-                map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r)))
-            }
-            lang::VecLang::Minus([l, r]) => {
-                map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r)))
-            }
+            lang::VecLang::Add([l, r]) => map!(get, l, r => {
+                lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
+            }),
+            lang::VecLang::Mul([l, r]) => map!(get, l, r => {
+                lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r))
+            }),
+            lang::VecLang::Minus([l, r]) => map!(get, l, r => {
+                lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r))
+            }),
             lang::VecLang::Div([l, r]) => get(l)
                 .iter()
                 .zip(get(r).iter())
@@ -507,6 +507,8 @@ impl SynthLanguage for lang::VecLang {
         });
 
         ////// HACK
+        // lol i don't remember why this is a hack. I think I wanted this to be done
+        // inside of ruler?
         if synth.params.enable_explanations {
             egraph = egraph.with_explanations_enabled();
         }
@@ -518,6 +520,8 @@ impl SynthLanguage for lang::VecLang {
         }
 
         // add variables
+        // set the initial cvecs of variables. this represents all the possible
+        // values that this variable can have
         for i in 0..synth.params.variables {
             let var = egg::Symbol::from(letter(i));
             let id = egraph.add(lang::VecLang::Symbol(var));
@@ -544,6 +548,8 @@ impl SynthLanguage for lang::VecLang {
                 .into_iter()
                 .map(Some),
             );
+
+            log::debug!("cvec for `{var}`: {cvec:?}");
 
             egraph[id].data.cvec = cvec;
         }
@@ -741,22 +747,125 @@ impl SynthLanguage for lang::VecLang {
     //     report.eqs = new_eqs;
     //     report
     // }
+
+    fn debug_pre_union(
+        egraph: &EGraph<Self, SynthAnalysis>,
+        id1: Id,
+        id2: Id,
+        justification: &Option<egg::Justification>,
+    ) {
+        for (val1, val2) in egraph[id1]
+            .data
+            .cvec
+            .iter()
+            .zip(egraph[id2].data.cvec.iter())
+        {
+            match (val1, val2) {
+                (Some(x), Some(y)) if x != y => {
+                    let extractor = egg::Extractor::new(egraph, egg::AstDepth);
+                    let (_, prog1) = extractor.find_best(id1);
+                    let (_, prog2) = extractor.find_best(id2);
+
+                    log::error!("Trying to merge:");
+                    log::error!(
+                        "  {} <=> {}",
+                        prog1.pretty(80),
+                        prog2.pretty(80)
+                    );
+                    log::error!("cvec1: {:?}", egraph[id1].data.cvec);
+                    log::error!("cvec2: {:?}", egraph[id2].data.cvec);
+                    log::error!("just: {justification:?}");
+
+                    if let Some(egg::Justification::Rule(s)) = &justification {
+                        if let Some((lhs, rhs)) =
+                            s.as_str().split(" => ").collect_tuple()
+                        {
+                            // strip off the ? prefix for variable names
+                            let lhs_expr: egg::RecExpr<_> = strip_prefix(
+                                &lhs.parse::<egg::RecExpr<_>>().unwrap(),
+                            );
+
+                            let rhs_expr: egg::RecExpr<_> = strip_prefix(
+                                &rhs.parse::<egg::RecExpr<_>>().unwrap(),
+                            );
+
+                            log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
+
+                            // print out ids, plus cannoncial ids
+                            let lhs_id = egraph
+                                .lookup_expr(&lhs_expr)
+                                .map(|x| egraph.find(x));
+                            let rhs_id = egraph
+                                .lookup_expr(&rhs_expr)
+                                .map(|x| egraph.find(x));
+                            log::error!(
+                                "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
+				egraph.find(id1),
+				egraph.find(id2),
+                            );
+
+                            // let's get the cvec for a
+                            let a_id = egraph
+                                .lookup_expr(&egg::RecExpr::from(vec![
+                                    lang::VecLang::Symbol("a".into()),
+                                ]))
+                                .unwrap();
+                            log::error!(
+                                "'a' cvec: {:?}",
+                                egraph[a_id].data.cvec
+                            );
+                        } else {
+                            log::error!("Split failed: '{s}'");
+                        }
+                    } else {
+                        log::error!("No rule justification");
+                    }
+
+                    panic!("This is going to cause problems. Let's just stop here.");
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+fn strip_prefix(
+    expr: &egg::RecExpr<lang::VecLang>,
+) -> egg::RecExpr<lang::VecLang> {
+    expr.as_ref()
+        .iter()
+        .map(|n: &lang::VecLang| match n {
+            lang::VecLang::Symbol(s) => lang::VecLang::Symbol(
+                s.as_str().strip_prefix("?").unwrap().into(),
+            ),
+            x => x.clone(),
+        })
+        .collect_vec()
+        .into()
 }
 
 fn get_vars(
     node: &lang::VecLang,
     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
-    seen: &mut HashSet<egg::Id>,
+    seen: &mut HashMap<egg::Id, Vec<egg::Symbol>>,
 ) -> Vec<egg::Symbol> {
     node.fold(vec![], |mut acc, id| {
         // if we haven't already seen this id, gather vars from children
-        if seen.insert(id) {
+
+        if let Some(cached) = seen.get(&id) {
+            // if we have already seen this id, add on the cached results
+            acc.extend_from_slice(cached)
+        } else {
+            // else, get the variables for this node, recursing if necessary
             let node = &egraph[id].nodes[0];
-            if node.is_leaf() {
-                acc.extend(egraph[id].data.vars.iter());
+            let vars = if node.is_leaf() {
+                egraph[id].data.vars.clone()
             } else {
-                acc.extend(get_vars(node, egraph, seen));
-            }
+                get_vars(node, egraph, seen)
+            };
+            // save the results in seen
+            seen.insert(id, vars.clone());
+            acc.extend(vars);
         }
         acc
     })
@@ -766,7 +875,7 @@ fn unique_vars(
     node: &lang::VecLang,
     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
 ) -> bool {
-    let mut seen: HashSet<egg::Id> = HashSet::default();
+    let mut seen: HashMap<egg::Id, Vec<egg::Symbol>> = HashMap::default();
     let vars: Vec<egg::Symbol> = get_vars(node, egraph, &mut seen);
     vars.iter().all_unique()
 }
@@ -832,7 +941,7 @@ pub fn run(
     //     DiosConfig::default()
     // };
 
-    debug!("running with config: {dios_config:#?}");
+    log::info!("running with config: {dios_config:#?}");
 
     // create the synthesizer
     let /*mut*/ syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(

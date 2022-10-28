@@ -1,12 +1,15 @@
 use egg::{define_language, Id, Language};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone)]
+#[derive(
+    Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Serialize, Deserialize,
+)]
 pub enum Value {
     // starts with i
-    Int(i32),
+    Int(i64),
     // starts with [
     List(Vec<Value>),
     // starts with <
@@ -19,7 +22,7 @@ impl FromStr for Value {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-        let int = str::parse::<i32>(s).map_err(|e| e.to_string())?;
+        let int = str::parse::<i64>(s).map_err(|e| e.to_string())?;
         Ok(Value::Int(int))
     }
 }
@@ -42,6 +45,7 @@ impl Display for Value {
 }
 
 define_language! {
+    #[derive(Serialize, Deserialize)]
     pub enum VecLang {
         // Id is a key to identify EClasses within an EGraph, represents
         // children nodes

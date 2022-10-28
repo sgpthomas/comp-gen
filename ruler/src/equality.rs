@@ -150,7 +150,7 @@ impl<L: SynthLanguage> Applier<L, SynthAnalysis> for NotUndefined<L> {
 }
 
 struct RandomCost {
-    rng: Pcg64,
+    rng: Pcg32,
 }
 impl<L: SynthLanguage> CostFunction<L> for RandomCost {
     type Cost = i32;

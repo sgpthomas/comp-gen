@@ -4,6 +4,171 @@ use z3::ast::Ast;
 
 use crate::{fuzz::FuzzEquals, lang};
 
+pub trait TypeEquals: ruler::SynthLanguage {
+    type T: Eq;
+    /// Return the type of `expr` in the domain `Self::T`.
+    /// Returns None if the expr is ill-formed.
+    fn get_type(expr: &egg::Pattern<Self>) -> Option<Self::T>;
+
+    /// Check if `lhs` and `rhs` have the same type. Requires that both
+    /// sides by well-formed.
+    fn type_equals(lhs: &egg::Pattern<Self>, rhs: &egg::Pattern<Self>) -> bool {
+        if let (Some(lhs_type), Some(rhs_type)) =
+            (Self::get_type(lhs), Self::get_type(rhs))
+        {
+            lhs_type == rhs_type
+        } else {
+            false
+        }
+    }
+}
+
+#[derive(Eq, Clone, Copy)]
+pub enum VecLangType {
+    Vector,
+    Scalar,
+    Variable,
+}
+
+impl PartialEq for VecLangType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            // if either side is a variable, then true
+            (VecLangType::Variable, _) | (_, VecLangType::Variable) => true,
+
+            // if they are the same, true
+            (VecLangType::Vector, VecLangType::Vector)
+            | (VecLangType::Scalar, VecLangType::Scalar) => true,
+
+            // otherwise false
+            _ => false,
+        }
+    }
+}
+
+impl VecLangType {
+    fn join(
+        &self,
+        b: &VecLangType,
+        default: VecLangType,
+    ) -> Option<VecLangType> {
+        match (self, b) {
+            (VecLangType::Variable, VecLangType::Variable) => Some(default),
+            // same type goes to same type
+            (x, y) if x == y => Some(*x),
+
+            // if one side is a variable, copy the type from the defined value
+            (VecLangType::Vector, _) | (_, VecLangType::Vector) => {
+                Some(VecLangType::Vector)
+            }
+            (VecLangType::Scalar, _) | (_, VecLangType::Scalar) => {
+                Some(VecLangType::Scalar)
+            }
+        }
+    }
+}
+
+impl TypeEquals for lang::VecLang {
+    type T = VecLangType;
+
+    fn get_type(expr: &egg::Pattern<Self>) -> Option<Self::T> {
+        // This is tracking the type of the expression so far
+        let mut types: Vec<Option<VecLangType>> = vec![];
+
+        for node in Self::instantiate(expr).as_ref().iter() {
+            match node {
+                // unops
+                lang::VecLang::Sgn([x])
+                | lang::VecLang::Sqrt([x])
+                | lang::VecLang::Neg([x]) => {
+                    types.push(types[usize::from(*x)].and_then(|t| match t {
+                        VecLangType::Vector => None,
+                        VecLangType::Scalar => Some(t),
+                        VecLangType::Variable => Some(VecLangType::Scalar),
+                    }))
+                }
+                lang::VecLang::VecNeg([x])
+                | lang::VecLang::VecSqrt([x])
+                | lang::VecLang::VecSgn([x]) => {
+                    types.push(types[usize::from(*x)].and_then(|t| match t {
+                        VecLangType::Vector => Some(t),
+                        VecLangType::Scalar => None,
+                        VecLangType::Variable => Some(VecLangType::Vector),
+                    }))
+                }
+
+                // binops
+                lang::VecLang::Add([x, y])
+                | lang::VecLang::Mul([x, y])
+                | lang::VecLang::Minus([x, y])
+                | lang::VecLang::Div([x, y])
+                | lang::VecLang::Or([x, y])
+                | lang::VecLang::And([x, y])
+                | lang::VecLang::Lt([x, y]) => {
+                    let type_x = &types[usize::from(*x)];
+                    let type_y = &types[usize::from(*y)];
+                    let t = type_x.and_then(|xt| {
+                        type_y.and_then(|yt| xt.join(&yt, VecLangType::Scalar))
+                    });
+                    types.push(t);
+                }
+
+                lang::VecLang::Concat([x, y])
+                | lang::VecLang::VecAdd([x, y])
+                | lang::VecLang::VecMinus([x, y])
+                | lang::VecLang::VecMul([x, y])
+                | lang::VecLang::VecDiv([x, y])
+                | lang::VecLang::VecMulSgn([x, y]) => {
+                    let type_x = &types[usize::from(*x)];
+                    let type_y = &types[usize::from(*y)];
+                    let t = type_x.and_then(|xt| {
+                        type_y.and_then(|yt| xt.join(&yt, VecLangType::Vector))
+                    });
+                    types.push(t);
+                }
+
+                lang::VecLang::Get([_x, _y]) => todo!(),
+                lang::VecLang::Ite([_x, _y, _z]) => todo!(),
+
+                // triops
+                lang::VecLang::VecMAC([x, y, z]) => {
+                    let type_x = &types[usize::from(*x)];
+                    let type_y = &types[usize::from(*y)];
+                    let type_z = &types[usize::from(*z)];
+                    let t = type_x.and_then(|xt| {
+                        type_y.and_then(|yt| {
+                            xt.join(&yt, VecLangType::Vector).and_then(|xyt| {
+                                type_z.and_then(|zt| {
+                                    xyt.join(&zt, VecLangType::Vector)
+                                })
+                            })
+                        })
+                    });
+
+                    types.push(t)
+                }
+
+                // constants
+                lang::VecLang::List(_) | lang::VecLang::Vec(_) => {
+                    types.push(Some(VecLangType::Vector))
+                }
+                lang::VecLang::Const(_) => {
+                    types.push(Some(VecLangType::Scalar))
+                }
+                lang::VecLang::Symbol(_) => {
+                    types.push(Some(VecLangType::Variable))
+                }
+            };
+        }
+
+        if let Some(x) = types.pop() {
+            x
+        } else {
+            None
+        }
+    }
+}
+
 pub trait SmtEquals: ruler::SynthLanguage {
     fn smt_equals(
         synth: &mut ruler::Synthesizer<Self, ruler::Init>,
@@ -18,6 +183,14 @@ impl SmtEquals for lang::VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
+        // if the expressions dont have the same type, they can't be equal
+        // abort now
+        let type_check = Self::type_equals(lhs, rhs);
+        debug!("type check: {lhs} = {rhs}: {type_check}");
+        if !type_check {
+            return false;
+        }
+
         let mut cfg = z3::Config::new();
         cfg.set_timeout_msec(1000);
         let ctx = z3::Context::new(&cfg);
@@ -87,7 +260,7 @@ impl SmtEquals for lang::VecLang {
 /// This only works for operations on integers for now.
 pub fn egg_to_z3<'a>(
     ctx: &'a z3::Context,
-    solver: &mut z3::Solver,
+    _solver: &mut z3::Solver,
     expr: &egg::RecExpr<lang::VecLang>,
     sqrt_fun: &'a z3::FuncDecl,
 ) -> Option<z3::ast::Int<'a>> {
