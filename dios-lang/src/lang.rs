@@ -1,4 +1,4 @@
-use egg::{define_language, Id, Language};
+use comp_gen::ruler::egg::{self, define_language, Id, Language};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};

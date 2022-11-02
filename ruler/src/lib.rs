@@ -4,7 +4,11 @@ It uses equality saturation in two novel ways to scale the rule synthesis:
    and 2. to minimize the candidate rule space by removing redundant rules based on rules
    currently in the ruleset.
 !*/
-use egg::*;
+use egg::{
+    AstSize, CostFunction, DidMerge, EGraph, ENodeOrVar, Extractor, Id,
+    Language, Pattern, PatternAst, RecExpr, Rewrite, Runner, SimpleScheduler,
+    Symbol, Var,
+};
 use itertools::Itertools;
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
@@ -13,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 use std::fs;
 use std::hash::Hash;
-use std::io::Read;
+use std::path::Path;
 use std::{
     fmt::{Debug, Display},
     marker::PhantomData,
@@ -37,6 +41,7 @@ pub type HashSet<K> = rustc_hash::FxHashSet<K>;
 pub type IndexMap<K, V> =
     indexmap::IndexMap<K, V, BuildHasherDefault<rustc_hash::FxHasher>>;
 
+pub use egg;
 pub use equality::*;
 pub use util::*;
 
@@ -71,10 +76,10 @@ pub trait SynthLanguage:
     + Send
     + Sync
     + Display
-    + FromOp
-    + 'static
+    + egg::FromOp
     + Serialize
     + DeserializeOwned
+    + 'static
 {
     type Constant: Clone
         + Hash
@@ -317,6 +322,22 @@ pub struct Uninit;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Init;
 
+// #[derive(Serialize, Deserialize, Clone)]
+// #[serde(from = "&'static str")]
+// pub struct Test(egg::Symbol);
+
+// impl From<Test> for &'static str {
+//     fn from(x: Test) -> Self {
+//         x.0.into()
+//     }
+// }
+
+// impl From<&'static str> for Test {
+//     fn from(x: &'static str) -> Self {
+//         Test(x.into())
+//     }
+// }
+
 /// A synthesizer for a given [SynthLanguage].
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(bound = "L: SynthLanguage")]
@@ -331,6 +352,9 @@ pub struct Synthesizer<L: SynthLanguage, State> {
     #[serde(serialize_with = "start_time_serialize")]
     #[serde(deserialize_with = "start_time_deserialize")]
     start_time: Instant,
+    outer_iter: usize,
+    inner_iter: usize,
+    poison_rules: HashSet<Equality<L>>,
     phantom_state: PhantomData<State>,
 }
 
@@ -370,6 +394,9 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
             params,
             start_time: Instant::now(),
             lang_config: data,
+            outer_iter: 1,
+            inner_iter: 0,
+            poison_rules: HashSet::default(),
             phantom_state: PhantomData,
         }
     }
@@ -377,17 +404,21 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
     pub fn init(mut self) -> Synthesizer<L, Init> {
         L::init_synth(&mut self);
         self.initial_egraph = self.egraph.clone();
+        self.phantom_state = PhantomData;
         Synthesizer {
             phantom_state: PhantomData,
             // copy the rest of the fields
-            params: self.params,
-            lang_config: self.lang_config,
             rng: self.rng,
             egraph: self.egraph,
             initial_egraph: self.initial_egraph,
             equalities: self.equalities,
             smt_unknown: self.smt_unknown,
+            params: self.params,
             start_time: self.start_time,
+            lang_config: self.lang_config,
+            outer_iter: self.outer_iter,
+            poison_rules: self.poison_rules,
+            inner_iter: self.inner_iter,
         }
     }
 }
@@ -420,26 +451,47 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
         }
     }
 
-    fn save_checkpoint(&self, outer_index: usize, inner_index: usize) {
+    fn save_checkpoint(&self) {
+        let start = Instant::now();
         log::info!("Starting a checkpoint!");
-        let mut s = flexbuffers::FlexbufferSerializer::new();
-        self.serialize(&mut s).unwrap();
-        fs::write(format!("ruler_{outer_index}_{inner_index}.chkpt"), s.view())
-            .expect("Write failed");
-        log::info!("Finished writing a checkpoint.");
+
+        let chkpt_filename =
+            format!("ruler_out{}_in{}.chkpt", self.outer_iter, self.inner_iter);
+        let file = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(chkpt_filename)
+            .expect("Failed to open file");
+
+        // serde_json::to_writer(file, &self).expect("Failed to serialize.");
+        ciborium::ser::into_writer(&self, file)
+            .expect("Failed to write checkpoint");
+
+        log::info!("Finished writing a checkpoint in {:?}", start.elapsed());
     }
 
-    #[allow(unused)]
-    fn load_checkpoint(&mut self, filename: &str) {
-        let mut chkpt_file = fs::File::open(filename).expect("File not found");
-        let metadata =
-            fs::metadata(&filename).expect("Unable to read metadata");
-        let mut buffer = vec![0; metadata.len() as usize];
-        chkpt_file.read(&mut buffer).expect("Failed to read file");
-        let reader = flexbuffers::Reader::get_root(buffer.as_slice())
-            .expect("Failed to make reader.");
-        let copy = Self::deserialize(reader).expect("Failed to deserialize!");
+    pub fn load_checkpoint(&mut self, filename: &Path) {
+        let start = Instant::now();
+        log::info!("Loading checkpoint: {filename:?}");
+        let chkpt_file = fs::File::open(filename).expect("Failed to open file");
+        // let copy: Self = serde_json::from_reader(chkpt_file)
+        //     .expect("Failed to derserialize");
+        let copy = ciborium::de::from_reader(chkpt_file)
+            .expect("Failed to deserialize");
         *self = copy;
+        // we save the index of the finished iter, so this is off by one.
+        // incrementing it corrects it
+        self.inner_iter += 1;
+
+        log::info!("Loaded in {:?}", start.elapsed());
+
+        // serialized egraphs don't necessarily maintain the correct
+        // invariants. reubild them so that they are correct
+        log::info!("Rebuilding egraphs...");
+        self.egraph.rebuild();
+        self.initial_egraph.rebuild();
+        log::info!("Done");
     }
 
     /// Get the eclass ids for all eclasses in the egraph.
@@ -678,11 +730,13 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
             self.params.chunk_size = usize::MAX;
         }
 
-        let mut poison_rules: HashSet<Equality<L>> = HashSet::default();
+        self.poison_rules = HashSet::default();
         let t = Instant::now();
         assert!(self.params.iters > 0);
-        'outer: for iter in 1..=self.params.iters {
+        'outer: for iter in self.outer_iter..=self.params.iters {
             log::info!("[[[ Iteration {} ]]]", iter);
+            // cache the iteration that we are on, so that we can restart if necessary
+            self.outer_iter = iter;
 
             let synth_copy = self.clone();
             let layer =
@@ -721,7 +775,6 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                 "Made layer! Using chunk size: {}",
                 self.params.chunk_size
             );
-            let mut inner_i = 0;
             for chunk in &layer.chunks(self.params.chunk_size) {
                 log::info!(
                     "egraph n={}, e={}",
@@ -735,11 +788,12 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     self.egraph.add(node);
                 }
                 'inner: loop {
-                    log::debug!("Starting inner loop");
+                    log::debug!("Starting inner loop {}", self.inner_iter);
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
                         // we doing another loop save a checkpoint
-                        self.save_checkpoint(iter, inner_i);
+                        self.save_checkpoint();
+                        self.inner_iter += 1;
                         break 'outer;
                     }
 
@@ -767,7 +821,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     // remove any known bad rules from the candiate set
                     let candidates: EqualityMap<L> = candidates
                         .into_iter()
-                        .filter(|eq| !poison_rules.contains(&eq.1))
+                        .filter(|eq| !self.poison_rules.contains(&eq.1))
                         .collect();
 
                     log::info!(
@@ -792,14 +846,14 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                             panic!();
                         }
                         // log::debug!("adding {} to poison set", bad.0);
-                        poison_rules.insert(bad.1);
+                        self.poison_rules.insert(bad.1);
                     }
 
                     if eqs.is_empty() {
                         log::info!("Stopping early, no eqs");
                         // we doing another loop save a checkpoint
-                        self.save_checkpoint(iter, inner_i);
-                        inner_i += 1;
+                        self.save_checkpoint();
+                        self.inner_iter += 1;
                         break 'inner;
                     }
 
@@ -826,16 +880,18 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                         log::info!("Stopping early, took all eqs");
 
                         // we doing another loop save a checkpoint
-                        self.save_checkpoint(iter, inner_i);
-                        inner_i += 1;
+                        self.save_checkpoint();
+                        self.inner_iter += 1;
                         break 'inner;
                     }
 
                     // we doing another loop save a checkpoint
-                    self.save_checkpoint(iter, inner_i);
-                    inner_i += 1;
+                    self.save_checkpoint();
+                    self.inner_iter += 1;
                 }
             }
+            // reset the inner loop counter
+            self.inner_iter = 0;
         }
 
         let time = t.elapsed().as_secs_f64();

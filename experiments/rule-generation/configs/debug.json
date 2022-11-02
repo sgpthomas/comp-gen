@@ -47,6 +47,6 @@
 	"important_cvec_offsets": 5,
 	"complete_cvec": false,
 	"do_final_run": true,
-	"enable_explanations": true 
+	"enable_explanations": true
     }
 }

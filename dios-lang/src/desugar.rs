@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use comp_gen::FromPattern;
+use comp_gen::{ruler::egg, FromPattern};
 use itertools::Itertools;
 
 use crate::lang;

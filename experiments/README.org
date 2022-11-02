@@ -145,7 +145,11 @@ sent 693 bytes  received 248 bytes  627.33 bytes/sec
 total size is 5,255  speedup is 5.58
 #+end_example
 
+
+*** Running on AWS
+
 Just send everything to the remote machine.
+#+name: rsync
 #+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent output
 rsync -rvp --exclude='.git*' --filter="dir-merge,- .gitignore" . \
       ubuntu@$IP:
@@ -170,11 +174,12 @@ Firstly, why does this rule cause these two things to get merged? It must be bec
 Run things on remote machine.
 #+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent :ansi t
 dir="experiments/rule-generation"
-export RUST_BACKTRACE=full
+export RUST_BACKTRACE=1
 export RUST_LOG='info,egg=info,ruler=info,z3=off'
-time cargo run --release --manifest-path dios-lang/Cargo.toml \
+
+time cargo run --manifest-path dios-lang/Cargo.toml \
     -- synth debug_sgn.json \
-    --config $dir/configs/debug.json #2>stderr.log
+    --config $dir/configs/debug.json
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
 # BENCH=q-prod
@@ -190,6 +195,8 @@ time cargo run --release --manifest-path dios-lang/Cargo.toml \
 
 The money question is why we are using rules that are never explicitly checked by =L::is_valid=.
 This was not the money question :(
+
+*** Rest
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent
 cd dios-lang

@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
+use comp_gen::ruler::egg;
+
 pub fn walk_recexpr_help<F, L: egg::Language>(
     expr: &egg::RecExpr<L>,
     id: egg::Id,

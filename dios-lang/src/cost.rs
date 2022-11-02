@@ -1,5 +1,5 @@
+use comp_gen::ruler::egg::{self, CostFunction, Language};
 use comp_gen::FromPattern;
-use egg::{CostFunction, Language};
 
 use crate::{lang::VecLang, recexpr_helpers};
 

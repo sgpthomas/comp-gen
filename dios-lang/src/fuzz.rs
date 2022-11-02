@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use comp_gen::{ruler, ruler::SynthLanguage};
+use comp_gen::{
+    ruler,
+    ruler::{egg, SynthLanguage},
+};
 use itertools::Itertools;
 
 use crate::{

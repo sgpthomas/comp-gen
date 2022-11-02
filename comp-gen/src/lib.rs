@@ -1,8 +1,9 @@
 pub mod config;
 
-use egg::rewrite as rw;
 use log::{debug, info};
 pub use ruler;
+use ruler::egg;
+use ruler::egg::rewrite as rw;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::{

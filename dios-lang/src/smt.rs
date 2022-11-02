@@ -1,4 +1,7 @@
-use comp_gen::{ruler, ruler::SynthLanguage};
+use comp_gen::{
+    ruler,
+    ruler::{egg, SynthLanguage},
+};
 use log::{debug, warn};
 use z3::ast::Ast;
 

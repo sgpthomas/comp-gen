@@ -1,5 +1,7 @@
-use comp_gen::ruler;
-use egg::{EGraph, Id, Language};
+use comp_gen::ruler::{
+    self,
+    egg::{self, EGraph, Id, Language},
+};
 use itertools::Itertools;
 use log::debug;
 use num::integer::Roots;
@@ -11,9 +13,9 @@ use ruler::{
 };
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::str::FromStr;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{fuzz::FuzzEquals, lang, smt::SmtEquals, Res};
 
@@ -927,28 +929,21 @@ fn debug_rule(
 }
 
 pub fn run(
-    // params: ruler::SynthParams,
     dios_config: DiosConfig,
-    // _opts: crate::SynthOpts,
+    chkpt_path: Option<PathBuf>,
 ) -> Res<ruler::Report<lang::VecLang>> {
-    // let dios_config = if let Some(config) = opts.config {
-    //     let config_file =
-    //         File::open(config.clone()).context("open config path")?;
-    //     let parsed: DiosConfig = serde_json::from_reader(config_file)
-    //         .context(format!("parse {config:?} as dios_config"))?;
-    //     parsed
-    // } else {
-    //     DiosConfig::default()
-    // };
-
     log::info!("running with config: {dios_config:#?}");
 
     // create the synthesizer
-    let /*mut*/ syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
+    let mut syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
         dios_config.ruler_config.clone(),
         dios_config.clone(),
     )
     .init();
+
+    if let Some(chkpt) = chkpt_path {
+        syn.load_checkpoint(&chkpt);
+    }
 
     // // debug
     // let res = lang::VecLang::smt_equals(

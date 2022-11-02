@@ -1,4 +1,5 @@
 use crate::*;
+use egg::{Applier, CostFunction, Subst};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -8,7 +9,7 @@ use std::sync::Arc;
 #[serde(from = "SerializedEq")]
 #[serde(into = "SerializedEq")]
 #[serde(bound = "L: SynthLanguage")]
-pub struct Equality<L: SynthLanguage> {
+pub struct Equality<L: SynthLanguage + 'static> {
     pub name: Arc<str>,
     pub lhs: Pattern<L>,
     pub ids: Option<(Id, Id)>,

@@ -10,7 +10,8 @@ env_logger = { version = "0.7", default-features = false }
 rand_pcg = { version = "0.2", features = ["serde1"] }
 rand = { version = "0.7", default-features = false, features = ["std"] }
 serde = { version = "1.0.137", features = ["derive", "rc"] }
-serde_json = "1"
+serde_json = "1.0"
+ciborium = "0.2.0"
 indexmap = "1"
 num = "0.3"
 num-bigint = { version = "0.3", features = ["rand"] }
@@ -23,8 +24,7 @@ rustc-hash = "1"
 symbolic_expressions = "5"
 rayon = "1"
 smallvec = { version = "1.6", features = ["union", "const_generics"] }
-flexbuffers = "2.0.0"
 
 [dependencies.egg]
-version = "0.9.1"
+git = "https://github.com/sgpthomas/egg.git"
 features = ["serde-1"]

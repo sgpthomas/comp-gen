@@ -13,6 +13,7 @@ mod synthesis;
 use crate::desugar::Desugar;
 use anyhow::Context;
 use argh::FromArgs;
+use comp_gen::ruler::egg;
 pub use error::Res;
 use log::info;
 use std::{fs, path::PathBuf, process};
@@ -44,6 +45,10 @@ pub struct SynthOpts {
     /// path to a dios configuration file
     #[argh(option, from_str_fn(read_synth_config))]
     config: Option<synthesis::DiosConfig>,
+
+    /// path to a chkpt file
+    #[argh(option, from_str_fn(read_path))]
+    checkpoint: Option<PathBuf>,
 }
 
 fn read_synth_config(path: &str) -> Result<synthesis::DiosConfig, String> {
@@ -103,7 +108,10 @@ fn read_compiler_config(
 }
 
 fn synth(synth_opts: SynthOpts) -> Res<()> {
-    let report = synthesis::run(synth_opts.config.unwrap_or_default())?;
+    let report = synthesis::run(
+        synth_opts.config.unwrap_or_default(),
+        synth_opts.checkpoint,
+    )?;
     let file = std::fs::File::create(&synth_opts.output)
         .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
     serde_json::to_writer_pretty(file, &report).expect("failed to write json");
