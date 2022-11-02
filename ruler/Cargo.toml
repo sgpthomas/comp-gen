@@ -27,4 +27,5 @@ smallvec = { version = "1.6", features = ["union", "const_generics"] }
 
 [dependencies.egg]
 git = "https://github.com/sgpthomas/egg.git"
+branch = "update_symbol_table"
 features = ["serde-1"]

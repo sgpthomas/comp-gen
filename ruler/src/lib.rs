@@ -355,6 +355,8 @@ pub struct Synthesizer<L: SynthLanguage, State> {
     outer_iter: usize,
     inner_iter: usize,
     poison_rules: HashSet<Equality<L>>,
+    #[serde(skip_serializing, skip_deserializing)]
+    inner_restored: bool,
     phantom_state: PhantomData<State>,
 }
 
@@ -397,6 +399,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
             outer_iter: 1,
             inner_iter: 0,
             poison_rules: HashSet::default(),
+            inner_restored: true,
             phantom_state: PhantomData,
         }
     }
@@ -418,6 +421,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
             lang_config: self.lang_config,
             outer_iter: self.outer_iter,
             poison_rules: self.poison_rules,
+            inner_restored: self.inner_restored,
             inner_iter: self.inner_iter,
         }
     }
@@ -488,10 +492,12 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
 
         // serialized egraphs don't necessarily maintain the correct
         // invariants. reubild them so that they are correct
-        log::info!("Rebuilding egraphs...");
-        self.egraph.rebuild();
-        self.initial_egraph.rebuild();
-        log::info!("Done");
+        // log::info!("Rebuilding egraphs...");
+        // self.egraph.rebuild();
+        // self.initial_egraph.rebuild();
+        // log::info!("Done");
+
+        self.inner_restored = false;
     }
 
     /// Get the eclass ids for all eclasses in the egraph.
@@ -730,7 +736,6 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
             self.params.chunk_size = usize::MAX;
         }
 
-        self.poison_rules = HashSet::default();
         let t = Instant::now();
         assert!(self.params.iters > 0);
         'outer: for iter in self.outer_iter..=self.params.iters {
@@ -781,14 +786,20 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     self.egraph.total_size(),
                     self.egraph.number_of_classes(),
                 );
-                for node in chunk {
-                    if self.check_time() {
-                        break 'outer;
+                // if we are running normally, add this chunk to the egraph.
+                // if we are restoring a checkpoint, skip this
+                if self.inner_restored {
+                    for node in chunk {
+                        if self.check_time() {
+                            break 'outer;
+                        }
+                        self.egraph.add(node);
                     }
-                    self.egraph.add(node);
                 }
                 'inner: loop {
-                    log::debug!("Starting inner loop {}", self.inner_iter);
+                    log::info!("Starting inner loop {}", self.inner_iter);
+                    // we have reached the inner loop, set inner_restored = true
+                    self.inner_restored = true;
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
                         // we doing another loop save a checkpoint
@@ -892,6 +903,8 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
             }
             // reset the inner loop counter
             self.inner_iter = 0;
+            // reset poison rules (honestly not sure why we need this)
+            self.poison_rules = HashSet::default();
         }
 
         let time = t.elapsed().as_secs_f64();

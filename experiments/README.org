@@ -177,9 +177,9 @@ dir="experiments/rule-generation"
 export RUST_BACKTRACE=1
 export RUST_LOG='info,egg=info,ruler=info,z3=off'
 
-time cargo run --manifest-path dios-lang/Cargo.toml \
+time cargo run --manifest-path dios-lang/Cargo.toml --release \
     -- synth debug_sgn.json \
-    --config $dir/configs/debug.json
+    --config $dir/configs/debug.json --checkpoint latest.chkpt
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
 # BENCH=q-prod
