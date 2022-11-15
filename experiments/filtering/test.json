@@ -1,7 +1,7 @@
 {
-    "total_node_limit": 5000000,
+    "total_node_limit": 2000000,
     "total_iter_limit": 20,
-    "timeout": 120,
+    "timeout": 240,
     "dry_run": false,
     "dump_rules": true,
     "reuse_egraphs": true,
@@ -12,7 +12,7 @@
 	    "name": "pre-compile",
 	    "cd": [null, 25.0],
 	    "ca": [null, 8.0],
-	    "node_limit": 100000,
+	    "node_limit": 500000,
 	    "iter_limit": 20
 	},
 	{

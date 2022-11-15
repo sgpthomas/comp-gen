@@ -19,7 +19,7 @@ rand_pcg = "0.2"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 num = "0.3"
 num-bigint = { version = "0.3", features = ["rand"] }
-z3 = { version = "0.11.2" }
+z3 = { version = "0.11.2", features = ["static-link-z3"] }
 rustc-hash = "1"
 lexpr = "0.2.6"
 thiserror = "1.0.37"

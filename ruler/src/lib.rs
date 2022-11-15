@@ -322,26 +322,11 @@ pub struct Uninit;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Init;
 
-// #[derive(Serialize, Deserialize, Clone)]
-// #[serde(from = "&'static str")]
-// pub struct Test(egg::Symbol);
-
-// impl From<Test> for &'static str {
-//     fn from(x: Test) -> Self {
-//         x.0.into()
-//     }
-// }
-
-// impl From<&'static str> for Test {
-//     fn from(x: &'static str) -> Self {
-//         Test(x.into())
-//     }
-// }
-
 /// A synthesizer for a given [SynthLanguage].
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(bound = "L: SynthLanguage")]
 pub struct Synthesizer<L: SynthLanguage, State> {
+    #[serde(skip)]
     pub params: SynthParams,
     pub lang_config: L::Config,
     pub rng: Pcg32,
@@ -349,40 +334,16 @@ pub struct Synthesizer<L: SynthLanguage, State> {
     initial_egraph: EGraph<L, SynthAnalysis>,
     pub equalities: EqualityMap<L>,
     pub smt_unknown: usize,
-    #[serde(serialize_with = "start_time_serialize")]
-    #[serde(deserialize_with = "start_time_deserialize")]
+    #[serde(skip, default = "Instant::now")]
     start_time: Instant,
+    #[serde(skip, default = "Instant::now")]
+    last_checked: Instant,
     outer_iter: usize,
     inner_iter: usize,
     poison_rules: HashSet<Equality<L>>,
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     inner_restored: bool,
     phantom_state: PhantomData<State>,
-}
-
-pub fn start_time_serialize<S>(
-    instant: &Instant,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    let duration = instant.elapsed();
-    duration.serialize(serializer)
-}
-
-pub fn start_time_deserialize<'de, D>(
-    deserializer: D,
-) -> Result<Instant, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let duration = Duration::deserialize(deserializer)?;
-    let now = Instant::now();
-    let instant = now
-        .checked_sub(duration)
-        .ok_or_else(|| serde::de::Error::custom("Error checked_add"))?;
-    Ok(instant)
 }
 
 impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
@@ -395,6 +356,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
             smt_unknown: 0,
             params,
             start_time: Instant::now(),
+            last_checked: Instant::now(),
             lang_config: data,
             outer_iter: 1,
             inner_iter: 0,
@@ -418,6 +380,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
             smt_unknown: self.smt_unknown,
             params: self.params,
             start_time: self.start_time,
+            last_checked: self.last_checked,
             lang_config: self.lang_config,
             outer_iter: self.outer_iter,
             poison_rules: self.poison_rules,
@@ -438,8 +401,14 @@ where
 }
 
 impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
-    fn check_time(&self) -> bool {
+    fn check_time(&mut self) -> bool {
         let t = self.start_time;
+
+        if self.last_checked.elapsed() > Duration::from_secs(10) {
+            log::info!("Time left: {:?}", self.time_left());
+            self.last_checked = Instant::now();
+        }
+
         self.params.abs_timeout > 0
             && t.elapsed() > Duration::from_secs(self.params.abs_timeout as u64)
     }
@@ -456,23 +425,32 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
     }
 
     fn save_checkpoint(&self) {
-        let start = Instant::now();
-        log::info!("Starting a checkpoint!");
+        if self.params.enable_checkpointing {
+            let start = Instant::now();
+            log::info!("Starting a checkpoint!");
 
-        let chkpt_filename =
-            format!("ruler_out{}_in{}.chkpt", self.outer_iter, self.inner_iter);
-        let file = fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(chkpt_filename)
-            .expect("Failed to open file");
+            let chkpt_filename = format!(
+                "ruler_out{}_in{}.chkpt",
+                self.outer_iter, self.inner_iter
+            );
+            let file = fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(chkpt_filename)
+                .expect("Failed to open file");
 
-        // serde_json::to_writer(file, &self).expect("Failed to serialize.");
-        ciborium::ser::into_writer(&self, file)
-            .expect("Failed to write checkpoint");
+            // serde_json::to_writer(file, &self).expect("Failed to serialize.");
+            ciborium::ser::into_writer(&self, file)
+                .expect("Failed to write checkpoint");
 
-        log::info!("Finished writing a checkpoint in {:?}", start.elapsed());
+            log::info!(
+                "Finished writing a checkpoint in {:?}",
+                start.elapsed()
+            );
+        } else {
+            log::info!("Skipping checkpoint!");
+        }
     }
 
     pub fn load_checkpoint(&mut self, filename: &Path) {
@@ -483,7 +461,11 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
         //     .expect("Failed to derserialize");
         let copy = ciborium::de::from_reader(chkpt_file)
             .expect("Failed to deserialize");
-        *self = copy;
+        // copy everything besides the params
+        *self = Self {
+            params: self.params.clone(),
+            ..copy
+        };
         // we save the index of the finished iter, so this is off by one.
         // incrementing it corrects it
         self.inner_iter += 1;
@@ -492,10 +474,10 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
 
         // serialized egraphs don't necessarily maintain the correct
         // invariants. reubild them so that they are correct
-        // log::info!("Rebuilding egraphs...");
-        // self.egraph.rebuild();
-        // self.initial_egraph.rebuild();
-        // log::info!("Done");
+        log::info!("Rebuilding egraphs...");
+        self.egraph.rebuild();
+        self.initial_egraph.rebuild();
+        log::info!("Done");
 
         self.inner_restored = false;
     }
@@ -786,15 +768,11 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     self.egraph.total_size(),
                     self.egraph.number_of_classes(),
                 );
-                // if we are running normally, add this chunk to the egraph.
-                // if we are restoring a checkpoint, skip this
-                if self.inner_restored {
-                    for node in chunk {
-                        if self.check_time() {
-                            break 'outer;
-                        }
-                        self.egraph.add(node);
+                for node in chunk {
+                    if self.check_time() {
+                        break 'outer;
                     }
+                    self.egraph.add(node);
                 }
                 'inner: loop {
                     log::info!("Starting inner loop {}", self.inner_iter);
@@ -984,6 +962,7 @@ pub struct SynthParams {
     pub complete_cvec: bool,
     pub do_final_run: bool,
     pub enable_explanations: bool,
+    pub enable_checkpointing: bool,
 }
 
 impl Default for SynthParams {
@@ -1008,6 +987,7 @@ impl Default for SynthParams {
             complete_cvec: false,
             do_final_run: false,
             enable_explanations: false,
+            enable_checkpointing: false,
         }
     }
 }
@@ -1173,9 +1153,9 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         let mut keepers = EqualityMap::default();
         let mut bads = EqualityMap::default();
         let initial_len = candidates.len();
-        while !candidates.is_empty() {
+        'outer: while !candidates.is_empty() {
             if self.check_time() {
-                break;
+                break 'outer;
             }
 
             // best are last
@@ -1185,7 +1165,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             let mut took = 0;
             while let Some((name, eq)) = candidates.pop() {
                 if self.check_time() {
-                    break;
+                    break 'outer;
                 }
 
                 // Call `L::is_valid` on `eq`. If valid, add to `keepers`
@@ -1198,24 +1178,7 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
                     );
 
                     if valid {
-                        // DEBUG
-                        // ok so this is not working :(. Not exactly sure why not
-                        // I was trying to figure out why, these terms are in the candidate set
-                        // if eq.to_string() == "(VecDiv (VecDiv d c) (VecMul b a)) => (VecDiv (VecSqrt c) (VecMinus d a))"
-                        //         || eq.to_string() == "(VecDiv (VecSqrt c) (VecMinus d a)) => (VecDiv (VecDiv d c) (VecMul b a))"
-                        //     {
-                        //         let mut eg = runner.egraph.clone();
-                        //         log::error!(
-                        //             "left expl: {}",
-                        //             eg.explain_existance(&left)
-                        //         );
-                        //         log::error!(
-                        //             "right expl: {}",
-                        //             eg.explain_existance(&right)
-                        //         );
-                        //     }
-                        log::info!("inserting {}", eq);
-                        // DEBUG
+                        log::debug!("inserting {}", eq);
                         let old = keepers.insert(name, eq);
                         took += old.is_none() as usize;
                     } else {
@@ -1320,9 +1283,11 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             );
         }
         if self.params.rules_to_take == usize::MAX && !candidates.is_empty() {
-            eprintln!("New eqs not empty");
-            assert!(candidates.is_empty());
-            // eprintln!("{:?}", new_eqs);
+            log::warn!("New eqs not empty");
+            log::warn!(
+                "If this is from a time out, I don't think we should worry."
+            );
+            // assert!(candidates.is_empty());
         }
         (keepers, bads)
     }
@@ -1336,10 +1301,6 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
         let mut bads = EqualityMap::default();
         let /* mut */ should_validate = true;
         for step in vec![100, 10, 1] {
-            if self.check_time() {
-                break;
-            }
-
             if self.params.rules_to_take < step {
                 continue;
             }
@@ -1355,6 +1316,13 @@ impl<L: SynthLanguage> Synthesizer<L, Init> {
             // guess: if we taking all the rules, we don't need to validate anymore
             // if self.params.rules_to_take == usize::MAX {
             //     should_validate = false;
+            // }
+
+            // this needs to be at the end!!! otherwise, we can break before
+            // we validate rules. This is a big no-no, and can cause subtle bugs
+            // if self.check_time() {
+            //     log::info!("Aborting choose_eqs because of time!");
+            //     break;
             // }
         }
         (new_eqs, bads)

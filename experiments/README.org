@@ -95,56 +95,25 @@ Wack config (that will probably work)
 #+end_src
 
 Setup a remote machine
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results output
-rule_config="experiments/rule-generation/data/10-10-2108/58.json"
-rsync -v $rule_config ubuntu@$IP:~/rules.json
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
+IP="3.18.225.198" 
+rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
+compile_config="experiments/filtering/test.json"
+alias r="rsync -e 'ssh -o StrictHostKeyChecking=no'"
+r -v $rule_config ubuntu@$IP:~/rules.json
+r -v $compile_config ubuntu@$IP:~/compile.json
 
 cargo build --release --manifest-path dios-lang/Cargo.toml
-rsync -v dios-lang/target/release/dios-lang \
+r -v dios-lang/target/release/dios-lang \
       ~/Research/diospyros/*-params \
       ubuntu@$IP:
 
-rsync -rv experiments/rule-generation/configs ubuntu@$IP:~/
-rsync -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
+r -rv experiments/rule-generation/configs ubuntu@$IP:~/
+r -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
 
 #+RESULTS:
-#+begin_example
-58.json
-
-sent 134 bytes  received 113 bytes  98.80 bytes/sec
-total size is 8,491  speedup is 34.38
-2d-conv-params
-dios-lang
-mat-mul-params
-q-prod-params
-qr-decomp-params
-
-sent 26,534,938 bytes  received 33,201 bytes  10,627,255.60 bytes/sec
-total size is 30,328,680  speedup is 1.14
-sending incremental file list
-configs/.gitignore
-configs/base.json
-configs/debug.json
-configs/make_configs.py
-
-sent 359 bytes  received 129 bytes  325.33 bytes/sec
-total size is 2,671  speedup is 5.47
-sending incremental file list
-synth_configs/.gitignore
-synth_configs/abs_timeout_60.json
-synth_configs/abs_timeout_600.json
-synth_configs/abs_timeout_6000.json
-synth_configs/abs_timeout_60000.json
-synth_configs/abs_timeout_600000.json
-synth_configs/base.json
-synth_configs/debug.json
-synth_configs/make_configs.py
-
-sent 693 bytes  received 248 bytes  627.33 bytes/sec
-total size is 5,255  speedup is 5.58
-#+end_example
-
+: #<buffer *ob-async-shell*>
 
 *** Running on AWS
 
@@ -179,7 +148,7 @@ export RUST_LOG='info,egg=info,ruler=info,z3=off'
 
 time cargo run --manifest-path dios-lang/Cargo.toml --release \
     -- synth debug_sgn.json \
-    --config $dir/configs/debug.json --checkpoint latest.chkpt
+    --config $dir/configs/debug.json
 
 # mat-mul, q-prod, 2d-conv, *qr-decomp*
 # BENCH=q-prod
@@ -195,6 +164,8 @@ time cargo run --manifest-path dios-lang/Cargo.toml --release \
 
 The money question is why we are using rules that are never explicitly checked by =L::is_valid=.
 This was not the money question :(
+
+Ok, well I'm not getting exactly the same results after checkpointing. But it still crashes and so maybe it will still be useful?
 
 *** Rest
 
@@ -263,5 +234,79 @@ export RUST_LOG=info,egg=off
 ./dios-lang synth out.json \
 	    --config configs/debug.json \
 	    --ruler synth_configs/test.json
+#+end_src
+
+
+* Testing rulesets
+
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
+IP="3.18.225.198" 
+rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
+compile_config="experiments/filtering/test.json"
+alias r="rsync -e 'ssh -o StrictHostKeyChecking=no'"
+r -v $rule_config ubuntu@$IP:~/rules.json
+r -v $compile_config ubuntu@$IP:~/compile.json
+
+cargo build --release --manifest-path dios-lang/Cargo.toml
+r -v dios-lang/target/release/dios-lang \
+      ~/Research/diospyros/*-params \
+      ubuntu@$IP:
+
+r -rv experiments/rule-generation/configs ubuntu@$IP:~/
+r -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ruleset_timeout86400.json
+
+sent 264 bytes  received 281 bytes  218.00 bytes/sec
+total size is 28,516  speedup is 52.32
+test.json
+
+sent 87 bytes  received 41 bytes  85.33 bytes/sec
+total size is 620  speedup is 4.84
+2d-conv-params
+dios-lang
+mat-mul-params
+q-prod-params
+qr-decomp-params
+
+sent 26,317,158 bytes  received 33,489 bytes  10,540,258.80 bytes/sec
+total size is 30,859,840  speedup is 1.17
+sending incremental file list
+configs/.gitignore
+configs/base.json
+configs/debug.json
+configs/make_configs.py
+
+sent 361 bytes  received 135 bytes  330.67 bytes/sec
+total size is 3,298  speedup is 6.65
+sending incremental file list
+synth_configs/.gitignore
+synth_configs/abs_timeout_60.json
+synth_configs/abs_timeout_600.json
+synth_configs/abs_timeout_6000.json
+synth_configs/abs_timeout_60000.json
+synth_configs/abs_timeout_600000.json
+synth_configs/base.json
+synth_configs/debug.json
+synth_configs/make_configs.py
+
+sent 693 bytes  received 248 bytes  627.33 bytes/sec
+total size is 5,119  speedup is 5.44
+#+end_example
+
+#+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
+export RUST_LOG='debug,egg=info'
+bench="q-prod"
+./dios-lang \
+    compile $bench \
+    --dios-bin diospyros/dios \
+    --dios-example-bin diospyros/dios-example-gen \
+    --dios-params $bench-params \
+    --vector-width 2 \
+    --rules rules.json \
+    --config compile.json
 #+end_src
 

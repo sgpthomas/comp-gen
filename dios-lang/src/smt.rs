@@ -195,7 +195,7 @@ impl SmtEquals for lang::VecLang {
         }
 
         let mut cfg = z3::Config::new();
-        cfg.set_timeout_msec(1000);
+        cfg.set_timeout_msec(10000);
         let ctx = z3::Context::new(&cfg);
         let mut solver = z3::Solver::new(&ctx);
 

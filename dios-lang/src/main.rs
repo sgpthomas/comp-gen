@@ -16,7 +16,7 @@ use argh::FromArgs;
 use comp_gen::ruler::egg;
 pub use error::Res;
 use log::info;
-use std::{fs, path::PathBuf, process};
+use std::{fs, io::Write, path::PathBuf, process};
 
 /// Generate and run an automatically generated compiler
 /// for the Diospyros vector language.
@@ -72,6 +72,10 @@ struct CompileOpts {
     /// dios-example-gen binary
     #[argh(option, from_str_fn(read_path))]
     dios_example_bin: PathBuf,
+
+    /// diosbinary
+    #[argh(option, from_str_fn(read_path))]
+    dios_bin: PathBuf,
 
     /// dios example params
     #[argh(option, from_str_fn(read_path))]
@@ -187,7 +191,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
                     // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
                     // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
                     // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
-                ]
+                    ]
             .into_iter(),
         )
         // .with_filter(|cm| cm.cd > 0.0)
@@ -204,8 +208,24 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // eg.dot().to_png("test.png").expect("failed to create image");
     info!("{}", prog.pretty(80));
 
-    // cleanup dir
-    fs::remove_dir_all(output_dir)?;
+    // write to spec.rkt
+    let mut spec_file = fs::File::create(output_dir.join("res.rkt"))?;
+    log::debug!("writing to {:?}", spec_file);
+    writeln!(spec_file, "{}", prog.pretty(80))?;
+
+    // call ./dios -w <vec_width> --egg --suppress-git -o <dir>/kernel.c <dir>
+    // this generates the kernel.c file
+    process::Command::new(opts.dios_bin)
+        .arg("-w")
+        .arg(opts.vector_width.to_string())
+        .arg("--egg")
+        .arg("--suppress-git")
+        .arg("-o")
+        .arg(output_dir.join("kernel.c"))
+        .arg(output_dir)
+        .stdout(process::Stdio::inherit())
+        .stderr(process::Stdio::inherit())
+        .output()?;
 
     Ok(())
 }
