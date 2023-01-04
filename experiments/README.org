@@ -242,59 +242,16 @@ export RUST_LOG=info,egg=off
 IP="3.18.225.198" 
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
 compile_config="experiments/filtering/test.json"
-alias r="rsync -e 'ssh -o StrictHostKeyChecking=no'"
-r -v $rule_config ubuntu@$IP:~/rules.json
-r -v $compile_config ubuntu@$IP:~/compile.json
+alias r="rsync -e 'ssh -o StrictHostKeyChecking=no' -v"
+r $rule_config ubuntu@$IP:~/rules.json
+r $compile_config ubuntu@$IP:~/compile.json
 
-cargo build --release --manifest-path dios-lang/Cargo.toml
-r -v dios-lang/target/release/dios-lang \
-      ~/Research/diospyros/*-params \
-      ubuntu@$IP:
+# cargo build --release --manifest-path dios-lang/Cargo.toml
+r ~/Research/diospyros/*-params ubuntu@$IP:
 
-r -rv experiments/rule-generation/configs ubuntu@$IP:~/
-r -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
+r -r experiments/rule-generation/configs ubuntu@$IP:~/
+r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
-
-#+RESULTS:
-#+begin_example
-ruleset_timeout86400.json
-
-sent 264 bytes  received 281 bytes  218.00 bytes/sec
-total size is 28,516  speedup is 52.32
-test.json
-
-sent 87 bytes  received 41 bytes  85.33 bytes/sec
-total size is 620  speedup is 4.84
-2d-conv-params
-dios-lang
-mat-mul-params
-q-prod-params
-qr-decomp-params
-
-sent 26,317,158 bytes  received 33,489 bytes  10,540,258.80 bytes/sec
-total size is 30,859,840  speedup is 1.17
-sending incremental file list
-configs/.gitignore
-configs/base.json
-configs/debug.json
-configs/make_configs.py
-
-sent 361 bytes  received 135 bytes  330.67 bytes/sec
-total size is 3,298  speedup is 6.65
-sending incremental file list
-synth_configs/.gitignore
-synth_configs/abs_timeout_60.json
-synth_configs/abs_timeout_600.json
-synth_configs/abs_timeout_6000.json
-synth_configs/abs_timeout_60000.json
-synth_configs/abs_timeout_600000.json
-synth_configs/base.json
-synth_configs/debug.json
-synth_configs/make_configs.py
-
-sent 693 bytes  received 248 bytes  627.33 bytes/sec
-total size is 5,119  speedup is 5.44
-#+end_example
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
 export RUST_LOG='debug,egg=info'
@@ -304,11 +261,17 @@ bench="q-prod"
     --dios-bin diospyros/dios \
     --dios-example-bin diospyros/dios-example-gen \
     --dios-params $bench-params \
-    --vector-width 2 \
+    --vector-width 4 \
     --rules rules.json \
     --config compile.json
 #+end_src
 
+#+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t
+IP="3.18.225.198"
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/q-prod-out/kernel.c \
+      samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/cycle-estimation/q-prod/
+#+end_src
 
 * Instructions for setting up Xtensa
 
@@ -328,6 +291,6 @@ Next you need to install core specific configuration. These can be found on the 
 
 The file that you download will be an =.xws= file. This is really just a renamed zip archive. Extract it with =unzip=. This will create a =__downloads= directory. Find the core archive in this directory (it is easy to find). Extract that tar file. Inside the resulting directory is an =install= script. Run this script and pass in the location of the XtensaTools directory for the corresponding version when prompted.
 
-That's it! Now running =xt-clang= and corresponding compilers should just "work".
+That's it! Now running =xt-clang= and corresponding compilers should just "work". They'll use whatever core you have set as default. I think you can also specify the name of a particular core on the command line.
 
 You also have to setup the license server. I honestly don't remember how I did that. You have to download the license file and then start up the license server with that file. It was relatively straightforward. I'll come back and document it next time I have to start it.
