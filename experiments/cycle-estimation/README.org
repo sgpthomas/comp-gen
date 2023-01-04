@@ -1,0 +1,25 @@
+* You've found the hot spot for doing cycle estimations
+
+I'm starting out by just trying to get a single thing working manually. I have things
+setup to produce the final diospyros =kernel.c= file. I now want to setup a minimal harness to see if I can get Xtensa simulation working.
+
+** q-prod
+
+#+begin_src async-shell :results silent :ansi t :dir q-prod
+XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
+XTCLANG=$XTENSA/bin/xt-clang++
+XTRUN=$XTENSA/bin/xt-run
+
+$XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 -DOUTFILE='"q-prod.out"' \
+	 -I /usr/include/eigen3 \
+	 -I ~/Research/xtensa/fusiong3_library/include \
+	 -I ~/Research/xtensa/fusiong3_library/include_private \
+	 egg-kernel.c harness.c -o q-prod.o
+
+$XTRUN --summary --mem_model q-prod.o
+#+end_src
+
+** mat-mul
+
+I need to add these flags to the compile command
+=-DA_ROWS=$(A_ROWS) -DA_COLS=$(A_COLS)=
