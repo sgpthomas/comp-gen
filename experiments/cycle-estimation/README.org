@@ -5,6 +5,19 @@ setup to produce the final diospyros =kernel.c= file. I now want to setup a mini
 
 ** q-prod
 
+copy the kernel here
+#+begin_src shell :var IP=(ec2/get-ip "exp") :results output
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/q-prod-out/kernel.c \
+      q-prod/egg-kernel.c
+#+end_src
+
+#+RESULTS:
+: kernel.c
+: 
+: sent 127 bytes  received 8,499 bytes  3,450.40 bytes/sec
+: total size is 9,130  speedup is 1.06
+
 #+begin_src async-shell :results silent :ansi t :dir q-prod
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
 XTCLANG=$XTENSA/bin/xt-clang++
@@ -23,3 +36,44 @@ $XTRUN --summary --mem_model q-prod.o
 
 I need to add these flags to the compile command
 =-DA_ROWS=$(A_ROWS) -DA_COLS=$(A_COLS)=
+
+copy the kernel here
+#+begin_src shell :var IP=(ec2/get-ip "exp") :results output
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/mat-mul-out/kernel.c \
+      mat-mul/egg-kernel.c
+#+end_src
+
+#+RESULTS:
+: kernel.c
+: 
+: sent 67 bytes  received 766 bytes  333.20 bytes/sec
+: total size is 2,084  speedup is 2.50
+
+This is the generated kernel:
+#+begin_example
+(VecMAC
+  (VecMul
+    (Vec (Get A 0) (Get A 0) (Get B 0) (Get B 1))
+    (Vec (Get B 0) (Get B 1) (Get A 2) (Get A 2)))
+  (Vec (Get A 1) (Get A 1) (Get B 2) (Get B 3))
+  (Vec (Get B 2) (Get B 3) (Get A 3) (Get A 3)))
+#+end_example
+
+
+#+begin_src async-shell :results silent :ansi t :dir mat-mul
+XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
+XTCLANG=$XTENSA/bin/xt-clang++
+XTRUN=$XTENSA/bin/xt-run
+
+$XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+	 -DOUTFILE='"mat-mul.out"' \
+	 -DA_ROWS='2' -DA_COLS='2' \
+	 -DB_ROWS='2' -DB_COLS='2' \
+	 -I /usr/include/eigen3 \
+	 -I ~/Research/xtensa/fusiong3_library/include \
+	 -I ~/Research/xtensa/fusiong3_library/include_private \
+	 egg-kernel.c harness.c -o mat-mul.o
+
+$XTRUN --summary --mem_model mat-mul.o
+#+end_src

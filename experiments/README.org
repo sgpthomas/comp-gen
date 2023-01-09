@@ -240,7 +240,7 @@ export RUST_LOG=info,egg=off
 
 #+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
 IP="3.18.225.198" 
-rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
+rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
 alias r="rsync -e 'ssh -o StrictHostKeyChecking=no' -v"
 r $rule_config ubuntu@$IP:~/rules.json

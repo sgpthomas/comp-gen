@@ -24,8 +24,8 @@ extern "C" {
   // Expert kernel
   void matrix_multiply_2x3_3x3_expert(float* c, float* a, float* b);
   // Nature kernel
-  void matmmltf(const float32_t *x, int M, int N, const float32_t *y,
-    int P, float32_t *z);
+  /* void matmmltf(const float32_t *x, int M, int N, const float32_t *y, */
+  /*   int P, float32_t *z); */
 }
 
 // Diospyros kernel
@@ -101,15 +101,15 @@ int main(int argc, char **argv) {
   fprintf(file, "%s,%d,%d,%d,%d,%d\n","Naive hard size",A_ROWS,A_COLS,B_ROWS,B_COLS,time);
 
   // Nature
-  start_cycle_timing;
-  matmmltf(a, A_ROWS, A_COLS, b, B_COLS, c);
-  stop_cycle_timing;
-  time = get_time();
-  print_matrix(c, A_ROWS, B_COLS);
-  output_check(c, c_spec, A_ROWS, B_COLS);
-  zero_matrix(c, A_ROWS, B_COLS);
-  printf("Nature : %d cycles\n", time);
-  fprintf(file, "%s,%d,%d,%d,%d,%d\n","Nature",A_ROWS,A_COLS,B_ROWS,B_COLS,time);
+  /* start_cycle_timing; */
+  /* matmmltf(a, A_ROWS, A_COLS, b, B_COLS, c); */
+  /* stop_cycle_timing; */
+  /* time = get_time(); */
+  /* print_matrix(c, A_ROWS, B_COLS); */
+  /* output_check(c, c_spec, A_ROWS, B_COLS); */
+  /* zero_matrix(c, A_ROWS, B_COLS); */
+  /* printf("Nature : %d cycles\n", time); */
+  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Nature",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
 
   // Diospyros
   start_cycle_timing;
