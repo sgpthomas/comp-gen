@@ -45,6 +45,12 @@ impl Desugar for lang::VecAst {
             x @ lang::VecAst::Vec(_) => {
                 panic!("Can't desugar Vecs with more than one lane.\n{:?}", x)
             }
+            x @ lang::VecAst::LitVec(_) => {
+                panic!(
+                    "Can't desugar LitVecs with more than one lane.\n{:?}",
+                    x
+                )
+            }
             lang::VecAst::Add(left, right) => lang::VecAst::Add(
                 Box::new(left.desugar(n_lanes)),
                 Box::new(right.desugar(n_lanes)),
@@ -170,6 +176,9 @@ impl AlphaRenamable for lang::VecAst {
                 lang::VecAst::Neg(Box::new(x.rename(suffix)))
             }
             lang::VecAst::Vec(items) => lang::VecAst::Vec(
+                items.into_iter().map(|x| x.rename(suffix)).collect_vec(),
+            ),
+            lang::VecAst::LitVec(items) => lang::VecAst::LitVec(
                 items.into_iter().map(|x| x.rename(suffix)).collect_vec(),
             ),
             lang::VecAst::VecAdd(x, y) => lang::VecAst::VecAdd(

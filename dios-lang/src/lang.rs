@@ -70,7 +70,7 @@ define_language! {
         "Vec" = Vec(Box<[Id]>),
 
         // Vector with all literals
-        // "LitVec" = LitVec(Box<[Id]>),
+        "LitVec" = LitVec(Box<[Id]>),
 
         "Get" = Get([Id; 2]),
 
@@ -120,6 +120,7 @@ pub enum VecAst {
     Neg(Box<VecAst>),
 
     Vec(Vec<VecAst>),
+    LitVec(Vec<VecAst>),
 
     VecAdd(Box<VecAst>, Box<VecAst>),
     VecMul(Box<VecAst>, Box<VecAst>),
@@ -232,6 +233,11 @@ impl VecAst {
                     items.iter().map(|it| it.to_recexpr(expr)).collect_vec();
                 expr.add(VecLang::Vec(ids.into_boxed_slice()))
             }
+            VecAst::LitVec(items) => {
+                let ids =
+                    items.iter().map(|it| it.to_recexpr(expr)).collect_vec();
+                expr.add(VecLang::LitVec(ids.into_boxed_slice()))
+            }
             VecAst::Const(v) => expr.add(VecLang::Const(v.clone())),
             VecAst::Symbol(s) => expr.add(VecLang::Symbol(s.into())),
         }
@@ -289,6 +295,12 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
             }
             VecLang::List(_) => todo!(),
             VecLang::Vec(items) => VecAst::Vec(
+                items
+                    .iter()
+                    .map(|id| subtree(&expr, *id).into())
+                    .collect_vec(),
+            ),
+            VecLang::LitVec(items) => VecAst::LitVec(
                 items
                     .iter()
                     .map(|id| subtree(&expr, *id).into())

@@ -152,7 +152,9 @@ impl TypeEquals for lang::VecLang {
                 }
 
                 // constants
-                lang::VecLang::List(_) | lang::VecLang::Vec(_) => {
+                lang::VecLang::List(_)
+                | lang::VecLang::Vec(_)
+                | lang::VecLang::LitVec(_) => {
                     types.push(Some(VecLangType::Vector))
                 }
                 lang::VecLang::Const(_) => {
@@ -390,7 +392,11 @@ pub fn egg_to_z3<'a>(
                 let x_int = &buf[usize::from(x)];
                 buf.push(x_int.clone());
             }
-
+            lang::VecLang::LitVec(inner) if inner.len() == 1 => {
+                let x = inner[0];
+                let x_int = &buf[usize::from(x)];
+                buf.push(x_int.clone());
+            }
             // unsupported operations
             // return early
             lang::VecLang::Const(_)
@@ -401,6 +407,7 @@ pub fn egg_to_z3<'a>(
             | lang::VecLang::List(_)
             | lang::VecLang::Get(_)
             | lang::VecLang::Vec(_)
+            | lang::VecLang::LitVec(_)
             | lang::VecLang::Concat(_)
             | lang::VecLang::VecMulSgn(_) => return None,
         }

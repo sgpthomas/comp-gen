@@ -42,7 +42,7 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                     STRUCTURE
                 }
             }
-            // VecLang::LitVec(..) => LITERAL,
+            VecLang::LitVec(..) => LITERAL,
 
             // But scalar and vector ops cost something
             VecLang::Add(vals) => OP * (vals.len() as f64 - 1.),
@@ -303,21 +303,21 @@ impl egg::CostFunction<VecLang> for PhaseCostFn {
 
                 // 2 children
                 VecLang::Add(ids)
-                    | VecLang::Mul(ids)
-                    | VecLang::Minus(ids)
-                    | VecLang::Div(ids)
-                    | VecLang::Or(ids)
-                    | VecLang::And(ids)
-                    | VecLang::Lt(ids)
-                    | VecLang::Get(ids)
-                    | VecLang::Concat(ids)
-                    | VecLang::VecAdd(ids)
-                    | VecLang::VecMinus(ids)
-                    | VecLang::VecMul(ids)
-		    | VecLang::VecMulSgn(ids)
-                    | VecLang::VecDiv(ids) => {
-			ids.iter().fold(0.0, |acc, it| acc + costs(*it))
-                    }
+                | VecLang::Mul(ids)
+                | VecLang::Minus(ids)
+                | VecLang::Div(ids)
+                | VecLang::Or(ids)
+                | VecLang::And(ids)
+                | VecLang::Lt(ids)
+                | VecLang::Get(ids)
+                | VecLang::Concat(ids)
+                | VecLang::VecAdd(ids)
+                | VecLang::VecMinus(ids)
+                | VecLang::VecMul(ids)
+                | VecLang::VecMulSgn(ids)
+                | VecLang::VecDiv(ids) => {
+                    ids.iter().fold(0.0, |acc, it| acc + costs(*it))
+                }
 
                 // 3 children
                 VecLang::VecMAC(ids) | VecLang::Ite(ids) => {
@@ -327,8 +327,7 @@ impl egg::CostFunction<VecLang> for PhaseCostFn {
                 // n children
                 VecLang::List(ids)
                 | VecLang::Vec(ids)
-                // | VecLang::LitVec(ids)
-		    => {
+                | VecLang::LitVec(ids) => {
                     ids.iter().fold(0.0, |acc, it| acc + costs(*it))
                 }
             };

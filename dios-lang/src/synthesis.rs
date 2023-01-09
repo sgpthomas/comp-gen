@@ -345,7 +345,21 @@ impl SynthLanguage for lang::VecLang {
                 .into_iter()
                 .map(|acc| acc.map(lang::Value::Vec))
                 .collect::<Vec<_>>(),
-            // lang::VecLang::LitVec(x) => todo!(),
+            lang::VecLang::LitVec(l) => l
+                .iter()
+                .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
+                    acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
+                        if let (Some(v), Some(i)) = (&mut v, i) {
+                            v.push(i.clone());
+                        } else {
+                            *v = None;
+                        }
+                    });
+                    acc
+                })
+                .into_iter()
+                .map(|acc| acc.map(lang::Value::Vec))
+                .collect::<Vec<_>>(),
             #[rustfmt::skip]
             lang::VecLang::Get([l, i]) => map!(get, l, i => {
                 if let (lang::Value::Vec(v), lang::Value::Int(idx)) = (l, i) {
