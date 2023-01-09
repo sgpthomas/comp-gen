@@ -191,6 +191,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
                     // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
                     // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
                     // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
+		egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))")
                     ]
             .into_iter(),
         )
@@ -203,8 +204,11 @@ fn compile(opts: CompileOpts) -> Res<()> {
         compiler.with_config(config);
     }
 
+    compiler.with_explanations();
     let (cost, prog, mut eg) = compiler.compile(&prog);
-    log::debug!("you exist bc: {}", eg.explain_existance(&prog));
+    let mut expl = eg.explain_existance(&prog);
+    log::debug!("you exist bc: {}", expl.get_string());
+    log::debug!("you exist bc: {}", expl.get_flat_string());
     info!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
     info!("{}", prog.pretty(80));

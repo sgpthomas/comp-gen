@@ -192,6 +192,7 @@ pub struct Compiler<
     dump_rules: bool,
     reuse_egraphs: bool,
     rule_distribution: Vec<(PathBuf, Box<dyn Fn(C::Cost) -> f64>)>,
+    explanations: bool,
 }
 
 impl<L, N, C> Compiler<L, N, C>
@@ -225,6 +226,7 @@ where
             dump_rules: false,
             reuse_egraphs: false,
             rule_distribution: vec![],
+            explanations: false,
         }
     }
 
@@ -404,6 +406,11 @@ where
         self
     }
 
+    pub fn with_explanations(&mut self) -> &mut Self {
+        self.explanations = true;
+        self
+    }
+
     fn equality_saturate(
         &self,
         phase: &Phase<L, N>,
@@ -521,8 +528,11 @@ where
     }
 
     fn new_egraph(&self) -> egg::EGraph<L, N> {
-        let mut egraph =
-            egg::EGraph::new(N::default()).with_explanations_disabled();
+        let mut egraph = if self.explanations {
+            egg::EGraph::new(N::default()).with_explanations_enabled()
+        } else {
+            egg::EGraph::new(N::default()).with_explanations_disabled()
+        };
         if let Some(node) = &self.init_node {
             egraph.add(node.clone());
         }
