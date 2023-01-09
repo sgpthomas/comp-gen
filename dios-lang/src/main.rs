@@ -203,7 +203,8 @@ fn compile(opts: CompileOpts) -> Res<()> {
         compiler.with_config(config);
     }
 
-    let (cost, prog, _eg) = compiler.compile(&prog);
+    let (cost, prog, mut eg) = compiler.compile(&prog);
+    log::debug!("you exist bc: {}", eg.explain_existance(&prog));
     info!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
     info!("{}", prog.pretty(80));
