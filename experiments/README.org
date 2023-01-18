@@ -243,15 +243,22 @@ IP="3.18.225.198"
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
 alias r="rsync -e 'ssh -o StrictHostKeyChecking=no' -v"
-r $rule_config ubuntu@$IP:~/rules.json
-r $compile_config ubuntu@$IP:~/compile.json
+# r $rule_config ubuntu@$IP:~/rules.json
+# r $compile_config ubuntu@$IP:~/compile.json
 
-# cargo build --release --manifest-path dios-lang/Cargo.toml
-r ~/Research/diospyros/*-params ubuntu@$IP:
+cargo build --release --manifest-path dios-lang/Cargo.toml
+r dios-lang/target/release/dios-lang ubuntu@$IP:
+# r ~/Research/diospyros/*-params ubuntu@$IP:
 
-r -r experiments/rule-generation/configs ubuntu@$IP:~/
-r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
+# r -r experiments/rule-generation/configs ubuntu@$IP:~/
+# r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
+
+#+RESULTS:
+: dios-lang
+: 
+: sent 20925169 bytes  received 33444 bytes  2465719.18 bytes/sec
+: total size is 20939191  speedup is 1.00
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
 export RUST_LOG='debug,egg=info'
