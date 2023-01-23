@@ -15,8 +15,8 @@ rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
 #+RESULTS:
 : kernel.c
 : 
-: sent 127 bytes  received 8,499 bytes  3,450.40 bytes/sec
-: total size is 9,130  speedup is 1.06
+: sent 109 bytes  received 8,113 bytes  5,481.33 bytes/sec
+: total size is 8,026  speedup is 0.98
 
 #+begin_src async-shell :results silent :ansi t :dir q-prod
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
@@ -47,8 +47,8 @@ rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
 #+RESULTS:
 : kernel.c
 : 
-: sent 67 bytes  received 766 bytes  333.20 bytes/sec
-: total size is 2,084  speedup is 2.50
+: sent 61 bytes  received 1,490 bytes  620.40 bytes/sec
+: total size is 2,084  speedup is 1.34
 
 This is the generated kernel:
 #+begin_example

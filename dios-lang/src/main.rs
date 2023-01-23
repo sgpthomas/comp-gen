@@ -192,7 +192,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
                     // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
                     // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
 		egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))"),
-		egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)")
+		egg::rewrite!("veclit0"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)")
                     ]
             .into_iter(),
         )

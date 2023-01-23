@@ -257,8 +257,8 @@ r dios-lang/target/release/dios-lang ubuntu@$IP:
 #+RESULTS:
 : dios-lang
 : 
-: sent 20925169 bytes  received 33444 bytes  2465719.18 bytes/sec
-: total size is 20939191  speedup is 1.00
+: sent 27,011,117 bytes  received 33,443 bytes  10,817,824.00 bytes/sec
+: total size is 30,954,480  speedup is 1.14
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
 export RUST_LOG='debug,egg=info'
@@ -277,7 +277,7 @@ bench="q-prod"
 IP="3.18.225.198"
 rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
       ubuntu@$IP:~/q-prod-out/kernel.c \
-      samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/cycle-estimation/q-prod/
+      ~/Research/comp-gen/experiments/cycle-estimation/q-prod/
 #+end_src
 
 * Instructions for setting up Xtensa
