@@ -51,6 +51,7 @@ pub struct SynthOpts {
     checkpoint: Option<PathBuf>,
 }
 
+/// Read a `synthesis::DiosConfig` from a path (represented as a `&str`).
 fn read_synth_config(path: &str) -> Result<synthesis::DiosConfig, String> {
     let config_file = fs::File::open(path)
         .context("open config path")
@@ -111,6 +112,7 @@ fn read_compiler_config(
     Ok(compile_config)
 }
 
+/// Synthesize a new ruleset using `Ruler`.
 fn synth(synth_opts: SynthOpts) -> Res<()> {
     let report = synthesis::run(
         synth_opts.config.unwrap_or_default(),
@@ -122,6 +124,9 @@ fn synth(synth_opts: SynthOpts) -> Res<()> {
     Ok(())
 }
 
+/// Run the entire phased eqsat compilation process on a Dios program.
+///  - this first calls the existing Dios code to generate an input program
+///  - once we have an input program, we construct and call a `comp-gen` compiler.
 fn compile(opts: CompileOpts) -> Res<()> {
     log::debug!("{opts:#?}");
 
@@ -204,6 +209,60 @@ fn compile(opts: CompileOpts) -> Res<()> {
     if let Some(config) = &opts.config {
         compiler.with_config(config);
     }
+
+    let test0: egg::RecExpr<lang::VecLang> = "(Vec
+        (+
+          (+
+            (* (Get aq 3) (Get bq 0))
+            (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
+          (* (Get aq 2) (Get bq 1)))
+        (+
+          (+
+            (* (Get aq 3) (Get bq 1))
+            (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
+          (* (Get aq 0) (Get bq 2)))
+        (+
+          (+
+            (* (Get aq 3) (Get bq 2))
+            (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
+          (* (Get bq 0) (Get aq 1)))
+        (+
+          (* (Get aq 3) (Get bq 3))
+          (+
+            (* (Get bq 0) (Get aq 0))
+            (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
+        .parse()
+        .unwrap();
+    let test1: egg::RecExpr<lang::VecLang> = "(VecAdd
+ (Vec
+  (+
+   (* (Get aq 3) (Get bq 0))
+   (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
+  (+
+   (* (Get aq 3) (Get bq 1))
+   (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
+  (+
+   (* (Get aq 3) (Get bq 2))
+   (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
+  (* (Get aq 3) (Get bq 3)))
+ (Vec
+  (* (Get aq 2) (Get bq 1))
+  (* (Get aq 0) (Get bq 2))
+  (* (Get bq 0) (Get aq 1))
+  (+
+   (* (Get bq 0) (Get aq 0))
+   (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
+        .parse()
+        .unwrap();
+
+    log::debug!(
+        "cost: {}",
+        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test0)
+    );
+    log::debug!(
+        "cost: {}",
+        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test1)
+    );
 
     compiler.with_explanations();
     let (cost, prog, mut eg) = compiler.compile(&prog);

@@ -229,36 +229,34 @@ Fix a set of filtering parameters, and play with the following settings:
 		(ec2/get-ip "exp1"))))
 #+end_src
 
-#+begin_src async-shell :dir (ec2/tramp "exp1") :results silent
+#+begin_src async-shell :dir (ec2/tramp "exp" "/" "home" "ubuntu") :results silent :ansi t
 export RUST_LOG=info,egg=off
 ./dios-lang synth out.json \
-	    --config configs/debug.json \
-	    --ruler synth_configs/test.json
+	    --config configs/debug.json
+	    # --ruler synth_configs/base.json
 #+end_src
 
 * Testing rulesets
 
-#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
-IP="3.18.225.198" 
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
-alias r="rsync -e 'ssh -o StrictHostKeyChecking=no' -v"
+
+function rs() {
+    rsync -e 'ssh -o StrictHostKeyChecking=no' -v $@
+}
+
 # r $rule_config ubuntu@$IP:~/rules.json
-# r $compile_config ubuntu@$IP:~/compile.json
+rs $compile_config ubuntu@$IP:~/compile.json
+rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
 
 cargo build --release --manifest-path dios-lang/Cargo.toml
-r dios-lang/target/release/dios-lang ubuntu@$IP:
+rs dios-lang/target/release/dios-lang ubuntu@$IP:
 # r ~/Research/diospyros/*-params ubuntu@$IP:
 
 # r -r experiments/rule-generation/configs ubuntu@$IP:~/
 # r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
-
-#+RESULTS:
-: dios-lang
-: 
-: sent 27,011,117 bytes  received 33,443 bytes  10,817,824.00 bytes/sec
-: total size is 30,954,480  speedup is 1.14
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
 export RUST_LOG='debug,egg=info'

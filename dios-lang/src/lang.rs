@@ -114,6 +114,7 @@ pub enum VecAst {
     #[allow(unused)]
     Ite(Box<VecAst>, Box<VecAst>, Box<VecAst>),
     Lt(Box<VecAst>, Box<VecAst>),
+    Get(Box<VecAst>, Box<VecAst>),
 
     Sqrt(Box<VecAst>),
     Sgn(Box<VecAst>),
@@ -238,6 +239,11 @@ impl VecAst {
                     items.iter().map(|it| it.to_recexpr(expr)).collect_vec();
                 expr.add(VecLang::LitVec(ids.into_boxed_slice()))
             }
+            VecAst::Get(left, right) => {
+                let left_id = left.to_recexpr(expr);
+                let right_id = right.to_recexpr(expr);
+                expr.add(VecLang::Get([left_id, right_id]))
+            }
             VecAst::Const(v) => expr.add(VecLang::Const(v.clone())),
             VecAst::Symbol(s) => expr.add(VecLang::Symbol(s.into())),
         }
@@ -306,7 +312,10 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
                     .map(|id| subtree(&expr, *id).into())
                     .collect_vec(),
             ),
-            VecLang::Get(_) => todo!(),
+            VecLang::Get([left, right]) => VecAst::Get(
+                Box::new(subtree(&expr, *left).into()),
+                Box::new(subtree(&expr, *right).into()),
+            ),
             VecLang::Concat(_) => todo!(),
             VecLang::VecAdd([left, right]) => VecAst::VecAdd(
                 Box::new(subtree(&expr, *left).into()),

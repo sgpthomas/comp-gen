@@ -18,7 +18,8 @@ impl egg::CostFunction<VecLang> for VecCostFn {
         const LITERAL: f64 = 0.001;
         const STRUCTURE: f64 = 0.1;
         const VEC_OP: f64 = 1.;
-        const OP: f64 = 2.;
+        const OP: f64 = 2.; // original
+                            // const OP: f64 = 10.;
         const BIG: f64 = 100.0;
         let op_cost = match enode {
             // You get literals for extremely cheap
@@ -37,7 +38,8 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                 let non_literals =
                     vals.iter().any(|&x| costs(x) > 3. * LITERAL);
                 if non_literals {
-                    BIG
+                    // BIG * vals.iter().fold(0., |acc, e| costs(*e) + acc)
+                    BIG // original
                 } else {
                     STRUCTURE
                 }

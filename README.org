@@ -3,3 +3,23 @@
 Automatically generate equality saturation based compilers using equality saturation and some cleverness.
 
 [[file:experiments/README.org][Experiments]]
+
+** Comp-gen
+
+This is the main library that implements the rule generation and rule phasing algorithms.
+
+[[file:comp-gen/README.org][README]]
+
+** dios-lang
+
+[[file:README.org][README]]
+
+This is an implementation of Diospyros using =comp-gen=. Right now it's using Ruler directly to do synthesis, rather than implementing the =Interpreter= trait. However it is using the =Compiler= structure in the =comp-gen= library.
+
+This is where most the work is happening right now.
+
+** aella
+
+[[file:aella/README.org][README]]
+
+An experimental equality saturation compiler for a simple imperative language. This is an experiment to see if this technique of automatically constructing an equality saturation based compiler can generalize beyond Diospyros.

@@ -170,6 +170,7 @@ pub struct Phase<
     iter_limit: usize,
 }
 
+/// An equality saturation based compiler.
 pub struct Compiler<
     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
     N: egg::Analysis<L> + Default + Clone,

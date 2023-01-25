@@ -119,6 +119,10 @@ impl Desugar for lang::VecAst {
                 Box::new(b.desugar(n_lanes)),
                 Box::new(c.desugar(n_lanes)),
             ),
+            lang::VecAst::Get(left, right) => lang::VecAst::Get(
+                Box::new(left.desugar(n_lanes)),
+                Box::new(right.desugar(n_lanes)),
+            ),
 
             x @ lang::VecAst::Const(_) => x,
             x @ lang::VecAst::Symbol(_) => x,
@@ -180,6 +184,10 @@ impl AlphaRenamable for lang::VecAst {
             ),
             lang::VecAst::LitVec(items) => lang::VecAst::LitVec(
                 items.into_iter().map(|x| x.rename(suffix)).collect_vec(),
+            ),
+            lang::VecAst::Get(x, y) => lang::VecAst::Get(
+                Box::new(x.rename(suffix)),
+                Box::new(y.rename(suffix)),
             ),
             lang::VecAst::VecAdd(x, y) => lang::VecAst::VecAdd(
                 Box::new(x.rename(suffix)),
