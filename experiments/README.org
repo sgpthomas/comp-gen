@@ -17,9 +17,10 @@ For each configuration, I want to measure:
 
 Compare this against, handwritten Diospyros rules
 
-** Emacs Play zone
+** Testing some configurations
 
 Reasonable config
+
 #+begin_src json :file (ec2/tramp "west" "test.json") :results file silent
 {
     "total_node_limit": 50000000,
@@ -62,6 +63,7 @@ Reasonable config
 #+end_src
 
 Wack config (that will probably work)
+
 #+begin_src json :file filtering/test.json :results file silent
 {
     "total_node_limit": 5000000,
@@ -95,6 +97,7 @@ Wack config (that will probably work)
 #+end_src
 
 Setup a remote machine
+
 #+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
 IP="3.18.225.198" 
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
@@ -271,32 +274,6 @@ bench="2d-conv"
     --config compile.json
 #+end_src
 
-* Instructions for setting up Xtensa
-
-You first need to download a =XtensaTools=. You can find this on the XPG site under any version number in the tools directory. Put this directory somewhere and extract it. This becomes the root directory of the Xtensa installation.
-
-I have it set up like:
-#+begin_example
-xtensa/
-  RI-2021.8-linux/
-    XtensaTools/    # home for the all of the Xtensa utilities
-    config/         # the Core Registry. Keeps configuration about what cores are installed
-#+end_example
-
-You can have other versions of the tools installed in the parent =xtensa= directory.
-
-Next you need to install core specific configuration. These can be found on the XPG site for some version in the =reference-cores= directory. I've been using Fusion G3 because that's what Diospyros uses.
-
-The file that you download will be an =.xws= file. This is really just a renamed zip archive. Extract it with =unzip=. This will create a =__downloads= directory. Find the core archive in this directory (it is easy to find). Extract that tar file. Inside the resulting directory is an =install= script. Run this script and pass in the location of the XtensaTools directory for the corresponding version when prompted.
-
-That's it! Now running =xt-clang= and corresponding compilers should just "work". They'll use whatever core you have set as default. I think you can also specify the name of a particular core on the command line.
-
-Here is the command to start the license server:
-
-#+begin_src async-shell :dir ~/Research/xtensa :results silent
-LM_LICENSE_FILE=licenses/LICENSE ./x64_lsb/lmgrd
-#+end_src
-
 * Fixing the Diospyros backend
 
 The backend doesn't correctly compile Vector expressions that have accesses to different memories. I'm not yet entirely sure that this is even a valid thing to do? But if it is, it would be very nice to fix.
@@ -343,7 +320,6 @@ The backend doesn't correctly compile Vector expressions that have accesses to d
      (LitVec (Get I 6) (Get I 6) (Get I 8) (Get I 8)))))))
 #+end_src
 
-
 #+begin_src async-shell :dir (concat (magit-toplevel) "/../diospyros") :results silent :name dios
 make dios
 # ./dios-example-gen -b 2d-conv -p 2d-conv-params -o fix-backend-out/ -w 4
@@ -351,3 +327,9 @@ make dios
     -o fix-backend-out/kernel.c fix-backend-out
 #+end_src
 
+#+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t
+IP="3.18.225.198"
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/q-prod-out/kernel.c \
+      samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/cycle-estimation/q-prod/
+#+end_src

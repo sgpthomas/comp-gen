@@ -3,6 +3,28 @@
 I'm starting out by just trying to get a single thing working manually. I have things
 setup to produce the final diospyros =kernel.c= file. I now want to setup a minimal harness to see if I can get Xtensa simulation working.
 
+** Instructions for setting up Xtensa
+
+You first need to download a =XtensaTools=. You can find this on the XPG site under any version number in the tools directory. Put this directory somewhere and extract it. This becomes the root directory of the Xtensa installation.
+
+I have it set up like:
+#+begin_example
+xtensa/
+  RI-2021.8-linux/
+    XtensaTools/    # home for the all of the Xtensa utilities
+    config/         # the Core Registry. Keeps configuration about what cores are installed
+#+end_example
+
+You can have other versions of the tools installed in the parent =xtensa= directory.
+
+Next you need to install core specific configuration. These can be found on the XPG site for some version in the =reference-cores= directory. I've been using Fusion G3 because that's what Diospyros uses.
+
+The file that you download will be an =.xws= file. This is really just a renamed zip archive. Extract it with =unzip=. This will create a =__downloads= directory. Find the core archive in this directory (it is easy to find). Extract that tar file. Inside the resulting directory is an =install= script. Run this script and pass in the location of the XtensaTools directory for the corresponding version when prompted.
+
+That's it! Now running =xt-clang= and corresponding compilers should just "work". They'll use whatever core you have set as default. I think you can also specify the name of a particular core on the command line.
+
+You also have to setup the license server. I honestly don't remember how I did that. You have to download the license file and then start up the license server with that file. It was relatively straightforward. I'll come back and document it next time I have to start it.
+
 ** q-prod
 
 copy the kernel here
@@ -105,7 +127,6 @@ $XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
 $XTRUN --summary --mem_model 2d-conv.o
 #+end_src
 
-
-** qr-decomp
+** TODO qr-decomp
 
 This benchmark is giant and takes forever to complete. Even starting the runner is incredibly slow. It seems like in the original Dios evaluation, they have a separate process for running the large memory programs and it takes upwards of 4.5 hours to complete. That's not ideal.
