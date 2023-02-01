@@ -2,6 +2,7 @@ mod cost;
 mod desugar;
 mod error;
 mod fuzz;
+mod handwritten;
 mod lang;
 #[allow(unused)]
 mod recexpr_helpers;
@@ -155,7 +156,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
         rewriteconcats::list_to_concats(opts.vector_width, &converted);
     // finally parse into a rec expr
     let prog: egg::RecExpr<lang::VecLang> = concats?.parse()?;
-    log::debug!("input: {}", prog.pretty(80));
+    // log::debug!("input: {}", prog.pretty(80));
 
     let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
         comp_gen::Compiler::with_cost_fn(cost::VecCostFn::default());
@@ -175,30 +176,31 @@ fn compile(opts: CompileOpts) -> Res<()> {
     compiler
         .add_rules(
             vec![
-                    // egg::rewrite!("sqrt-1-inv"; "1" => "(sqrt 1)"),
-                    // egg::rewrite!("sqrt-1-inv-rev"; "(sqrt 1)" => "1"),
-            // egg::rewrite!("div-1"; "(/ ?a 1)" => "?a"),
-            // egg::rewrite!("div-1-inv"; "?a" => "(/ ?a 1)"),
-            // egg::rewrite!("neg-sgn"; "(neg (sgn ?a))" => "(sgn (neg ?a))"),
-            // egg::rewrite!("neg-sgn-rev"; "(sgn (neg ?a))" => "(neg (sgn ?a))"),
-                    // egg::rewrite!("sqrt-vec"; "(Vec (sqrt ?a))" => "(VecSqrt ?a)"),
-                    // egg::rewrite!("sqrt-vec-rev"; "(VecSqrt ?a)" => "(Vec (sqrt ?a))"),
-                    // egg::rewrite!("sgn-vec"; "(Vec (sgn ?a))" => "(VecSgn ?a)"),
-                    // egg::rewrite!("sgn-vec-rev"; "(VecSgn ?a)" => "(Vec (sgn ?a))"),
-                    // egg::rewrite!("div"; "(Vec (/ ?a ?b) (/ ?c ?d))" => "(VecDiv (Vec ?a ?c) (Vec ?b ?d))"),
-                    // egg::rewrite!("div-rev"; "(VecDiv (Vec ?a ?c) (Vec ?b ?d))" => "(Vec (/ ?a ?b) (/ ?c ?d))"),
+                handwritten::build_litvec_rule(opts.vector_width),
+                // egg::rewrite!("sqrt-1-inv"; "1" => "(sqrt 1)"),
+                // egg::rewrite!("sqrt-1-inv-rev"; "(sqrt 1)" => "1"),
+                // egg::rewrite!("div-1"; "(/ ?a 1)" => "?a"),
+                // egg::rewrite!("div-1-inv"; "?a" => "(/ ?a 1)"),
+                // egg::rewrite!("neg-sgn"; "(neg (sgn ?a))" => "(sgn (neg ?a))"),
+                // egg::rewrite!("neg-sgn-rev"; "(sgn (neg ?a))" => "(neg (sgn ?a))"),
+                // egg::rewrite!("sqrt-vec"; "(Vec (sqrt ?a))" => "(VecSqrt ?a)"),
+                // egg::rewrite!("sqrt-vec-rev"; "(VecSqrt ?a)" => "(Vec (sqrt ?a))"),
+                // egg::rewrite!("sgn-vec"; "(Vec (sgn ?a))" => "(VecSgn ?a)"),
+                // egg::rewrite!("sgn-vec-rev"; "(VecSgn ?a)" => "(Vec (sgn ?a))"),
+                // egg::rewrite!("div"; "(Vec (/ ?a ?b) (/ ?c ?d))" => "(VecDiv (Vec ?a ?c) (Vec ?b ?d))"),
+                // egg::rewrite!("div-rev"; "(VecDiv (Vec ?a ?c) (Vec ?b ?d))" => "(Vec (/ ?a ?b) (/ ?c ?d))"),
 
-                    // egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
-                    // egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))"),
-                    // egg::rewrite!("blah"; "0" => "(+ 0 0)"),
-                    // egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
-                    // egg::rewrite!("-+neg"; "(- ?a ?b)" => "(+ ?a (neg ?b))"),
-                    // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
-                    // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
-                    // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
-		egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))"),
-		egg::rewrite!("veclit0"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)")
-                    ]
+                // egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
+                // egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))"),
+                // egg::rewrite!("blah"; "0" => "(+ 0 0)"),
+                // egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
+                // egg::rewrite!("-+neg"; "(- ?a ?b)" => "(+ ?a (neg ?b))"),
+                // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
+                // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
+                // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
+                // egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))"),
+                // egg::rewrite!("veclit0"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)")
+            ]
             .into_iter(),
         )
         // .with_filter(|cm| cm.cd > 0.0)

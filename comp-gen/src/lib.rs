@@ -48,6 +48,19 @@ where
     }
 }
 
+/// Find the depth of a `RecExpr` starting at a particular `root` node.
+fn depth<L: egg::Language, I: Into<egg::Id>>(
+    term: &egg::RecExpr<L>,
+    root: I,
+) -> usize {
+    if term.is_dag() {
+        1 + term[root.into()]
+            .fold(0, |acc, id| std::cmp::max(acc, depth(term, id)))
+    } else {
+        usize::max_value()
+    }
+}
+
 pub struct CostMetric<
     L: egg::Language + FromPattern,
     N: egg::Analysis<L>,
@@ -419,6 +432,11 @@ where
         prog: &egg::RecExpr<L>,
     ) -> EqSatResult<L, N, C> {
         debug!("Making runner");
+        debug!(
+            "Initial Program Depth: {}",
+            depth(&prog, prog.as_ref().len() - 1)
+        );
+
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
                 .with_egraph(egraph)
@@ -452,6 +470,10 @@ where
         let (cost, prog) = extractor.find_best(runner.roots[0]);
 
         debug!("Egraph size: {}", runner.egraph.total_size());
+        debug!(
+            "Final Program Depth: {}",
+            depth(&prog, prog.as_ref().len() - 1)
+        );
         let mut stats = Stats::from_runner(&phase, &runner);
         stats.cost = Some(cost.clone());
         stats.report();

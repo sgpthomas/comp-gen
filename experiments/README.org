@@ -238,7 +238,7 @@ export RUST_LOG=info,egg=off
 
 * Testing rulesets
 
-#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent :ansi t
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
 
@@ -247,8 +247,8 @@ function rs() {
 }
 
 # r $rule_config ubuntu@$IP:~/rules.json
-rs $compile_config ubuntu@$IP:~/compile.json
-rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
+# rs $compile_config ubuntu@$IP:~/compile.json
+# rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
 
 cargo build --release --manifest-path dios-lang/Cargo.toml
 rs dios-lang/target/release/dios-lang ubuntu@$IP:
@@ -258,9 +258,9 @@ rs dios-lang/target/release/dios-lang ubuntu@$IP:
 # r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
 #+end_src
 
-#+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t
+#+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
 export RUST_LOG='debug,egg=info'
-bench="q-prod"
+bench="2d-conv"
 ./dios-lang \
     compile $bench \
     --dios-bin diospyros/dios \
@@ -269,13 +269,6 @@ bench="q-prod"
     --vector-width 4 \
     --rules rules.json \
     --config compile.json
-#+end_src
-
-#+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t
-IP="3.18.225.198"
-rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
-      ubuntu@$IP:~/q-prod-out/kernel.c \
-      ~/Research/comp-gen/experiments/cycle-estimation/q-prod/
 #+end_src
 
 * Instructions for setting up Xtensa
@@ -298,4 +291,63 @@ The file that you download will be an =.xws= file. This is really just a renamed
 
 That's it! Now running =xt-clang= and corresponding compilers should just "work". They'll use whatever core you have set as default. I think you can also specify the name of a particular core on the command line.
 
-You also have to setup the license server. I honestly don't remember how I did that. You have to download the license file and then start up the license server with that file. It was relatively straightforward. I'll come back and document it next time I have to start it.
+Here is the command to start the license server:
+
+#+begin_src async-shell :dir ~/Research/xtensa :results silent
+LM_LICENSE_FILE=licenses/LICENSE ./x64_lsb/lmgrd
+#+end_src
+
+* Fixing the Diospyros backend
+
+The backend doesn't correctly compile Vector expressions that have accesses to different memories. I'm not yet entirely sure that this is even a valid thing to do? But if it is, it would be very nice to fix.
+
+#+begin_src emacs-lisp :tangle (concat (magit-toplevel) "/../diospyros/fix-backend-out/res.rkt") :mkdirp t
+(Concat
+ (VecAdd
+  (VecMul (Vec 1 (Get I 0) (Get F 1) 1) (Vec 0 (Get F 1) (Get I 1) 0))
+  (VecMul
+   (LitVec (Get F 0) (Get F 0) (Get F 0) (Get F 1))
+   (LitVec (Get I 0) (Get I 1) (Get I 2) (Get I 2))))
+ (Concat
+  (VecAdd
+   (VecAdd
+    (VecMul (Vec 0 (Get I 4) (Get I 1) 1)
+            (Vec 1 (Get F 0) (Get F 3) 0))
+    (VecMul (Vec 1 (Get F 1) (Get F 2) 1)
+            (Vec 0 (Get I 3) (Get I 2) 0)))
+   (VecAdd
+    (VecMul
+     (LitVec (Get F 0) (Get F 3) (Get F 1) (Get F 1))
+     (LitVec (Get I 3) (Get I 0) (Get I 4) (Get I 5)))
+    (VecMul
+     (LitVec (Get I 0) (Get I 1) (Get I 5) (Get I 2))
+     (LitVec (Get F 2) (Get F 2) (Get F 0) (Get F 3)))))
+  (Concat
+   (VecAdd
+    (VecMul (Vec 0 (Get F 3) (Get F 3) 1) (Vec 1 (Get I 3) (Get I 4) 0))
+    (VecAdd
+     (VecMul
+      (LitVec (Get F 2) (Get F 2) (Get F 2) (Get F 3))
+      (LitVec (Get I 3) (Get I 4) (Get I 5) (Get I 5)))
+     (VecAdd
+      (VecMul (Vec 1 (Get F 0) (Get F 1) 1) (Vec 0 (Get I 7) (Get I 7) 0))
+      (VecMul
+       (LitVec (Get I 6) (Get I 6) (Get I 8) (Get I 8))
+       (LitVec (Get F 0) (Get F 1) (Get F 0) (Get F 1))))))
+   (VecAdd
+    (VecMul
+     (Vec 1 (Get F 2) (Get F 3) 1)
+     (Vec 0 (Get I 7) (Get I 7) 0))
+    (VecMul
+     (LitVec (Get F 2) (Get F 3) (Get F 2) (Get F 3))
+     (LitVec (Get I 6) (Get I 6) (Get I 8) (Get I 8)))))))
+#+end_src
+
+
+#+begin_src async-shell :dir (concat (magit-toplevel) "/../diospyros") :results silent :name dios
+make dios
+# ./dios-example-gen -b 2d-conv -p 2d-conv-params -o fix-backend-out/ -w 4
+./dios -w 4 --egg --suppress-git --validation \
+    -o fix-backend-out/kernel.c fix-backend-out
+#+end_src
+

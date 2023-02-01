@@ -1,4 +1,4 @@
-* You've found the hot spot for doing cycle estimations
+* You've found the place for doing cycle estimations
 
 I'm starting out by just trying to get a single thing working manually. I have things
 setup to produce the final diospyros =kernel.c= file. I now want to setup a minimal harness to see if I can get Xtensa simulation working.
@@ -6,19 +6,14 @@ setup to produce the final diospyros =kernel.c= file. I now want to setup a mini
 ** q-prod
 
 copy the kernel here
-#+begin_src shell :var IP=(ec2/get-ip "exp") :results output
+
+#+begin_src async-shell :var IP=(ec2/get-ip "exp") :results silent
 rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
       ubuntu@$IP:~/q-prod-out/kernel.c \
-      q-prod/egg-kernel.c
+      q-prod/dios-egg-kernel.c
 #+end_src
 
-#+RESULTS:
-: kernel.c
-: 
-: sent 109 bytes  received 8,113 bytes  5,481.33 bytes/sec
-: total size is 8,026  speedup is 0.98
-
-#+begin_src async-shell :results silent :ansi t :dir q-prod
+#+begin_src async-shell :results silent :ansi t :dir q-prod :name q-prod
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
 XTCLANG=$XTENSA/bin/xt-clang++
 XTRUN=$XTENSA/bin/xt-run
@@ -51,6 +46,7 @@ rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
 : total size is 2,084  speedup is 1.34
 
 This is the generated kernel:
+
 #+begin_example
 (VecMAC
   (VecMul
@@ -77,3 +73,39 @@ $XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
 
 $XTRUN --summary --mem_model mat-mul.o
 #+end_src
+
+** 2d-conv
+
+Copy the file over:
+
+#+begin_src async-shell :name rsync :var IP=(ec2/get-ip "exp") :results silent
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/2d-conv-out/kernel.c \
+      2d-conv/comp-gen-kernel.c
+#+end_src
+
+Run the xtensa simulator on it.
+
+#+begin_src async-shell :name sim :results silent :ansi t :dir 2d-conv
+XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
+XTCLANG=$XTENSA/bin/xt-clang++
+XTRUN=$XTENSA/bin/xt-run
+# KERNEL=comp-gen-kernel.c
+KERNEL=~/Research/diospyros/fix-backend-out/kernel.c
+
+$XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+	 -DOUTFILE='"2d-conv.out"' \
+	 -DI_ROWS='3' -DI_COLS='3' \
+	 -DF_ROWS='2' -DF_COLS='2' \
+	 -I /usr/include/eigen3 \
+	 -I ~/Research/xtensa/fusiong3_library/include \
+	 -I ~/Research/xtensa/fusiong3_library/include_private \
+	 $KERNEL harness.c -o 2d-conv.o
+
+$XTRUN --summary --mem_model 2d-conv.o
+#+end_src
+
+
+** qr-decomp
+
+This benchmark is giant and takes forever to complete. Even starting the runner is incredibly slow. It seems like in the original Dios evaluation, they have a separate process for running the large memory programs and it takes upwards of 4.5 hours to complete. That's not ideal.

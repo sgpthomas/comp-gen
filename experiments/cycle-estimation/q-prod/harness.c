@@ -141,7 +141,11 @@ int main(int argc, char **argv) {
   /* printf("Eigen : %d cycles\n", time); */
   /* fprintf(file, "%s,%d\n","Eigen",time); */
 
-  // Diospyros
+  // Original Diospryos
+
+  // Diospyros-like ruleset
+
+  // Comp-gen
   start_cycle_timing;
   kernel(a_q, a_t, b_q, b_t, r_q, r_t);
   stop_cycle_timing;
@@ -152,8 +156,8 @@ int main(int argc, char **argv) {
   output_check(r_t, r_t_spec, 3, 1);
   zero_matrix(r_q, 4, 1);
   zero_matrix(r_t, 3, 1);
-  printf("Diospyros : %d cycles\n", time);
-  fprintf(file, "%s,%d\n","Diospyros",time);
+  printf("Comp-gen : %d cycles\n", time);
+  fprintf(file, "%s,%d\n","Comp-gen",time);
 
   return 0;
 }

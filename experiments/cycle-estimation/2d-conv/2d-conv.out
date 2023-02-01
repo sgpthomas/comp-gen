@@ -1,0 +1,3 @@
+kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles
+Naive,3,3,2,2,587
+Naive hard size,3,3,2,2,412
