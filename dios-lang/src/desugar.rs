@@ -21,7 +21,8 @@ impl Desugar for egg::Pattern<lang::VecLang> {
             .iter()
             .map(|l: &lang::VecLang| match l {
                 lang::VecLang::Symbol(s) => egg::ENodeOrVar::Var(
-                    egg::Var::from_str(s.as_str()).unwrap(),
+                    egg::Var::from_str(s.as_str())
+                        .expect(&format!("Couldn't varify '{s}' in {self}")),
                 ),
                 x => egg::ENodeOrVar::ENode(x.clone()),
             })

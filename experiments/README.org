@@ -241,7 +241,7 @@ export RUST_LOG=info,egg=off
 
 * Testing rulesets
 
-#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent :ansi t
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent :ansi t :name comp
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
 
@@ -252,6 +252,8 @@ function rs() {
 # r $rule_config ubuntu@$IP:~/rules.json
 # rs $compile_config ubuntu@$IP:~/compile.json
 # rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
+rs "experiments/manual_expansion/manual_rules.json" ubuntu@$IP:~/manual_rules.json
+rs "experiments/manual_expansion/expanding_rules.json" ubuntu@$IP:~/expanding.json
 
 cargo build --release --manifest-path dios-lang/Cargo.toml
 rs dios-lang/target/release/dios-lang ubuntu@$IP:
@@ -263,15 +265,15 @@ rs dios-lang/target/release/dios-lang ubuntu@$IP:
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
 export RUST_LOG='debug,egg=info'
-bench="2d-conv"
+bench="q-prod"
 ./dios-lang \
     compile $bench \
     --dios-bin diospyros/dios \
     --dios-example-bin diospyros/dios-example-gen \
     --dios-params $bench-params \
     --vector-width 4 \
-    --rules original_dios_rules.json \
-    --config no_phase_compile.json
+    --rules rules.json \
+    --config compile.json
 #+end_src
 
 * Fixing the Diospyros backend

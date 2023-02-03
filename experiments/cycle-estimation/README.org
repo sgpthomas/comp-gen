@@ -112,8 +112,8 @@ Run the xtensa simulator on it.
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
 XTCLANG=$XTENSA/bin/xt-clang++
 XTRUN=$XTENSA/bin/xt-run
-# KERNEL=comp-gen-kernel.c
-KERNEL=~/Research/diospyros/fix-backend-out/kernel.c
+KERNEL=comp-gen-kernel.c
+# KERNEL=~/Research/diospyros/fix-backend-out/kernel.c
 
 $XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
 	 -DOUTFILE='"2d-conv.out"' \
@@ -130,3 +130,14 @@ $XTRUN --summary --mem_model 2d-conv.o
 ** TODO qr-decomp
 
 This benchmark is giant and takes forever to complete. Even starting the runner is incredibly slow. It seems like in the original Dios evaluation, they have a separate process for running the large memory programs and it takes upwards of 4.5 hours to complete. That's not ideal.
+
+* Data
+
+| Benchmark | Ruleset        | Cycles |
+|-----------+----------------+--------|
+| q-prod    | rules.json     |        |
+| q-prod    | ruler2.json    |        |
+| q-prod    | expanding.json |        |
+| 2d-conv   |                |        |
+| mat-mul   |                |        |
+| qr-decomp |                |        |
