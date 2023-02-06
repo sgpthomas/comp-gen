@@ -1,4 +1,5 @@
 pub mod config;
+mod stats;
 
 use log::{debug, info};
 pub use ruler;
@@ -10,6 +11,8 @@ use std::{
     fs::File,
     path::{Path, PathBuf},
 };
+
+use crate::stats::EggStats;
 
 pub trait Interpreter {
     type Env: Default;
@@ -442,6 +445,7 @@ where
                 .with_egraph(egraph)
                 .with_expr(prog)
                 .with_node_limit(phase.node_limit)
+                .with_hook(EggStats::density())
                 .with_iter_limit(phase.iter_limit)
                 .with_time_limit(std::time::Duration::from_secs(self.timeout));
 
