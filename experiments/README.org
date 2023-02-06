@@ -265,14 +265,14 @@ rs dios-lang/target/release/dios-lang ubuntu@$IP:
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
 export RUST_LOG='debug,egg=info'
-bench="q-prod"
+bench="mat-mul"
 ./dios-lang \
     compile $bench \
     --dios-bin diospyros/dios \
     --dios-example-bin diospyros/dios-example-gen \
     --dios-params $bench-params \
     --vector-width 4 \
-    --rules rules.json \
+    --rules expanding.json \
     --config compile.json
 #+end_src
 

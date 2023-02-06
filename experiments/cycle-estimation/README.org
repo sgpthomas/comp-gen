@@ -133,11 +133,110 @@ This benchmark is giant and takes forever to complete. Even starting the runner 
 
 * Data
 
-| Benchmark | Ruleset        | Cycles |
-|-----------+----------------+--------|
-| q-prod    | rules.json     |        |
-| q-prod    | ruler2.json    |        |
-| q-prod    | expanding.json |        |
-| 2d-conv   |                |        |
-| mat-mul   |                |        |
-| qr-decomp |                |        |
+** Looking at how e-graph is growing based on ruleset
+
+Using the ruleset =expanding.json=. This is the ruleset where I've used Ruler 2.0 to generate just normal arithmetic rules up to depth 3, removed all the "non-expansion" rules and then manually added the vector compilation rules.
+
+This is for =2d-conv=
+
+#+name: 2d-conv-expanding
+| iter |      search |        apply |   enodes | eclasses |
+|------+-------------+--------------+----------+----------|
+|    0 | 0.014394228 |  0.474613063 |   173540 |    58618 |
+|    1 | 0.978857021 |  26.69292254 |  5984991 |   483136 |
+|    2 | 3.340895762 |   45.7094559 | 12234387 |   861286 |
+|    3 | 4.908809593 | 34.940109989 | 13190192 |   974679 |
+|    4 | 5.413900343 | 34.731200248 | 13599639 |  1032562 |
+|    5 | 5.719339313 | 35.245221067 | 13840583 |  1057859 |
+|    6 | 5.793327618 | 34.945761604 | 13951192 |  1065963 |
+|    7 | 6.115901912 | 35.080558204 | 13975748 |  1065963 |
+|    8 | 5.867310351 | 34.519687711 | 13975748 |  1065963 |
+
+And this is the table for using =manual_rules.json=.
+
+| iter |       search | apply        | enodes  | eclasses |   | ------+---------+----------+--------------+-------------- |
+|    0 |   0.52814723 | 20.186553761 | 5351792 | 1257325  |   |                                                           |
+|    1 | 28.275128165 | dnf          | dnf     | dnf      |   |                                                           |
+
+Well that one didn't even get past the first iteration. Here's for =rules.json=.
+
+#+name: 2d-conv-rules
+| iter |      search |        apply |   enodes | eclasses |
+|------+-------------+--------------+----------+----------|
+|    0 | 0.001417728 |  0.039550018 |    21244 |     9307 |
+|    1 | 0.204570658 |  5.523102448 |  1584012 |   389298 |
+|    2 | 2.652106883 | 50.953702258 | 11072618 |  1046329 |
+|    3 | 6.367701421 | 94.489983124 | 22170759 |  1334273 |
+|    4 | 6.961618305 | 62.414715545 | 22298735 |  1334273 |
+|    5 | 6.709916788 | 61.691662932 | 22298735 |  1334273 |
+
+What happens when the iterations for the first phase are 3 instead of 2? 
+
+=expanding.json=:
+| iter | search             |        apply |   enodes | eclasses |
+|------+--------------------+--------------+----------+----------|
+|    0 | 2.2267050680000002 | 94.615348931 | 22398479 |  5291230 |
+|    1 | killed             |              |          |          |
+
+=rules.json=:
+| iter |             search |        apply |  enodes | eclasses |
+|------+--------------------+--------------+---------+----------|
+|    0 |        0.002882457 |  0.089417886 |   44589 |    16935 |
+|    1 | 1.1553220180000001 | 41.801752809 | 9287979 |  1841504 |
+|    2 |        71.03608476 |              |         |          |
+
+Well that just straight up doesn't work? I thought this did work? Maybe it works for =q-prod=?
+
+=rules.json= (expansion iter=2):
+#+name: q-prod-rules
+| iter |       search |         apply |    enodes | eclasses |
+|------+--------------+---------------+-----------+----------|
+|    0 |  0.003289253 |   0.087861545 |     40076 |    13194 |
+|    1 |    0.4940899 |  14.097727038 |   3491672 |   389368 |
+|    2 |  4.382978251 | 108.309431318 |  22406861 |  2242549 |
+|    3 | 21.961383955 | 509.715477098 |  93835967 |  4255447 |
+|    4 | 32.882815934 | 516.881415174 | 121591083 |  5186668 |
+|    5 | 39.845039008 | 579.464795449 | 148036094 |  5487499 |
+|    6 | 40.947749726 | 506.179938106 | 148796585 |  5487679 |
+|    7 | 39.604264858 | 499.249599669 | 148797017 |  5487679 |
+|    8 | 39.773607888 | 495.748338123 | 148797017 |  5487679 |
+
+=expanding.json=: (expansion iter=2)
+#+name: q-prod-expanding
+| iter |             search |         apply |   enodes | eclasses |
+|------+--------------------+---------------+----------+----------|
+|    0 |        0.004915533 |   0.147002059 |    69679 |    31754 |
+|    1 |        0.923069946 |  29.454689936 |  6588293 |   621366 |
+|    2 | 5.8174557159999996 | 118.615584968 | 26212795 |  1168475 |
+|    3 |        8.361541658 | 103.133977164 | 30353946 |  1467215 |
+|    4 |        9.924798331 |  96.731343429 | 32306248 |  1793088 |
+|    5 |       11.991250729 | 100.797493646 | 34176327 |  2051353 |
+|    6 |       14.050943633 |  104.57464641 | 35590348 |  2287209 |
+|    7 |       14.867557774 | 106.430438446 | 36700255 |  2452669 |
+|    8 |       15.945125517 | 113.027889121 | 37740552 |  2581089 |
+|    9 |       17.062338049 | 109.568791432 | 38198441 |  2612457 |
+|   10 |       16.684745949 | 110.268900637 | 38394245 |  2639187 |
+|   11 |       17.041021852 | 110.898836666 | 38516315 |  2645943 |
+|   12 |          17.914887 | 114.840112695 | 38555735 |  2647311 |
+|   13 |       17.774444006 | 114.964675838 | 38561261 |  2647707 |
+|   14 |       17.121141341 | 109.669074948 | 38562089 |  2647887 |
+|   15 |       17.054257338 | 109.208855336 | 38562089 |  2647887 |
+
+
+** Making some graphs
+
+#+header: :var data=q-prod-expanding
+#+header: :file ruleset-analysis.png
+#+begin_src R :session *ruleset* :colnames yes :results graphics file
+library(tidyverse)
+
+data %>%
+  ggplot(aes(x = iter)) +
+  geom_line(aes(y = search / apply, color="s/a")) +
+  geom_line(aes(y = eclasses / enodes, color="c/n")) +
+  scale_color_discrete()
+#+end_src
+
+#+RESULTS:
+[[file:ruleset-analysis.png]]
+
