@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CompilerConfiguration {
     pub total_node_limit: usize,
+    pub total_iter_limit: usize,
     pub timeout: u64,
     pub dry_run: bool,
     pub dump_rules: bool,

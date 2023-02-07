@@ -384,6 +384,7 @@ where
         config: &config::CompilerConfiguration,
     ) -> &mut Self {
         self.total_node_limit = config.total_node_limit;
+        self.total_iter_limit = config.total_iter_limit;
         self.timeout = config.timeout;
         self.dry_run = config.dry_run;
         self.dump_rules = config.dump_rules;

@@ -264,6 +264,7 @@ rs dios-lang/target/release/dios-lang ubuntu@$IP:
 #+end_src
 
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
+export RUST_BACKTRACE=1
 export RUST_LOG='debug,egg=info'
 bench="mat-mul"
 ./dios-lang \
