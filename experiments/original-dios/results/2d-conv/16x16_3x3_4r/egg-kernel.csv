@@ -1,0 +1,4 @@
+kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles
+Naive,16,16,3,3,35491
+Naive hard size,16,16,3,3,29954
+Diospyros,16,16,3,3,1938

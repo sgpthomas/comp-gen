@@ -1,0 +1,5 @@
+kernel,SIZE,cycles
+Naive,3,7010
+Naive hard size,3,5838
+Eigen,3,3281
+Diospyros,3,616
