@@ -46,7 +46,7 @@ $XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 -DOUTFILE='"
 	 -I ~/Research/xtensa/fusiong3_library/include_private \
 	 egg-kernel.c harness.c -o q-prod.o
 
-$XTRUN --summary --mem_model q-prod.o
+$XTRUN q-prod.o
 #+end_src
 
 ** mat-mul
@@ -55,52 +55,37 @@ I need to add these flags to the compile command
 =-DA_ROWS=$(A_ROWS) -DA_COLS=$(A_COLS)=
 
 copy the kernel here
-#+begin_src shell :var IP=(ec2/get-ip "exp") :results output
+#+begin_src async-shell :var IP=(ec2/get-ip "exp") :results silent :name cycles
 rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
       ubuntu@$IP:~/mat-mul-out/kernel.c \
       mat-mul/egg-kernel.c
 #+end_src
 
-#+RESULTS:
-: kernel.c
-: 
-: sent 61 bytes  received 1,490 bytes  620.40 bytes/sec
-: total size is 2,084  speedup is 1.34
-
-This is the generated kernel:
-
-#+begin_example
-(VecMAC
-  (VecMul
-    (Vec (Get A 0) (Get A 0) (Get B 0) (Get B 1))
-    (Vec (Get B 0) (Get B 1) (Get A 2) (Get A 2)))
-  (Vec (Get A 1) (Get A 1) (Get B 2) (Get B 3))
-  (Vec (Get B 2) (Get B 3) (Get A 3) (Get A 3)))
-#+end_example
-
-
-#+begin_src async-shell :results silent :ansi t :dir mat-mul
+#+begin_src async-shell :results silent :ansi t :dir mat-mul :name cycles
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
 XTCLANG=$XTENSA/bin/xt-clang++
 XTRUN=$XTENSA/bin/xt-run
+KERNEL=egg-kernel.c
+# KERNEL=~/Research/comp-gen/experiments/original-dios/results/mat-mul/2x2_2x2_4r/egg-kernel.c 
 
-$XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
-	 -DOUTFILE='"mat-mul.out"' \
-	 -DA_ROWS='2' -DA_COLS='2' \
-	 -DB_ROWS='2' -DB_COLS='2' \
-	 -I /usr/include/eigen3 \
-	 -I ~/Research/xtensa/fusiong3_library/include \
-	 -I ~/Research/xtensa/fusiong3_library/include_private \
-	 egg-kernel.c harness.c -o mat-mul.o
+$XTCLANG -std=c++11 -O3 -mlongcalls -LNO:SIMD -w -mtext-section-literals \
+         -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+         -DOUTFILE='"mat-mul.out"' \
+         -DA_ROWS='4' -DA_COLS='4' \
+         -DB_ROWS='4' -DB_COLS='4' \
+         -I /usr/include/eigen3 \
+         -I ~/Research/xtensa/fusiong3_library/include \
+         -I ~/Research/xtensa/fusiong3_library/include_private \
+         $KERNEL harness.c -o mat-mul.o
 
-$XTRUN --summary --mem_model mat-mul.o
+$XTRUN mat-mul.o
 #+end_src
 
 ** 2d-conv
 
 Copy the file over:
 
-#+begin_src async-shell :name rsync :var IP=(ec2/get-ip "exp") :results silent
+#+begin_src async-shell :name cycles :var IP=(ec2/get-ip "exp") :results silent
 rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
       ubuntu@$IP:~/2d-conv-out/kernel.c \
       2d-conv/comp-gen-kernel.c
@@ -108,23 +93,24 @@ rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
 
 Run the xtensa simulator on it.
 
-#+begin_src async-shell :name sim :results silent :ansi t :dir 2d-conv
+#+begin_src async-shell :name sim :results silent :ansi t :dir 2d-conv :name cycles
 XTENSA=~/Research/xtensa/RI-2021.8-linux/XtensaTools
 XTCLANG=$XTENSA/bin/xt-clang++
 XTRUN=$XTENSA/bin/xt-run
 KERNEL=comp-gen-kernel.c
 # KERNEL=~/Research/diospyros/fix-backend-out/kernel.c
 
-$XTCLANG -std=c++11 -O3 -LNO:SIMD -w -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
-	 -DOUTFILE='"2d-conv.out"' \
-	 -DI_ROWS='3' -DI_COLS='3' \
-	 -DF_ROWS='2' -DF_COLS='2' \
-	 -I /usr/include/eigen3 \
-	 -I ~/Research/xtensa/fusiong3_library/include \
-	 -I ~/Research/xtensa/fusiong3_library/include_private \
-	 $KERNEL harness.c -o 2d-conv.o
+$XTCLANG -std=c++11 -O3 -mlongcalls -LNO:SIMD -w -mtext-section-literals \
+         -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+         -DOUTFILE='"2d-conv.out"' \
+         -DI_ROWS='3' -DI_COLS='3' \
+         -DF_ROWS='3' -DF_COLS='3' \
+         -I /usr/include/eigen3 \
+         -I ~/Research/xtensa/fusiong3_library/include \
+         -I ~/Research/xtensa/fusiong3_library/include_private \
+         $KERNEL harness.c -o 2d-conv.o
 
-$XTRUN --summary --mem_model 2d-conv.o
+$XTRUN 2d-conv.o
 #+end_src
 
 ** TODO qr-decomp
@@ -222,8 +208,7 @@ Well that just straight up doesn't work? I thought this did work? Maybe it works
 |   14 |       17.121141341 | 109.669074948 | 38562089 |  2647887 |
 |   15 |       17.054257338 | 109.208855336 | 38562089 |  2647887 |
 
-
-** Making some graphs
+*** Making some graphs
 
 #+header: :var data=q-prod-expanding
 #+header: :file ruleset-analysis.png
@@ -239,4 +224,34 @@ data %>%
 
 #+RESULTS:
 [[file:ruleset-analysis.png]]
+
+
+
+** Cycle Estimates compared with Dios
+
+| X | Benchmark              | Cost | Stock Cycles | Comp Gen Cycles |
+|---+------------------------+------+--------------+-----------------|
+|   | 2d-conv/3x3_2x2_4r     |      |           58 |              68 |
+|   | 2d-conv/3x3_3x3_4r     |      |          135 |             dnf |
+|   | 2d-conv/3x5_3x3_4r     |      |          155 |                 |
+|   | 2d-conv/4x4_3x3_4r     |      |          179 |                 |
+|   | 2d-conv/8x8_3x3_4r     |      |          450 |                 |
+|   | 2d-conv/10x10_2x2_4r   |      |          284 |                 |
+|   | 2d-conv/10x10_2x2_4r   |      |          284 |                 |
+|   | 2d-conv/10x10_3x3_4r   |      |          713 |                 |
+|   | 2d-conv/10x10_4x4_4r   |      |         1517 |                 |
+|   | 2d-conv/16x16_2x2_4r   |      |          741 |                 |
+|   | 2d-conv/16x16_3x3_4r   |      |         1938 |                 |
+|   | 2d-conv/16x16_4x4_4r   |      |         8402 |                 |
+| D | mat-mul/2x2_2x2_4r     |      |           33 |              33 |
+| D | mat-mul/2x3_3x3_4r     |      |           40 |              40 |
+| D | mat-mul/3x3_3x3_4r     |      |           44 |              50 |
+| I | mat-mul/4x4_4x4_4r     |      |           48 |             dnf |
+|   | mat-mul/8x8_8x8_4r     |      |          207 |                 |
+|   | mat-mul/10x10_10x10_4r |      |          724 |                 |
+|   | mat-mul/16x16_16x16_4r |      |        14115 |                 |
+| F | q-prod/4r              |      |           63 |              66 |
+|   | qr-decomp/3_4r         |      |          616 |             dnf |
+|   | qr-decomp/4_4r         |      |          586 |                 |
+
 

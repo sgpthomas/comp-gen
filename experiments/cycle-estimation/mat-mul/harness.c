@@ -20,13 +20,13 @@ float c[A_ROWS * B_COLS] __attribute__((section(".dram0.data")));
 
 float c_spec[A_ROWS * B_COLS] __attribute__((section(".dram0.data")));
 
-extern "C" {
-  // Expert kernel
-  void matrix_multiply_2x3_3x3_expert(float* c, float* a, float* b);
-  // Nature kernel
-  /* void matmmltf(const float32_t *x, int M, int N, const float32_t *y, */
-  /*   int P, float32_t *z); */
-}
+/* extern "C" { */
+/*   // Expert kernel */
+/*   void matrix_multiply_2x3_3x3_expert(float* c, float* a, float* b); */
+/*   // Nature kernel */
+/*   /\* void matmmltf(const float32_t *x, int M, int N, const float32_t *y, *\/ */
+/*   /\*   int P, float32_t *z); *\/ */
+/* } */
 
 // Diospyros kernel
 void kernel(float* input_A, float* input_B, float* input_C);
@@ -124,36 +124,36 @@ int main(int argc, char **argv) {
 
   // Eigen
   // Don't count data transformation toward timing
-  Eigen::Map<Eigen::Matrix<float, A_ROWS, A_COLS, Eigen::RowMajor>> e_a(a, A_ROWS, A_COLS);
-  Eigen::Map<Eigen::Matrix<float, B_ROWS, B_COLS, Eigen::RowMajor>> e_b(b, B_ROWS, B_COLS);
-  Eigen::Matrix<float, A_ROWS, B_COLS, Eigen::RowMajor> e_c;
-  start_cycle_timing;
-  e_c = e_a*e_b;
-  stop_cycle_timing;
-  time = get_time();
+  /* Eigen::Map<Eigen::Matrix<float, A_ROWS, A_COLS, Eigen::RowMajor>> e_a(a, A_ROWS, A_COLS); */
+  /* Eigen::Map<Eigen::Matrix<float, B_ROWS, B_COLS, Eigen::RowMajor>> e_b(b, B_ROWS, B_COLS); */
+  /* Eigen::Matrix<float, A_ROWS, B_COLS, Eigen::RowMajor> e_c; */
+  /* start_cycle_timing; */
+  /* e_c = e_a*e_b; */
+  /* stop_cycle_timing; */
+  /* time = get_time(); */
 
-  memcpy(c, e_c.data(), sizeof(float) * A_ROWS * B_COLS);
-  print_matrix(c, A_ROWS, B_COLS);
-  output_check(c, c_spec, A_ROWS, B_COLS);
-  zero_matrix(c, A_ROWS, B_COLS);
-  printf("Eigen : %d cycles\n", time);
-  fprintf(file, "%s,%d,%d,%d,%d,%d\n","Eigen",A_ROWS,A_COLS,B_ROWS,B_COLS,time);
+  /* memcpy(c, e_c.data(), sizeof(float) * A_ROWS * B_COLS); */
+  /* print_matrix(c, A_ROWS, B_COLS); */
+  /* output_check(c, c_spec, A_ROWS, B_COLS); */
+  /* zero_matrix(c, A_ROWS, B_COLS); */
+  /* printf("Eigen : %d cycles\n", time); */
+  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Eigen",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
 
   // Expert
-  if ((A_ROWS == 2) &&
-      (A_COLS == 3) &&
-      (B_ROWS == 3) &&
-      (B_COLS == 3)) {
-    start_cycle_timing;
-    matrix_multiply_2x3_3x3_expert(c, a, b);
-    stop_cycle_timing;
-    time = get_time();
-    print_matrix(c, A_ROWS, B_COLS);
-    output_check(c, c_spec, A_ROWS, B_COLS);
-    zero_matrix(c, A_ROWS, B_COLS);
-    printf("Expert : %d cycles\n", time);
-    fprintf(file, "%s,%d,%d,%d,%d,%d\n","Expert",A_ROWS,A_COLS,B_ROWS,B_COLS,time);
-  }
+  /* if ((A_ROWS == 2) && */
+  /*     (A_COLS == 3) && */
+  /*     (B_ROWS == 3) && */
+  /*     (B_COLS == 3)) { */
+  /*   start_cycle_timing; */
+  /*   matrix_multiply_2x3_3x3_expert(c, a, b); */
+  /*   stop_cycle_timing; */
+  /*   time = get_time(); */
+  /*   print_matrix(c, A_ROWS, B_COLS); */
+  /*   output_check(c, c_spec, A_ROWS, B_COLS); */
+  /*   zero_matrix(c, A_ROWS, B_COLS); */
+  /*   printf("Expert : %d cycles\n", time); */
+  /*   fprintf(file, "%s,%d,%d,%d,%d,%d\n","Expert",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
+  /* } */
 
   return 0;
 }

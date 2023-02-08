@@ -135,11 +135,12 @@ int main(int argc, char **argv) {
   kernel(i, f, o);
   stop_cycle_timing;
   time = get_time();
+  printf("\n");
+  printf("Comp-gen : %d cycles\n", time);
+  fprintf(file, "%s, %d, %d, %d, %d, %d\n", "Comp-gen", I_ROWS, I_COLS, F_ROWS, F_COLS, time);
   print_matrix(o, O_ROWS, O_COLS);
   output_check(o, o_spec, O_ROWS, O_COLS);
   zero_matrix(o, O_ROWS, O_COLS);
-  printf("Comp-gen : %d cycles\n", time);
-  fprintf(file, "%s, %d, %d, %d, %d, %d\n", "Comp-gen", I_ROWS, I_COLS, F_ROWS, F_COLS, time);
 
   return 0;
 }

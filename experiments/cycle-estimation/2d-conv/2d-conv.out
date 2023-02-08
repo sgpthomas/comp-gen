@@ -1,4 +1,4 @@
 kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles
-Naive,3,3,2,2,589
-Naive hard size,3,3,2,2,418
-Comp-gen, 3, 3, 2, 2, 121
+Naive,3,3,2,2,547
+Naive hard size,3,3,2,2,347
+Comp-gen, 3, 3, 2, 2, 68

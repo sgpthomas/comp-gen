@@ -241,6 +241,22 @@ export RUST_LOG=info,egg=off
 
 * Testing rulesets
 
+** Params
+
+Mat mul params
+
+#+begin_src json :file (ec2/tramp "exp" "/" "home" "ubuntu" "mat-mul-params") :results silent
+{
+  "A-rows": 3,
+  "A-cols": 3,
+  "B-rows": 2,
+  "B-cols": 2,
+  "reg-size": 4
+}
+#+end_src
+
+** Running
+
 #+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent :ansi t :name comp
 rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
 compile_config="experiments/filtering/test.json"
@@ -266,14 +282,14 @@ rs dios-lang/target/release/dios-lang ubuntu@$IP:
 #+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
 export RUST_BACKTRACE=1
 export RUST_LOG='debug,egg=info'
-bench="mat-mul"
+bench="q-prod"
 ./dios-lang \
     compile $bench \
     --dios-bin diospyros/dios \
     --dios-example-bin diospyros/dios-example-gen \
     --dios-params $bench-params \
     --vector-width 4 \
-    --rules expanding.json \
+    --rules rules.json \
     --config compile.json
 #+end_src
 
