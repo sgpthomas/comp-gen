@@ -1,4 +1,13 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
+pub enum RuleSchedulerOpt {
+    Backoff,
+    #[default]
+    Simple,
+}
 
 /// A serializable configuration struct so that configurations can be loaded
 /// from files.
@@ -13,6 +22,8 @@ pub struct CompilerConfiguration {
     pub cd_filter: Option<f64>,
     pub require_all_vars: bool,
     pub phases: Vec<PhaseConfiguration>,
+    pub scheduler: Option<RuleSchedulerOpt>,
+    pub stats: Option<PathBuf>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
