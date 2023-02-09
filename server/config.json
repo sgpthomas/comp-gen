@@ -1,5 +1,11 @@
 {
   "compgen_bin": "../dios-lang/target/release/dios-lang",
   "dios_bin": "../../diospyros/dios",
-  "dios_example_bin": "../../diospyros/dios-example-gen"
+  "dios_example_bin": "../../diospyros/dios-example-gen",
+  "rulesets": {
+    "expanding": "../experiments/expanding.json"
+  },
+  "compile_configs": {
+    "phased": "../experiments/compile.json"
+  }
 }
