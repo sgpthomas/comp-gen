@@ -98,6 +98,10 @@ struct CompileOpts {
     /// config
     #[argh(option, from_str_fn(read_compiler_config))]
     config: Option<comp_gen::config::CompilerConfiguration>,
+
+    /// output dir
+    #[argh(option, from_str_fn(read_path))]
+    output_dir: Option<PathBuf>,
 }
 
 fn read_path(path: &str) -> Result<PathBuf, String> {
@@ -131,7 +135,11 @@ fn synth(synth_opts: SynthOpts) -> Res<()> {
 fn compile(opts: CompileOpts) -> Res<()> {
     log::debug!("{opts:#?}");
 
-    let output_dir = PathBuf::from(format!("{}-out", opts.input.as_str()));
+    let output_dir = if let Some(path) = opts.output_dir {
+        path
+    } else {
+        PathBuf::from(format!("{}-out", opts.input.as_str()))
+    };
 
     // generate the example with dios_example_gen
     process::Command::new(opts.dios_example_bin)
