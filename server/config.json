@@ -1,0 +1,5 @@
+{
+  "compgen_bin": "../dios-lang/target/release/dios-lang",
+  "dios_bin": "../../diospyros/dios",
+  "dios_example_bin": "../../diospyros/dios-example-gen"
+}
