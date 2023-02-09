@@ -421,6 +421,7 @@ where
         }
         self.scheduler = config
             .scheduler
+            .clone()
             .unwrap_or(config::RuleSchedulerOpt::default());
         self.stats = config.stats.clone();
         self
