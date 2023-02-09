@@ -14,6 +14,8 @@
 
 #include "../utils.h"
 
+#define OUTFILE "mat-mul.out"
+
 float a[A_ROWS * A_COLS] __attribute__((section(".dram0.data")));
 float b[B_ROWS * B_COLS] __attribute__((section(".dram0.data")));
 float c[A_ROWS * B_COLS] __attribute__((section(".dram0.data")));

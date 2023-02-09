@@ -70,7 +70,6 @@ KERNEL=egg-kernel.c
 
 $XTCLANG -std=c++11 -O3 -mlongcalls -LNO:SIMD -w -mtext-section-literals \
          -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
-         -DOUTFILE='"mat-mul.out"' \
          -DA_ROWS='4' -DA_COLS='4' \
          -DB_ROWS='4' -DB_COLS='4' \
          -I /usr/include/eigen3 \
@@ -225,8 +224,6 @@ data %>%
 #+RESULTS:
 [[file:ruleset-analysis.png]]
 
-
-
 ** Cycle Estimates compared with Dios
 
 | X | Benchmark              | Cost | Stock Cycles | Comp Gen Cycles |
@@ -254,4 +251,21 @@ data %>%
 |   | qr-decomp/3_4r         |      |          616 |             dnf |
 |   | qr-decomp/4_4r         |      |          586 |                 |
 
+* Automating Experiments
+
+I basically want to generate the above table automatically. These are the steps needed to do a single full run:
+
+- Compile the comp-gen executable for the language
+- on the server, run =./dios-lang ..= with the each config in =params/=
+  - have timeout + memory limit
+- Record some data (initial and final program depth, e-graph cost, saturation, phase stats)
+- Copy back =kernel.c=
+- Simulate with x-sim
+- Report data
+
+#+begin_example
+results/
+  bench-name/
+    params_4r_rules_compile
+#+end_example
 
