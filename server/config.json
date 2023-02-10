@@ -3,9 +3,10 @@
   "dios_bin": "../../diospyros/dios",
   "dios_example_bin": "../../diospyros/dios-example-gen",
   "rulesets": {
-    "expanding": "../experiments/expanding.json"
+    "expanding": "../experiments/expanding_rules.json"
   },
   "compile_configs": {
     "phased": "../experiments/compile.json"
-  }
+  },
+  "jobs_at_once": 1
 }
