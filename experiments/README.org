@@ -630,3 +630,10 @@ rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
 (+ ?c (* 0 (+ ?b ?a))) ==> ?c
 (- ?c (* (* ?b ?a) 0)) ==> ?c
 #+end_example
+
+* Sending some experiments
+
+#+begin_src async-shell :dir (magit-toplevel) :results none :var IP=(ec2/get-ip "exp")
+cd server
+rsync -rvp jobs -e 'ssh -o StrictHostKeyChecking=no' ubuntu@$IP:~/comp-gen/server
+#+end_src
