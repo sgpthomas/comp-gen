@@ -1,8 +1,8 @@
-import sys
+#!/usr/bin/env python3
+
 from pathlib import Path
 from typing import Iterator, Callable, List
 import re
-import pprint
 from functools import reduce
 import click
 import csv
@@ -38,7 +38,7 @@ def dict_to_csv(d):
 
 
 class LogFilter:
-    def __init__(self, combine = None):
+    def __init__(self, combine=None):
         if isinstance(combine, Callable):
             self.combine = combine
         else:
@@ -57,7 +57,26 @@ class LogFilter:
 
 
 class Chunker(LogFilter):
-    def __init__(self, start, end=None, data: LogFilter = None, combine = None):
+    """
+    Chunks up a log into a series of "chunked" logs, and returns the result
+    of another LogFilter applied to these chunks.
+
+    A chunk is defined by a `start` filter, and optionally an `end` filter.
+    A chunk starts the first time a line matches `start`. If an `end` filter
+    is defined, a chunk ends when the `end` filter matches. If no `end` filter
+    is defined, then a chunk ends the next time `start` matches
+    (or the end of the log).
+
+    By default, this filter produces a dictionary where the key of each entry
+    is whatever the `start` filter returns on a matched line. The value is
+    whatever is returned by the `data` LogFilter.
+
+    An optional `combine` parameter can be given that specifies how to combine
+    the list of returned dictionaries into a single object. If nothing is
+    specified, a list of dictionaries is returned.
+    """
+
+    def __init__(self, start, end=None, data: LogFilter = None, combine=None):
         super().__init__(combine)
         self.start = start
 
@@ -124,7 +143,20 @@ class LineFilter(LogFilter):
                 yield self.f(matches)
 
 
+class First(LineFilter):
+    def __init__(self, regex, f):
+        super().__init__(
+            regex,
+            f,
+            combine=lambda x: x[0] if len(x) > 0 else {}
+        )
+
+
 class Combine(LogFilter):
+    """
+    Composes a list of LogFilters together into a single LogFilter.
+    """
+
     def __init__(self, *children: List[LogFilter], combine=None):
         super().__init__(combine)
         self.children = children
@@ -137,16 +169,15 @@ class Combine(LogFilter):
         return self.combine(res)
 
 
-@click.command()
-@click.argument("data_dir")
-def process(data_dir):
-    data_dir = Path(sys.argv[1])
-    stderr_log = data_dir / "results" / "stderr.log"
-    log = stderr_log.open("r").readlines()
-    log = map(lambda x: x.strip(), log)
+# merge a list of dicts into a single dict
+def dict_combine(res):
+    if len(res) == 0:
+        return {}
+    else:
+        return reduce(lambda a, b: {**a, **b}, res)
 
-    print(f"Reading {data_dir}...", end="")
 
+def filter_log(log):
     egraph_stats = LineFilter(
         r"Size: n=(\d+), e=(\d+)",
         lambda m: {"nodes": int(m.group(1)), "classes": int(m.group(2))}
@@ -162,12 +193,34 @@ def process(data_dir):
         lambda m: {"apply": float(m.group(1))}
     )
 
-    # merge a list of dicts into a single dict
-    def dict_combine(res):
-        if len(res) == 0:
-            return res
-        else:
-            return reduce(lambda a, b: {**a, **b}, res)
+    cost = Chunker(
+        start=matches("Runner report", lambda m: "report"),
+        # end=matches("Egraph size:", lambda x: x.group(0)),
+        end=matches("======================", lambda m: ""),
+        combine=lambda x: x[0] if len(x) > 0 else {},
+        data=Combine(
+            First(
+                r"Stop reason: (.*)",
+                lambda m: {"stop_reason": m.group(1)}
+            ),
+            First(
+                r"Cost: (\d+.\d+) \(old: .*\)",
+                lambda m: {"cost": float(m.group(1))},
+            ),
+            First(
+                r"Iterations: (\d+)",
+                lambda m: {"iterations": int(m.group(1))}
+            ),
+            First(
+                r"Egraph size: (\d+) nodes, (\d+) classes",
+                lambda m: {
+                    "final_nodes": int(m.group(1)),
+                    "final_classes": int(m.group(2))
+                }
+            ),
+            combine=dict_combine
+        )
+    )
 
     phases_f = Chunker(
         start=matches(r"Starting Phase (\w+)", lambda m: m.group(1)),
@@ -183,27 +236,70 @@ def process(data_dir):
                     combine=lambda x: dict_combine(sum(x, []))
                 ),
             ),
-            LineFilter(
+            cost,
+            First(
+                r"Using (\d+) rules",
+                lambda m: {"rules": int(m.group(1))}
+            ),
+            First(
                 r"Initial Program Depth: (\d+)",
                 lambda m: {"initial_depth": int(m.group(1))},
-                combine=lambda x: x[0]
             ),
-            LineFilter(
+            First(
                 r"Final Program Depth: (\d+)",
                 lambda m: {"final_depth": int(m.group(1))},
-                combine=lambda x: x[0]
             ),
             combine=dict_combine
         ),
     )
 
-    res = list(dict_to_csv(phases_f.run(log)))
-    with (data_dir / "data.csv").open("w") as f:
+    return phases_f.run(log)
+
+
+def process_single(data_path):
+    stderr_log = data_path / "results" / "stderr.log"
+    log = stderr_log.open("r").readlines()
+    log = map(lambda x: x.strip(), log)
+
+    print(f"Reading {data_path}...", end="")
+    data = filter_log(log)
+
+    # pp = pprint.PrettyPrinter(indent=2)
+    # print()
+    # pp.pprint(data)
+
+    # write out to a csv
+    res = list(dict_to_csv(data))
+    with (data_path / "data.csv").open("w") as f:
         wr = csv.writer(f)
-        wr.writerow(["phase","iteration","name","value"])
+        wr.writerow(["phase", "iteration", "name", "value"])
         wr.writerows(list(res))
 
     print("Done")
 
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument("data_dir")
+def single(data_dir):
+    process_single(Path(data_dir))
+
+
+@cli.command()
+@click.argument("parent_dir")
+def all(parent_dir):
+    parent_dir = Path(parent_dir)
+
+    # find all directories that have a stderr.log
+    for log_path in parent_dir.glob("**/results/stderr.log"):
+        # call process single on the containing directory
+        # that's what `.parents[1]` gets use.
+        process_single(log_path.parents[1])
+
+
 if __name__ == "__main__":
-    process()
+    cli()

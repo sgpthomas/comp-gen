@@ -85,7 +85,10 @@ class Task:
 
         self.benchmark = self.config["benchmark"]
         self.rules_path = global_config.rulesets[self.config["ruleset"]]
-        self.config_path = global_config.compile_configs[self.config["compile_config"]]
+        self.config_path = global_config.compile_configs[
+            self.config["compile_config"]
+        ]
+        self.cost_function = self.config["cost_function"]
         self.output_dir = task_dir / "results"
 
         # once started, this holds the executing child process
@@ -124,7 +127,8 @@ class Task:
                 "--vector-width", "4",
                 "--rules", str(self.rules_path),
                 "--config", str(self.config_path),
-                "--output-dir", str(self.output_dir)
+                "--output-dir", str(self.output_dir),
+                "--alt_cost" if self.cost_function == "alternative" else ""
             ],
             env={"RUST_LOG": "debug,egg=info"},
             stdout=stdout_log.open("w"),

@@ -102,6 +102,10 @@ struct CompileOpts {
     /// output dir
     #[argh(option, from_str_fn(read_path))]
     output_dir: Option<PathBuf>,
+
+    /// cost fun
+    #[argh(switch)]
+    alt_cost: bool,
 }
 
 fn read_path(path: &str) -> Result<PathBuf, String> {
@@ -167,7 +171,11 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // log::debug!("input: {}", prog.pretty(80));
 
     let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
-        comp_gen::Compiler::with_cost_fn(cost::VecCostFn::default());
+        comp_gen::Compiler::with_cost_fn(if opts.alt_cost {
+            cost::VecCostFn::alternative()
+        } else {
+            cost::VecCostFn::original()
+        });
 
     // add rules to compiler
     compiler.with_init_node(lang::VecLang::Const(lang::Value::Int(0)));
@@ -220,65 +228,65 @@ fn compile(opts: CompileOpts) -> Res<()> {
         compiler.with_config(config);
     }
 
-    let test0: egg::RecExpr<lang::VecLang> = "(Vec
-        (+
-          (+
-            (* (Get aq 3) (Get bq 0))
-            (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
-          (* (Get aq 2) (Get bq 1)))
-        (+
-          (+
-            (* (Get aq 3) (Get bq 1))
-            (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
-          (* (Get aq 0) (Get bq 2)))
-        (+
-          (+
-            (* (Get aq 3) (Get bq 2))
-            (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
-          (* (Get bq 0) (Get aq 1)))
-        (+
-          (* (Get aq 3) (Get bq 3))
-          (+
-            (* (Get bq 0) (Get aq 0))
-            (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
-        .parse()
-        .unwrap();
-    let test1: egg::RecExpr<lang::VecLang> = "(VecAdd
- (Vec
-  (+
-   (* (Get aq 3) (Get bq 0))
-   (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
-  (+
-   (* (Get aq 3) (Get bq 1))
-   (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
-  (+
-   (* (Get aq 3) (Get bq 2))
-   (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
-  (* (Get aq 3) (Get bq 3)))
- (Vec
-  (* (Get aq 2) (Get bq 1))
-  (* (Get aq 0) (Get bq 2))
-  (* (Get bq 0) (Get aq 1))
-  (+
-   (* (Get bq 0) (Get aq 0))
-   (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
-        .parse()
-        .unwrap();
+    //    let test0: egg::RecExpr<lang::VecLang> = "(Vec
+    //        (+
+    //          (+
+    //            (* (Get aq 3) (Get bq 0))
+    //            (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
+    //          (* (Get aq 2) (Get bq 1)))
+    //        (+
+    //          (+
+    //            (* (Get aq 3) (Get bq 1))
+    //            (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
+    //          (* (Get aq 0) (Get bq 2)))
+    //        (+
+    //          (+
+    //            (* (Get aq 3) (Get bq 2))
+    //            (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
+    //          (* (Get bq 0) (Get aq 1)))
+    //        (+
+    //          (* (Get aq 3) (Get bq 3))
+    //          (+
+    //            (* (Get bq 0) (Get aq 0))
+    //            (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
+    //        .parse()
+    //        .unwrap();
+    //    let test1: egg::RecExpr<lang::VecLang> = "(VecAdd
+    // (Vec
+    //  (+
+    //   (* (Get aq 3) (Get bq 0))
+    //   (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
+    //  (+
+    //   (* (Get aq 3) (Get bq 1))
+    //   (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
+    //  (+
+    //   (* (Get aq 3) (Get bq 2))
+    //   (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
+    //  (* (Get aq 3) (Get bq 3)))
+    // (Vec
+    //  (* (Get aq 2) (Get bq 1))
+    //  (* (Get aq 0) (Get bq 2))
+    //  (* (Get bq 0) (Get aq 1))
+    //  (+
+    //   (* (Get bq 0) (Get aq 0))
+    //   (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
+    //        .parse()
+    //        .unwrap();
 
-    log::debug!(
-        "cost: {}",
-        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test0)
-    );
-    log::debug!(
-        "cost: {}",
-        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test1)
-    );
+    //    log::debug!(
+    //        "cost: {}",
+    //        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test0)
+    //    );
+    //    log::debug!(
+    //        "cost: {}",
+    //        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test1)
+    //    );
 
-    compiler.with_explanations();
-    let (cost, prog, mut eg) = compiler.compile(&prog);
-    let mut expl = eg.explain_existance(&prog);
-    log::debug!("you exist bc:\n{}", expl.get_string());
-    log::debug!("you exist bc:\n{}", expl.get_flat_string());
+    // compiler.with_explanations();
+    let (cost, prog, mut _eg) = compiler.compile(&prog);
+    // let mut expl = eg.explain_existance(&prog);
+    // log::debug!("you exist bc:\n{}", expl.get_string());
+    // log::debug!("you exist bc:\n{}", expl.get_flat_string());
     info!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
     info!("{}", prog.pretty(80));

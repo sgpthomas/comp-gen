@@ -251,21 +251,29 @@ data %>%
 |   | qr-decomp/3_4r         |      |          616 |             dnf |
 |   | qr-decomp/4_4r         |      |          586 |                 |
 
-* Automating Experiments
+** expanding vs standard
 
-I basically want to generate the above table automatically. These are the steps needed to do a single full run:
-
-- Compile the comp-gen executable for the language
-- on the server, run =./dios-lang ..= with the each config in =params/=
-  - have timeout + memory limit
-- Record some data (initial and final program depth, e-graph cost, saturation, phase stats)
-- Copy back =kernel.c=
-- Simulate with x-sim
-- Report data
-
-#+begin_example
-results/
-  bench-name/
-    params_4r_rules_compile
-#+end_example
+| Benchmark              | Expanding | Ruler  |
+|------------------------+-----------+--------|
+| 2d-conv/3x3_2x2_4r     | y         | y      |
+| 2d-conv/3x3_3x3_4r     | y         | y      |
+| 2d-conv/3x5_3x3_4r     | killed    | killed |
+| 2d-conv/4x4_3x3_4r     | killed    | killed |
+| 2d-conv/8x8_3x3_4r     | killed    | killed |
+| 2d-conv/10x10_2x2_4r   | killed    | killed |
+| 2d-conv/10x10_3x3_4r   | killed    | killed |
+| 2d-conv/10x10_4x4_4r   | killed    | killed |
+| 2d-conv/16x16_2x2_4r   | killed    | killed |
+| 2d-conv/16x16_3x3_4r   | killed    | killed |
+| 2d-conv/16x16_4x4_4r   | killed    | killed |
+| mat-mul/2x2_2x2_4r     | y         | y      |
+| mat-mul/2x3_3x3_4r     | y         | y      |
+| mat-mul/3x3_3x3_4r     | y         | y      |
+| mat-mul/4x4_4x4_4r     | killed    | y      |
+| mat-mul/8x8_8x8_4r     | killed    | killed |
+| mat-mul/10x10_10x10_4r |           |        |
+| mat-mul/16x16_16x16_4r |           |        |
+| q-prod/4r              |           |        |
+| qr-decomp/3_4r         | killed    | killed |
+| qr-decomp/4_4r         | killed    | killed |
 

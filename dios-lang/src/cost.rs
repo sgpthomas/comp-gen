@@ -5,8 +5,20 @@ use crate::{lang::VecLang, recexpr_helpers};
 
 pub type DiosRwrite = egg::Rewrite<VecLang, ()>;
 
-#[derive(Default, Clone)]
-pub struct VecCostFn;
+#[derive(Clone)]
+pub struct VecCostFn {
+    original: bool,
+}
+
+impl VecCostFn {
+    pub fn original() -> Self {
+        VecCostFn { original: true }
+    }
+
+    pub fn alternative() -> Self {
+        VecCostFn { original: false }
+    }
+}
 
 impl egg::CostFunction<VecLang> for VecCostFn {
     type Cost = f64;
@@ -18,8 +30,11 @@ impl egg::CostFunction<VecLang> for VecCostFn {
         const LITERAL: f64 = 0.001;
         const STRUCTURE: f64 = 0.1;
         const VEC_OP: f64 = 1.;
-        const OP: f64 = 2.; // original
-                            // const OP: f64 = 10.;
+        let op_cost: f64 = if self.original {
+            2. // original
+        } else {
+            10.
+        };
         const BIG: f64 = 100.0;
         let op_cost = match enode {
             // You get literals for extremely cheap
@@ -38,8 +53,11 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                 let non_literals =
                     vals.iter().any(|&x| costs(x) > 3. * LITERAL);
                 if non_literals {
-                    // BIG * vals.iter().fold(0., |acc, e| costs(*e) + acc)
-                    BIG // original
+                    if self.original {
+                        BIG
+                    } else {
+                        BIG * vals.iter().fold(0., |acc, e| costs(*e) + acc)
+                    }
                 } else {
                     STRUCTURE
                 }
@@ -47,14 +65,14 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::LitVec(..) => LITERAL,
 
             // But scalar and vector ops cost something
-            VecLang::Add(vals) => OP * (vals.len() as f64 - 1.),
-            VecLang::Mul(vals) => OP * (vals.len() as f64 - 1.),
-            VecLang::Minus(vals) => OP * (vals.len() as f64 - 1.),
-            VecLang::Div(vals) => OP * (vals.len() as f64 - 1.),
+            VecLang::Add(vals) => op_cost * (vals.len() as f64 - 1.),
+            VecLang::Mul(vals) => op_cost * (vals.len() as f64 - 1.),
+            VecLang::Minus(vals) => op_cost * (vals.len() as f64 - 1.),
+            VecLang::Div(vals) => op_cost * (vals.len() as f64 - 1.),
 
-            VecLang::Sgn(..) => OP,
-            VecLang::Neg(..) => OP,
-            VecLang::Sqrt(..) => OP,
+            VecLang::Sgn(..) => op_cost,
+            VecLang::Neg(..) => op_cost,
+            VecLang::Sqrt(..) => op_cost,
 
             VecLang::VecAdd(..) => VEC_OP,
             VecLang::VecMinus(..) => VEC_OP,
@@ -82,15 +100,15 @@ impl comp_gen::CostMetrics<VecLang, ()> for VecCostFn {
         {
             let lexp: egg::RecExpr<VecLang> = VecLang::from_pattern(lhs);
             let rexp: egg::RecExpr<VecLang> = VecLang::from_pattern(rhs);
-            let mut costfn = VecCostFn {};
-            costfn.cost_rec(&lexp) - costfn.cost_rec(&rexp)
+            // let mut costfn = VecCostFn {};
+            self.cost_rec(&lexp) - self.cost_rec(&rexp)
         } else {
             match r.name.as_str() {
-                "litvec" => 0.099,
-                "+_binop_or_zero_vec" => 102.8,
-                "*_binop_or_zero_vec" => 102.8,
-                "-_binop_or_zero_vec" => 102.8,
-                "vec-mac" => 106.7,
+                // "litvec" => 0.099,
+                // "+_binop_or_zero_vec" => 102.8,
+                // "*_binop_or_zero_vec" => 102.8,
+                // "-_binop_or_zero_vec" => 102.8,
+                // "vec-mac" => 106.7,
                 _ => panic!("rule: {:?}", r),
             }
         }
@@ -102,15 +120,15 @@ impl comp_gen::CostMetrics<VecLang, ()> for VecCostFn {
         {
             let lexp: egg::RecExpr<VecLang> = VecLang::from_pattern(lhs);
             let rexp: egg::RecExpr<VecLang> = VecLang::from_pattern(rhs);
-            let mut costfn = VecCostFn {};
-            (costfn.cost_rec(&lexp) + costfn.cost_rec(&rexp)) / 2.
+            // let mut costfn = VecCostFn {};
+            (self.cost_rec(&lexp) + self.cost_rec(&rexp)) / 2.
         } else {
             match r.name.as_str() {
-                "litvec" => 100.,
-                "+_binop_or_zero_vec" => 50.,
-                "*_binop_or_zero_vec" => 50.,
-                "-_binop_or_zero_vec" => 50.,
-                "vec-mac" => 100.,
+                // "litvec" => 100.,
+                // "+_binop_or_zero_vec" => 50.,
+                // "*_binop_or_zero_vec" => 50.,
+                // "-_binop_or_zero_vec" => 50.,
+                // "vec-mac" => 100.,
                 _ => panic!("rule: {:?}", r),
             }
         }
