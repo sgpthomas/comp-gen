@@ -116,9 +116,7 @@ class Task:
         stdout_log.touch()
         stderr_log.touch()
 
-        # run the comp-gen binary, storing stdout and stderr in logs
-        self.proc = subprocess.Popen(
-            [
+        cmd = [
                 self.global_config.compgen_bin,
                 "compile", self.benchmark,
                 "--dios-bin", self.global_config.dios_bin,
@@ -128,7 +126,13 @@ class Task:
                 "--rules", str(self.rules_path),
                 "--config", str(self.config_path),
                 "--output-dir", str(self.output_dir),
-            ] + ["--alt_cost"] if self.cost_function == "alternative" else [],
+            ]
+        if self.cost_function == "alternative":
+            cmd += ["--alt_cost"]
+
+        # run the comp-gen binary, storing stdout and stderr in logs
+        self.proc = subprocess.Popen(
+            cmd,
             env={"RUST_LOG": "debug,egg=info"},
             stdout=stdout_log.open("w"),
             stderr=stderr_log.open("w")
@@ -260,6 +264,7 @@ def main():
 
     except Exception as e:
         print(f"Unknown exception: {e}")
+        raise e
 
 
 if __name__ == "__main__":
