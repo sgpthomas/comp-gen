@@ -128,8 +128,7 @@ class Task:
                 "--rules", str(self.rules_path),
                 "--config", str(self.config_path),
                 "--output-dir", str(self.output_dir),
-                "--alt_cost" if self.cost_function == "alternative" else ""
-            ],
+            ] + ["--alt_cost"] if self.cost_function == "alternative" else [],
             env={"RUST_LOG": "debug,egg=info"},
             stdout=stdout_log.open("w"),
             stderr=stderr_log.open("w")
