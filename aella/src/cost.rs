@@ -1,5 +1,7 @@
-use comp_gen::{CostMetrics, FromPattern};
-use egg::{CostFunction, Language};
+use comp_gen::{
+    ruler::egg::{self, CostFunction, Language},
+    CostMetrics, FromPattern,
+};
 
 use crate::lang;
 
@@ -40,7 +42,9 @@ impl egg::CostFunction<lang::Aella> for AellaCost {
             | lang::Aella::Not(_)
             | lang::Aella::And(_) => self.op,
             // normal commands
-            lang::Aella::Seq(_) | lang::Aella::While(_) | lang::Aella::Assign(_) => self.command,
+            lang::Aella::Seq(_)
+            | lang::Aella::While(_)
+            | lang::Aella::Assign(_) => self.command,
             // assembly instructions (2 args)
             lang::Aella::AsmMov(_vals) => {
                 self.asm_instr
@@ -69,8 +73,12 @@ impl egg::CostFunction<lang::Aella> for AellaCost {
 }
 
 impl CostMetrics<lang::Aella, ()> for AellaCost {
-    fn cost_differential(&mut self, r: &egg::Rewrite<lang::Aella, ()>) -> Self::Cost {
-        if let (Some(lhs), Some(rhs)) = (r.searcher.get_pattern_ast(), r.applier.get_pattern_ast())
+    fn cost_differential(
+        &mut self,
+        r: &egg::Rewrite<lang::Aella, ()>,
+    ) -> Self::Cost {
+        if let (Some(lhs), Some(rhs)) =
+            (r.searcher.get_pattern_ast(), r.applier.get_pattern_ast())
         {
             let lexp: egg::RecExpr<_> = lang::Aella::from_pattern(lhs);
             let rexp: egg::RecExpr<_> = lang::Aella::from_pattern(rhs);
@@ -82,8 +90,12 @@ impl CostMetrics<lang::Aella, ()> for AellaCost {
         }
     }
 
-    fn cost_average(&mut self, r: &egg::Rewrite<lang::Aella, ()>) -> Self::Cost {
-        if let (Some(lhs), Some(rhs)) = (r.searcher.get_pattern_ast(), r.applier.get_pattern_ast())
+    fn cost_average(
+        &mut self,
+        r: &egg::Rewrite<lang::Aella, ()>,
+    ) -> Self::Cost {
+        if let (Some(lhs), Some(rhs)) =
+            (r.searcher.get_pattern_ast(), r.applier.get_pattern_ast())
         {
             let lexp: egg::RecExpr<_> = lang::Aella::from_pattern(lhs);
             let rexp: egg::RecExpr<_> = lang::Aella::from_pattern(rhs);

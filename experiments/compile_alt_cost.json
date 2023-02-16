@@ -1,7 +1,7 @@
 {
   "total_node_limit": 20000000000,
   "total_iter_limit": 4000,
-  "timeout": 4000,
+  "timeout": 60,
   "dry_run": false,
   "dump_rules": false,
   "reuse_egraphs": true,
@@ -17,6 +17,7 @@
           "ca": [10, 1000.0],
           "node_limit": 500000,
           "iter_limit": 2,
+          "fresh_egraph": true,
           "disabled": false
         },
         {
@@ -26,7 +27,7 @@
           "disabled": false
         }
       ],
-      "loops": 10,
+      "loops": 10
     },
     {
       "name": "litvec",
@@ -39,7 +40,7 @@
       "cd": [-5.0, 5.0],
       "ca": [null, 9.0],
       "fresh_egraph": true,
-      "iter_limit": 50,
+      "iter_limit": 20,
       "disabled": false
     },
     {

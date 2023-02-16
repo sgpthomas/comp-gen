@@ -14,6 +14,16 @@ use std::{
 
 use crate::stats::EggStats;
 
+pub trait Interpreter {
+    type Env: Default;
+    type Res;
+
+    fn eval_with_env(&self, env: &mut Self::Env) -> Self::Res;
+    fn eval(&self) -> Self::Res {
+        self.eval_with_env(&mut Self::Env::default())
+    }
+}
+
 /// Recursively translate some type `T` into a `egg::RecExpr`.
 pub trait ToRecExpr<T> {
     fn to_recexpr(&self, expr: &mut egg::RecExpr<T>) -> egg::Id;
@@ -160,12 +170,12 @@ where
 
 pub struct EqSatResult<
     L: egg::Language + FromPattern,
-    N: egg::Analysis<L>,
+    // N: egg::Analysis<L>,
     C: egg::CostFunction<L>,
 > {
     cost: C::Cost,
     prog: egg::RecExpr<L>,
-    egraph: egg::EGraph<L, N>,
+    // egraph: egg::EGraph<L, N>,
     stats: Stats<L, C>,
 }
 
@@ -189,7 +199,8 @@ pub enum Phase<
 > {
     Single(SinglePhase<L, N, C>),
     Loop {
-        phases: Vec<Phase<L, N, C>>,
+        // TODO: maybe generalize this to allow arbitrary nesting?
+        phases: Vec<SinglePhase<L, N, C>>,
         loops: u64,
     },
 }
@@ -347,11 +358,12 @@ where
         self
     }
 
+    #[allow(unused)]
     /// Define a new phase named `name` using `filter`.
     /// Be careful to call this function after you have added all the rules
     /// to the compiler.
-    pub fn new_single_phase<F, S>(
-        &mut self,
+    fn new_single_phase<F, S>(
+        &self,
         name: S,
         filter: F,
         fresh_egraph: bool,
@@ -379,6 +391,72 @@ where
             node_limit: node_limit.unwrap_or(self.total_node_limit),
             iter_limit: iter_limit.unwrap_or(self.total_iter_limit),
         })
+    }
+
+    pub fn add_single_phase<F, S>(
+        &mut self,
+        name: S,
+        filter: F,
+        fresh_egraph: bool,
+        node_limit: Option<usize>,
+        iter_limit: Option<usize>,
+    ) -> &mut Self
+    where
+        F: Fn(CostMetric<L, N, C>) -> bool + 'static,
+        S: ToString,
+    {
+        // construct phase
+        let phase = Phase::Single(SinglePhase {
+            name: name.to_string(),
+            // rules: phase_rules,
+            select: Box::new(filter),
+            fresh_egraph,
+            node_limit: node_limit.unwrap_or(self.total_node_limit),
+            iter_limit: iter_limit.unwrap_or(self.total_iter_limit),
+        });
+        self.phases.push(phase);
+        self
+    }
+
+    /// Define a new phase named `name` using `filter`.
+    /// Be careful to call this function after you have added all the rules
+    /// to the compiler.
+    fn new_single_phase_range<S>(
+        &self,
+        name: S,
+        cd: [Option<f64>; 2],
+        ca: [Option<f64>; 2],
+        fresh_egraph: bool,
+        node_limit: Option<usize>,
+        iter_limit: Option<usize>,
+    ) -> SinglePhase<L, N, C>
+    where
+        S: ToString,
+    {
+        let filter = move |cm: CostMetric<L, N, C>| {
+            let [cd_low, cd_high] = cd;
+            let [ca_low, ca_high] = ca;
+
+            // check conditions. if condition doesn't exist,
+            // then default to true
+            //   cd conditions
+            cd_low.map(|l| cm.cd > l).unwrap_or(true)
+                && cd_high.map(|h| cm.cd <= h).unwrap_or(true)
+	    // check ca conditions
+                && ca_low.map(|l| cm.ca > l).unwrap_or(true)
+                && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
+            // && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
+        };
+
+        // construct phase
+        SinglePhase {
+            name: name.to_string(),
+            // rules: phase_rules,
+            select: Box::new(filter),
+            fresh_egraph,
+            node_limit: node_limit.unwrap_or(self.total_node_limit),
+            iter_limit: iter_limit.unwrap_or(self.total_iter_limit),
+        }
     }
 
     pub fn dry_run(&mut self) -> &mut Self {
@@ -413,7 +491,7 @@ where
     /// Load config from a file. This overries anything previously set.
     pub fn with_config(
         &mut self,
-        config: config::CompilerConfiguration,
+        config: &config::CompilerConfiguration,
     ) -> &mut Self {
         self.total_node_limit = config.total_node_limit;
         self.total_iter_limit = config.total_iter_limit;
@@ -437,30 +515,56 @@ where
                         continue;
                     }
 
-                    let phase = self.new_single_phase(
+                    // let [cd_low, cd_high] = cd;
+                    // let [ca_low, ca_high] = ca;
+                    let phase = self.new_single_phase_range(
                         name,
-                        move |cm| {
-                            let [cd_low, cd_high] = cd;
-                            let [ca_low, ca_high] = ca;
-
-                            // check conditions. if condition doesn't exist,
-                            // then default to true
-                            //   cd conditions
-                            cd_low.map(|l| cm.cd > l).unwrap_or(true)
-                            && cd_high.map(|h| cm.cd <= h).unwrap_or(true)
-		            // check ca conditions
-                            && ca_low.map(|l| cm.ca > l).unwrap_or(true)
-                            && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
-		            && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
-                        },
+                        cd,
+                        ca,
                         fresh_egraph.unwrap_or(false),
                         node_limit,
                         iter_limit,
                     );
 
-                    self.phases.push(phase);
+                    self.phases.push(Phase::Single(phase));
                 }
-                config::PhaseConfiguration::Phases { phases, loops } => todo!(),
+                config::PhaseConfiguration::Phases { phases, loops } => {
+                    let single_phases = phases
+                        .into_iter()
+                        .filter_map(|p| match p {
+                            config::PhaseConfiguration::Single {
+                                name,
+                                cd,
+                                ca,
+                                fresh_egraph,
+                                node_limit,
+                                iter_limit,
+                                disabled,
+                            } => {
+                                if disabled.unwrap_or(false) {
+                                    None
+                                } else {
+                                    Some(self.new_single_phase_range(
+                                        name,
+                                        cd,
+                                        ca,
+                                        fresh_egraph.unwrap_or(false),
+                                        node_limit,
+                                        iter_limit,
+                                    ))
+                                }
+                            }
+                            config::PhaseConfiguration::Phases {
+                                phases: _,
+                                loops: _,
+                            } => todo!(),
+                        })
+                        .collect::<Vec<_>>();
+                    self.phases.push(Phase::Loop {
+                        phases: single_phases,
+                        loops,
+                    })
+                }
             }
         }
         self.scheduler = config
@@ -494,7 +598,7 @@ where
         phase: &SinglePhase<L, N, C>,
         egraph: egg::EGraph<L, N>,
         prog: &egg::RecExpr<L>,
-    ) -> EqSatResult<L, N, C> {
+    ) -> (egg::EGraph<L, N>, EqSatResult<L, C>) {
         debug!("Making runner");
         debug!(
             "Initial Program Depth: {}",
@@ -550,18 +654,21 @@ where
         stats.cost = Some(cost.clone());
         stats.report();
 
-        EqSatResult {
+        let res = EqSatResult {
             cost,
             prog,
-            egraph: runner.egraph,
+            // egraph: runner.egraph,
             stats,
-        }
+        };
+        (runner.egraph, res)
     }
 
-    pub fn run_one(
-        &mut self,
+    fn run_single(
+        &self,
         phase: &SinglePhase<L, N, C>,
-    ) -> Option<EqSatResult<L, N, C>> {
+        mut egraph: egg::EGraph<L, N>,
+        prog: &egg::RecExpr<L>,
+    ) -> (egg::EGraph<L, N>, Option<EqSatResult<L, C>>) {
         let msg = format!("Starting Phase {}", phase.name);
         info!("{}", "=".repeat(msg.len()));
         info!("{msg}");
@@ -590,7 +697,7 @@ where
         }
 
         if self.dry_run {
-            return None;
+            return (egraph, None);
         }
 
         // update egraph
@@ -600,9 +707,41 @@ where
         }
         // let (new_cost, new_prog, new_egraph) =
         //     self.equality_saturate(&phase, egraph, &prog);
-        let eq_sat = self.equality_saturate(&phase, egraph, &prog);
+        let (egraph, eq_sat) = self.equality_saturate(&phase, egraph, &prog);
 
-        Some(eq_sat)
+        (egraph, Some(eq_sat))
+    }
+
+    fn run_loop(
+        &self,
+        phases: &[SinglePhase<L, N, C>],
+        loops: u64,
+        mut egraph: egg::EGraph<L, N>,
+        prog: &egg::RecExpr<L>,
+    ) -> (egg::EGraph<L, N>, Option<EqSatResult<L, C>>) {
+        info!("Starting a loop! Running for {loops} iterations");
+
+        let mut res = None;
+
+        for _ in 0..loops {
+            for phase in phases {
+                let (egraph_new, eq_sat_opt) =
+                    self.run_single(phase, egraph, prog);
+                egraph = egraph_new;
+                res = eq_sat_opt;
+                // handle stats if we have them
+                // if let Some(eq_sat) = eq_sat_opt {
+                //     let mut stat = eq_sat.stats.clone();
+                //     stat.old_cost = Some(cost.clone());
+                //     stats.push(stat);
+
+                //     info!("Cost: {:?} (old: {:?})", eq_sat.cost.clone(), cost);
+                //     // update state for next iteration
+                //     // (cost, prog) = (eq_sat.cost, eq_sat.prog);
+                // }
+            }
+        }
+        (egraph, res)
     }
 
     pub fn compile(
@@ -614,30 +753,29 @@ where
         });
 
         let mut egraph = self.new_egraph();
-        let mut cost_fn = self.cost_fn.clone();
+        // let mut cost_fn = self.cost_fn.clone();
         let mut prog = prog.clone();
         let mut cost = self.cost_fn.cost_rec(&prog);
 
         let mut stats: Vec<Stats<L, C>> = vec![];
         for phase in &self.phases {
-            match phase {
-                Phase::Single(phase) => {
-                    if let Some(eq_sat) = self.run_one(phase) {
-                        let mut stat = eq_sat.stats.clone();
-                        stat.old_cost = Some(cost.clone());
-                        stats.push(stat);
-
-                        info!(
-                            "Cost: {:?} (old: {:?})",
-                            eq_sat.cost.clone(),
-                            cost
-                        );
-                        // update state for next iteration
-                        (cost, prog, egraph) =
-                            (eq_sat.cost, eq_sat.prog, eq_sat.egraph);
-                    }
+            let (egraph_new, eq_sat_opt) = match phase {
+                Phase::Single(phase) => self.run_single(phase, egraph, &prog),
+                Phase::Loop { phases, loops } => {
+                    self.run_loop(phases, *loops, egraph, &prog)
                 }
-                Phase::Loop { phases, loops } => todo!(),
+            };
+            // update the egraph with the one returned from run_single
+            egraph = egraph_new;
+            // handle stats if we have them
+            if let Some(eq_sat) = eq_sat_opt {
+                let mut stat = eq_sat.stats.clone();
+                stat.old_cost = Some(cost.clone());
+                stats.push(stat);
+
+                info!("Cost: {:?} (old: {:?})", eq_sat.cost.clone(), cost);
+                // update state for next iteration
+                (cost, prog) = (eq_sat.cost, eq_sat.prog);
             }
         }
 

@@ -1,5 +1,7 @@
-use comp_gen::{FromPattern, ToRecExpr};
-use egg::{define_language, Id};
+use comp_gen::{
+    ruler::egg::{self, define_language, Id},
+    FromPattern, ToRecExpr,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
@@ -63,6 +65,7 @@ impl Command {
 }
 
 define_language! {
+    #[derive(Serialize, Deserialize)]
     pub enum Aella {
     "+" = Plus([Id; 2]),
     "-" = Sub([Id; 2]),
@@ -94,12 +97,13 @@ impl ToRecExpr<Aella> for Command {
                 } else if items.len() > 1 {
                     let last = items[items.len() - 1].clone();
                     let last_id = last.to_recexpr(expr);
-                    items[..items.len() - 1]
-                        .into_iter()
-                        .rfold(last_id, |acc, it| {
+                    items[..items.len() - 1].into_iter().rfold(
+                        last_id,
+                        |acc, it| {
                             let next_id = it.to_recexpr(expr);
                             expr.add(Aella::Seq([next_id, acc]))
-                        })
+                        },
+                    )
                 } else {
                     unreachable!()
                 }

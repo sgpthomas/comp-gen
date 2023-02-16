@@ -1,21 +1,24 @@
-use egg::Id;
 use itertools::Itertools;
 use rand::Rng;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg32;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 use crate::lang::Aella;
-use comp_gen::ruler;
+use comp_gen::ruler::{
+    self,
+    egg::{self, Id},
+};
 
 type Env = BTreeMap<egg::Symbol, i64>;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub enum PrimVal {
     Int(i64),
     Var(egg::Symbol),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct Value(Option<PrimVal>, Env);
 
 impl Value {
@@ -47,7 +50,7 @@ impl Value {
         }
     }
 
-    fn random_env(rng: &mut Pcg64, prim: usize, n_vars: usize) -> Value {
+    fn random_env(rng: &mut Pcg32, prim: usize, n_vars: usize) -> Value {
         let mut map = BTreeMap::default();
         for i in 0..n_vars {
             let rand_sym = egg::Symbol::from(ruler::letter(i));

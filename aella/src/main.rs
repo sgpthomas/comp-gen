@@ -6,8 +6,11 @@ mod synthesis;
 
 use argh::FromArgs;
 use chain_cmp::chmp;
-use comp_gen::{ruler, ToRecExpr};
-use egg::RecExpr;
+use comp_gen::{
+    ruler::{self, egg::RecExpr},
+    ToRecExpr,
+};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 use crate::lang::Command;
@@ -28,7 +31,7 @@ enum Commands {
     Compile(CompileOpts),
 }
 
-#[derive(Clone, FromArgs)]
+#[derive(Clone, FromArgs, Serialize, Deserialize)]
 #[argh(subcommand, name = "synth")]
 /// Synth options.
 pub struct SynthOpts {
@@ -79,29 +82,42 @@ fn compile(opts: CompileOpts) {
 
     println!("{}", expr.pretty(80));
 
-    let compiler: comp_gen::Compiler<lang::Aella, (), _> =
-        comp_gen::Compiler::with_cost_fn(cost::AellaCost::default())
-            .with_timeout(240)
-            .with_node_limit(1_000_000)
-            .with_init_node(lang::Aella::Num(0))
-            .add_external_rules(&opts.rules)
-            .output_rule_distribution("rule_distribution.csv", |x| x)
-            .dry_run()
-            .dump_rules()
-            .add_cutoff_phase("pre compile", |cd, ca| {
-                cd.abs() < 1.0 && ca.abs() < 0.5
-            })
-            .add_cutoff_phase("compile", |cd, ca| {
-                chmp!(1.0 < cd.abs() < 3.0) && chmp!(0.5 < ca.abs() < 1.5)
-            })
-            .add_cutoff_phase("optimization", |cd, ca| {
-                3.0 < cd.abs() && 1.5 < ca.abs()
-            });
+    let mut compiler: comp_gen::Compiler<lang::Aella, (), _> =
+        comp_gen::Compiler::with_cost_fn(cost::AellaCost::default());
+    compiler
+        .with_timeout(240)
+        .with_total_node_limit(1_000_000)
+        .with_init_node(lang::Aella::Num(0))
+        .add_external_rules(&opts.rules)
+        .output_rule_distribution("rule_distribution.csv", |x| x)
+        .dry_run()
+        .dump_rules()
+        .add_single_phase(
+            "pre compile",
+            |cm| cm.cd.abs() < 1.0 && cm.ca.abs() < 0.5,
+            false,
+            None,
+            None,
+        )
+        .add_single_phase(
+            "compile",
+            |cm| {
+                chmp!(1.0 < cm.cd.abs() < 3.0) && chmp!(0.5 < cm.ca.abs() < 1.5)
+            },
+            false,
+            None,
+            None,
+        )
+        .add_single_phase(
+            "optimization",
+            |cm| 3.0 < cm.cd.abs() && 1.5 < cm.ca.abs(),
+            false,
+            None,
+            None,
+        );
 
     let (cost, prog, _eg) = compiler.compile(&expr);
-    if let Some(cost) = cost {
-        println!("cost: {cost}");
-    }
+    println!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
     println!("{}", prog.pretty(80));
 }
