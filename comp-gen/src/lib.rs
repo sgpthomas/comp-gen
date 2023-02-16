@@ -84,15 +84,16 @@ pub struct Stats<L: egg::Language, C: egg::CostFunction<L>> {
 impl<L, C> Stats<L, C>
 where
     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
-    C: egg::CostFunction<L>,
+    C: egg::CostFunction<L> + Clone,
 {
     fn from_runner<N: egg::Analysis<L> + Default + Clone>(
-        phase: &Phase<L, N>,
+        phase: &SinglePhase<L, N, C>,
+        n_rules: usize,
         runner: &egg::Runner<L, N, ()>,
     ) -> Self {
         Self {
             phase_name: phase.name.to_string(),
-            rules: phase.rules.len(),
+            rules: n_rules,
             stop_reason: runner.stop_reason.clone(),
             iterations: runner.iterations.len(),
             egraph_total_nodes: runner.egraph.total_number_of_nodes(),
@@ -168,17 +169,42 @@ pub struct EqSatResult<
     stats: Stats<L, C>,
 }
 
-/// Structure that defines a rule phase.
-pub struct Phase<
+pub struct SinglePhase<
     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
     N: egg::Analysis<L> + Default + Clone,
+    C: egg::CostFunction<L> + Clone,
 > {
     name: String,
-    rules: Vec<egg::Rewrite<L, N>>,
+    // rules: Vec<egg::Rewrite<L, N>>,
+    select: Box<dyn Fn(CostMetric<L, N, C>) -> bool>,
     fresh_egraph: bool,
     node_limit: usize,
     iter_limit: usize,
 }
+
+pub enum Phase<
+    L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
+    N: egg::Analysis<L> + Default + Clone,
+    C: egg::CostFunction<L> + Clone,
+> {
+    Single(SinglePhase<L, N, C>),
+    Loop {
+        phases: Vec<Phase<L, N, C>>,
+        loops: u64,
+    },
+}
+
+// /// Structure that defines a rule phase.
+// pub struct Phase<
+//     L: egg::Language + egg::FromOp + Send + Sync + FromPattern + 'static,
+//     N: egg::Analysis<L> + Default + Clone,
+// > {
+//     name: String,
+//     rules: Vec<egg::Rewrite<L, N>>,
+//     fresh_egraph: bool,
+//     node_limit: usize,
+//     iter_limit: usize,
+// }
 
 /// An equality saturation based compiler.
 pub struct Compiler<
@@ -193,7 +219,7 @@ pub struct Compiler<
     filter: Option<Box<dyn Fn(CostMetric<L, N, C>) -> bool>>,
 
     /// Phases.
-    phases: Vec<Phase<L, N>>,
+    phases: Vec<Phase<L, N, C>>,
     cost_fn: C,
     init_node: Option<L>,
     total_node_limit: usize,
@@ -324,27 +350,35 @@ where
     /// Define a new phase named `name` using `filter`.
     /// Be careful to call this function after you have added all the rules
     /// to the compiler.
-    pub fn new_phase<F, S>(&mut self, name: S, filter: F) -> Phase<L, N>
+    pub fn new_single_phase<F, S>(
+        &mut self,
+        name: S,
+        filter: F,
+        fresh_egraph: bool,
+        node_limit: Option<usize>,
+        iter_limit: Option<usize>,
+    ) -> Phase<L, N, C>
     where
-        F: Fn(CostMetric<L, N, C>) -> bool,
+        F: Fn(CostMetric<L, N, C>) -> bool + 'static,
         S: ToString,
     {
         // gather rules that pass the filter
-        let phase_rules = self
-            .rules
-            .iter()
-            .filter(|r| filter(self.cost_fn.all(r)))
-            .cloned()
-            .collect::<Vec<_>>();
+        // let phase_rules = self
+        //     .rules
+        //     .iter()
+        //     .filter(|r| filter(self.cost_fn.all(r)))
+        //     .cloned()
+        //     .collect::<Vec<_>>();
 
         // construct phase
-        Phase {
+        Phase::Single(SinglePhase {
             name: name.to_string(),
-            rules: phase_rules,
-            fresh_egraph: false,
-            node_limit: self.total_node_limit,
-            iter_limit: self.total_iter_limit,
-        }
+            // rules: phase_rules,
+            select: Box::new(filter),
+            fresh_egraph,
+            node_limit: node_limit.unwrap_or(self.total_node_limit),
+            iter_limit: iter_limit.unwrap_or(self.total_iter_limit),
+        })
     }
 
     pub fn dry_run(&mut self) -> &mut Self {
@@ -379,7 +413,7 @@ where
     /// Load config from a file. This overries anything previously set.
     pub fn with_config(
         &mut self,
-        config: &config::CompilerConfiguration,
+        config: config::CompilerConfiguration,
     ) -> &mut Self {
         self.total_node_limit = config.total_node_limit;
         self.total_iter_limit = config.total_iter_limit;
@@ -388,36 +422,46 @@ where
         self.dump_rules = config.dump_rules;
         self.reuse_egraphs = config.reuse_egraphs;
         for phase_config in config.phases.clone() {
-            // if disabled, skip this phase
-            if let Some(true) = phase_config.disabled {
-                continue;
-            }
+            match phase_config {
+                config::PhaseConfiguration::Single {
+                    name,
+                    cd,
+                    ca,
+                    fresh_egraph,
+                    node_limit,
+                    iter_limit,
+                    disabled,
+                } => {
+                    // if disabled, skip this phase
+                    if let Some(true) = disabled {
+                        continue;
+                    }
 
-            let mut phase = self.new_phase(phase_config.name, move |cm| {
-                let [cd_low, cd_high] = phase_config.cd;
-                let [ca_low, ca_high] = phase_config.ca;
+                    let phase = self.new_single_phase(
+                        name,
+                        move |cm| {
+                            let [cd_low, cd_high] = cd;
+                            let [ca_low, ca_high] = ca;
 
-                // check conditions. if condition doesn't exist,
-                // then default to true
-                //   cd conditions
-                cd_low.map(|l| cm.cd > l).unwrap_or(true)
-                    && cd_high.map(|h| cm.cd <= h).unwrap_or(true)
-		    // check ca conditions
-                    && ca_low.map(|l| cm.ca > l).unwrap_or(true)
-                    && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
-		    && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
-            });
-            if let Some(l) = phase_config.node_limit {
-                phase.node_limit = l;
-            }
-            if let Some(l) = phase_config.iter_limit {
-                phase.iter_limit = l;
-            }
-            if let Some(true) = phase_config.fresh_egraph {
-                phase.fresh_egraph = true;
-            }
+                            // check conditions. if condition doesn't exist,
+                            // then default to true
+                            //   cd conditions
+                            cd_low.map(|l| cm.cd > l).unwrap_or(true)
+                            && cd_high.map(|h| cm.cd <= h).unwrap_or(true)
+		            // check ca conditions
+                            && ca_low.map(|l| cm.ca > l).unwrap_or(true)
+                            && ca_high.map(|h| cm.ca <= h).unwrap_or(true)
+		            && config.cd_filter.map(|c| cm.cd > c).unwrap_or(true)
+                        },
+                        fresh_egraph.unwrap_or(false),
+                        node_limit,
+                        iter_limit,
+                    );
 
-            self.phases.push(phase);
+                    self.phases.push(phase);
+                }
+                config::PhaseConfiguration::Phases { phases, loops } => todo!(),
+            }
         }
         self.scheduler = config
             .scheduler
@@ -447,7 +491,7 @@ where
 
     fn equality_saturate(
         &self,
-        phase: &Phase<L, N>,
+        phase: &SinglePhase<L, N, C>,
         egraph: egg::EGraph<L, N>,
         prog: &egg::RecExpr<L>,
     ) -> EqSatResult<L, N, C> {
@@ -482,8 +526,15 @@ where
             runner
         };
 
+        let rules = self
+            .rules
+            .iter()
+            .filter(|r| (phase.select)(self.cost_fn.clone().all(r)))
+            .cloned()
+            .collect::<Vec<_>>();
+
         debug!("Starting equality saturation");
-        runner = runner.run(&phase.rules);
+        runner = runner.run(&rules);
 
         // extract the best program
         let extractor =
@@ -495,7 +546,7 @@ where
             "Final Program Depth: {}",
             depth(&prog, prog.as_ref().len() - 1)
         );
-        let mut stats = Stats::from_runner(&phase, &runner);
+        let mut stats = Stats::from_runner(&phase, rules.len(), &runner);
         stats.cost = Some(cost.clone());
         stats.report();
 
@@ -505,6 +556,53 @@ where
             egraph: runner.egraph,
             stats,
         }
+    }
+
+    pub fn run_one(
+        &mut self,
+        phase: &SinglePhase<L, N, C>,
+    ) -> Option<EqSatResult<L, N, C>> {
+        let msg = format!("Starting Phase {}", phase.name);
+        info!("{}", "=".repeat(msg.len()));
+        info!("{msg}");
+        // gather rules that pass the filter
+        let mut cost_fn = self.cost_fn.clone();
+        let rules = self
+            .rules
+            .iter()
+            .filter(|r| (phase.select)(cost_fn.all(r)))
+            .cloned()
+            .collect::<Vec<_>>();
+        info!("Using {} rules", rules.len());
+        info!("{}", "=".repeat(msg.len()));
+
+        if self.dump_rules {
+            for r in &rules {
+                debug!(
+                    "[cd:{:.2?} ca:{:.2?}] {} => {} ({})",
+                    cost_fn.cost_differential(r),
+                    cost_fn.cost_average(r),
+                    r.searcher.get_pattern_ast().unwrap(),
+                    r.applier.get_pattern_ast().unwrap(),
+                    r.name
+                );
+            }
+        }
+
+        if self.dry_run {
+            return None;
+        }
+
+        // update egraph
+        if phase.fresh_egraph || !self.reuse_egraphs {
+            debug!("Using a fresh egraph for this phase");
+            egraph = self.new_egraph();
+        }
+        // let (new_cost, new_prog, new_egraph) =
+        //     self.equality_saturate(&phase, egraph, &prog);
+        let eq_sat = self.equality_saturate(&phase, egraph, &prog);
+
+        Some(eq_sat)
     }
 
     pub fn compile(
@@ -522,45 +620,25 @@ where
 
         let mut stats: Vec<Stats<L, C>> = vec![];
         for phase in &self.phases {
-            let msg = format!("Starting Phase {}", &phase.name);
-            info!("{}", "=".repeat(msg.len()));
-            info!("{msg}");
-            info!("Using {} rules", phase.rules.len());
-            info!("{}", "=".repeat(msg.len()));
+            match phase {
+                Phase::Single(phase) => {
+                    if let Some(eq_sat) = self.run_one(phase) {
+                        let mut stat = eq_sat.stats.clone();
+                        stat.old_cost = Some(cost.clone());
+                        stats.push(stat);
 
-            if self.dump_rules {
-                for r in &phase.rules {
-                    debug!(
-                        "[cd:{:.2?} ca:{:.2?}] {} => {} ({})",
-                        cost_fn.cost_differential(r),
-                        cost_fn.cost_average(r),
-                        r.searcher.get_pattern_ast().unwrap(),
-                        r.applier.get_pattern_ast().unwrap(),
-                        r.name
-                    );
+                        info!(
+                            "Cost: {:?} (old: {:?})",
+                            eq_sat.cost.clone(),
+                            cost
+                        );
+                        // update state for next iteration
+                        (cost, prog, egraph) =
+                            (eq_sat.cost, eq_sat.prog, eq_sat.egraph);
+                    }
                 }
+                Phase::Loop { phases, loops } => todo!(),
             }
-
-            if self.dry_run {
-                continue;
-            }
-
-            // update egraph
-            if phase.fresh_egraph || !self.reuse_egraphs {
-                debug!("Using a fresh egraph for this phase");
-                egraph = self.new_egraph();
-            }
-            // let (new_cost, new_prog, new_egraph) =
-            //     self.equality_saturate(&phase, egraph, &prog);
-            let eq_sat = self.equality_saturate(&phase, egraph, &prog);
-            let mut stat = eq_sat.stats.clone();
-            stat.old_cost = Some(cost.clone());
-            stats.push(stat);
-
-            info!("Cost: {:?} (old: {:?})", eq_sat.cost.clone(), cost);
-
-            // update state for next iteration
-            (cost, prog, egraph) = (eq_sat.cost, eq_sat.prog, eq_sat.egraph);
         }
 
         // report the total stats

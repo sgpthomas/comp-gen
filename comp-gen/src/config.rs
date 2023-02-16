@@ -28,12 +28,19 @@ pub struct CompilerConfiguration {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PhaseConfiguration {
-    pub name: String,
-    pub cd: [Option<f64>; 2],
-    pub ca: [Option<f64>; 2],
-    pub fresh_egraph: Option<bool>,
-    pub node_limit: Option<usize>,
-    pub iter_limit: Option<usize>,
-    pub disabled: Option<bool>,
+#[serde(untagged)]
+pub enum PhaseConfiguration {
+    Single {
+        name: String,
+        cd: [Option<f64>; 2],
+        ca: [Option<f64>; 2],
+        fresh_egraph: Option<bool>,
+        node_limit: Option<usize>,
+        iter_limit: Option<usize>,
+        disabled: Option<bool>,
+    },
+    Phases {
+        phases: Vec<PhaseConfiguration>,
+        loops: u64,
+    },
 }

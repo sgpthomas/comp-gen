@@ -293,6 +293,23 @@ bench="mat-mul"
     --config compile.json
 #+end_src
 
+Local version
+
+#+begin_src async-shell :results silent :dir (magit-toplevel) :ansi t :name comp
+export RUST_BACKTRACE=1
+export RUST_LOG='debug,egg=info'
+bench="q-prod"
+cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
+    compile $bench \
+    --dios-bin ../diospyros/dios \
+    --dios-example-bin ../diospyros/dios-example-gen \
+    --dios-params ../diospyros/$bench-params \
+    --vector-width 4 \
+    --rules experiments/expanding_rules.json \
+    --config experiments/compile_alt_cost.json \
+    --alt-cost
+#+end_src
+
 * Fixing the Diospyros backend
 
 The backend doesn't correctly compile Vector expressions that have accesses to different memories. I'm not yet entirely sure that this is even a valid thing to do? But if it is, it would be very nice to fix.
