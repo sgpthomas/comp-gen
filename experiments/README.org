@@ -306,8 +306,8 @@ cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
     --dios-params ../diospyros/$bench-params \
     --vector-width 4 \
     --rules experiments/expanding_rules.json \
-    --config experiments/compile.json # _alt_cost.json \
-    # --alt-cost
+    --config experiments/compile_alt_cost.json --alt-cost
+    # --config experiments/compile.json
 #+end_src
 
 * Fixing the Diospyros backend

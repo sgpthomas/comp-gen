@@ -5,7 +5,7 @@ use crate::{lang::VecLang, recexpr_helpers};
 
 pub type DiosRwrite = egg::Rewrite<VecLang, ()>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct VecCostFn {
     original: bool,
 }

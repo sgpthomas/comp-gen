@@ -283,7 +283,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
     //    );
 
     // compiler.with_explanations();
-    let (cost, prog, mut _eg) = compiler.compile(&prog);
+    let (cost, prog, mut _eg) = compiler.compile(prog);
     // let mut expl = eg.explain_existance(&prog);
     // log::debug!("you exist bc:\n{}", expl.get_string());
     // log::debug!("you exist bc:\n{}", expl.get_flat_string());

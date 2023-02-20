@@ -10,6 +10,7 @@ use comp_gen::{
     ruler::{self, egg::RecExpr},
     ToRecExpr,
 };
+use env_logger::Env;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -90,40 +91,36 @@ fn compile(opts: CompileOpts) {
         .with_init_node(lang::Aella::Num(0))
         .add_external_rules(&opts.rules)
         .output_rule_distribution("rule_distribution.csv", |x| x)
-        .dry_run()
-        .dump_rules()
-        .add_single_phase(
-            "pre compile",
-            |cm| cm.cd.abs() < 1.0 && cm.ca.abs() < 0.5,
-            false,
-            None,
-            None,
-        )
-        .add_single_phase(
-            "compile",
-            |cm| {
+        // .dry_run()
+        .dump_rules();
+    compiler.with_phase_builder(|pb: &mut comp_gen::PhaseBuilder<_, _, _>| {
+        pb.build_loop(2, |pb| {
+            pb.add_single_w_opts(
+                "pre compile",
+                |cm| cm.cd.abs() < 1.0 && cm.ca.abs() < 0.5,
+                true,
+                None,
+                None,
+            );
+            pb.add_single("compile", |cm| {
                 chmp!(1.0 < cm.cd.abs() < 3.0) && chmp!(0.5 < cm.ca.abs() < 1.5)
-            },
-            false,
-            None,
-            None,
-        )
-        .add_single_phase(
-            "optimization",
-            |cm| 3.0 < cm.cd.abs() && 1.5 < cm.ca.abs(),
-            false,
-            None,
-            None,
-        );
+            });
+        });
+        pb.add_single("optimization", |cm| {
+            3.0 < cm.cd.abs() && 1.5 < cm.ca.abs()
+        });
+    });
 
-    let (cost, prog, _eg) = compiler.compile(&expr);
+    let (cost, prog, _eg) = compiler.compile(expr);
     println!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
     println!("{}", prog.pretty(80));
 }
 
 fn main() {
-    let _ = env_logger::builder().try_init();
+    // let _ = env_logger::builder().try_init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info"))
+        .init();
 
     let args: Cmdline = argh::from_env();
 

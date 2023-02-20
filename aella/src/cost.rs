@@ -5,7 +5,7 @@ use comp_gen::{
 
 use crate::lang;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AellaCost {
     literal: f64,
     op: f64,
