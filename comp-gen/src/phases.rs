@@ -3,6 +3,12 @@ use ruler::egg;
 
 use crate::{CostMetric, FromPattern};
 
+/// Describes a single phase of equality saturation. Besides a name, a phase
+/// consists of the `select` predicate; which is a predicate selecting which rules
+/// should be run in this phase. A phase can also specify an equality saturation
+/// iteration and node limit. You can also specify that a fresh egraph should be
+/// used for this phase. This means that the best program is extracted from the
+/// current egraph, and then a new egraph is constructed from scratch.
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub struct SinglePhase<
@@ -12,7 +18,6 @@ pub struct SinglePhase<
 > {
     /// The name of the phase.
     pub(crate) name: String,
-    // rules: Vec<egg::Rewrite<L, N>>,
     /// Predicate that selects which rules should run in this phase.
     #[derivative(Debug = "ignore")]
     pub(crate) select: Box<dyn Fn(CostMetric<L, N, C>) -> bool>,
@@ -24,6 +29,8 @@ pub struct SinglePhase<
     pub(crate) iter_limit: Option<usize>,
 }
 
+/// Describes the phase config tree. A phase can either be a single phase, or a loop
+/// of a sequence of phases.
 #[derive(Derivative)]
 #[derivative(Debug)]
 pub enum Phase<
@@ -38,6 +45,8 @@ pub enum Phase<
     },
 }
 
+/// The default phase is an empty phase that runs for a single iteration. This does
+/// nothing.
 impl<L, N, C> Default for Phase<L, N, C>
 where
     L: egg::Language + FromPattern,
@@ -52,21 +61,7 @@ where
     }
 }
 
-// pub struct PhaseIter<L, N, C>;
-
-// impl<L, N, C> Iterator for PhaseIter<L, N, C>
-// where
-//     L: egg::Language + FromPattern,
-//     N: egg::Analysis<L>,
-//     C: egg::CostFunction<L>,
-// {
-//     type Item = SinglePhase<L, N, C>;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         todo!()
-//     }
-// }
-
+/// The recommended way to programmatically construct phases.
 pub struct PhaseBuilder<
     L: egg::Language + FromPattern,
     N: egg::Analysis<L>,
@@ -92,7 +87,7 @@ impl<
         C: egg::CostFunction<L>,
     > PhaseBuilder<L, N, C>
 {
-    pub fn add_single<S, F>(&mut self, name: S, select: F) -> &mut Self
+    pub fn build_single<S, F>(&mut self, name: S, select: F) -> &mut Self
     where
         S: ToString,
         F: Fn(CostMetric<L, N, C>) -> bool + 'static,
@@ -108,7 +103,7 @@ impl<
         self
     }
 
-    pub fn add_single_w_opts<S, F>(
+    pub fn build_single_w_opts<S, F>(
         &mut self,
         name: S,
         select: F,
@@ -156,7 +151,7 @@ impl<
         self
     }
 
-    pub fn build(mut self) -> Phase<L, N, C> {
+    pub fn finish(mut self) -> Phase<L, N, C> {
         if self.phases.len() == 1 {
             self.phases.remove(0)
         } else {

@@ -71,7 +71,7 @@ where
                 if !disabled.unwrap_or(false) {
                     let [cd_low, cd_high] = cd;
                     let [ca_low, ca_high] = ca;
-                    pb.add_single_w_opts(
+                    pb.build_single_w_opts(
                         name,
                         // check all the conditions, if a condition doesn't exist
                         // default to true for that check
@@ -104,6 +104,6 @@ where
                 );
             }
         }
-        pb.build()
+        pb.finish()
     }
 }

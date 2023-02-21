@@ -159,7 +159,7 @@ where
     {
         let mut pb = phases::PhaseBuilder::default();
         build(&mut pb);
-        self.phases = pb.build();
+        self.phases = pb.finish();
         self
     }
 
