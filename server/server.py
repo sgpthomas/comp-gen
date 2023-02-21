@@ -27,19 +27,15 @@ class GlobalConfig:
         self.completed.mkdir(exist_ok=True)
 
         # the default values of configuration
-        self.compgen_bin = "dios-lang/target/release/dios-lang"
-        self.dios_bin = "diospyros/dios"
-        self.dios_example_bin = "diospyros/dios-example-gen"
-        self.rulesets = {}
-        self.compile_configs = {}
+        self.env = {}
         self.jobs_at_once = 1
 
     def list_jobs(self):
         """Read jobs directory and produce an iterator of tasks to perform."""
 
         for task_dir in self.jobs.glob("*"):
-            if Task.valid(task_dir):
-                yield Task(self, task_dir)
+            if Job.valid(task_dir):
+                yield Job(self, task_dir)
 
     def reload(self):
         """Reload the configuration from `config_path`."""
@@ -53,11 +49,12 @@ class GlobalConfig:
 
         with self.config_path.open("r") as f:
             data = json.load(f)
-            self.compgen_bin = data["compgen_bin"]
-            self.dios_bin = data["dios_bin"]
-            self.dios_example_bin = data["dios_example_bin"]
-            self.rulesets = data["rulesets"]
-            self.compile_configs = data["compile_configs"]
+            for key, value in data["env"].items():
+                path = Path(value).expanduser().resolve()
+                if path.exists():
+                    self.env[key] = path
+                else:
+                    self.env[key] = value
             self.jobs_at_once = data["jobs_at_once"]
 
     def commit(self):
@@ -65,109 +62,75 @@ class GlobalConfig:
 
         with self.config_path.open("w") as f:
             data = {
-                "compgen_bin": self.compgen_bin,
-                "dios_bin": self.dios_bin,
-                "dios_example_bin": self.dios_example_bin,
-                "rulesets": self.rulesets,
-                "compile_configs": self.compile_configs
+                "env": self.env,
+                "jobs_at_once": self.jobs_at_once
             }
             json.dump(data, f, indent=2)
 
 
-class Task:
-    def __init__(self, global_config: GlobalConfig, task_dir: Path):
-        assert Task.valid(task_dir)
+class Job:
+    def __init__(self, global_config: GlobalConfig, job_dir: Path):
+        assert Job.valid(job_dir)
 
+        data = json.load((job_dir / "config.json").open("r"))
         self.global_config = global_config
+        self.dir = job_dir
+        self.date = data["date"]
+        self.name = data["name"]
+        self.memory_limit = data["memory_limit"]
+        self.command = data["command"]
 
-        self.task_dir = task_dir
-        self.config = json.load((task_dir / "config.json").open("r"))
+    def valid(job_dir: Path):
+        """Check if `job_dir` contains a valid job."""
 
-        self.benchmark = self.config["benchmark"]
-        self.rules_path = global_config.rulesets[self.config["ruleset"]]
-        self.config_path = global_config.compile_configs[
-            self.config["compile_config"]
-        ]
-        self.cost_function = self.config["cost_function"]
-        self.output_dir = task_dir / "results"
+        config = job_dir / "config.json"
 
-        # once started, this holds the executing child process
-        self.proc = None
+        if not config.exists():
+            return False
 
-    def valid(task_dir):
-        """Check if `task_dir` has the right files to be a task."""
-
-        dir_exists = task_dir.exists()
-        config_b = (task_dir / "config.json").exists()
-        return dir_exists and config_b
+        data = json.load(config.open("r"))
+        return all(map(
+            lambda k: k in data,
+            ["date", "name", "memory_limit", "command"]
+        ))
 
     def exec(self):
-
-        # write out the params to a file
-        params_path = self.task_dir / "params.json"
-        json.dump(self.config["params"], params_path.open("w"))
-
-        # make sure that the results dir exists
-        self.output_dir.mkdir(exist_ok=False)
-
         # prepare log files
-        stdout_log = self.output_dir / "stdout.log"
-        stderr_log = self.output_dir / "stderr.log"
+        stdout_log = self.dir / "stdout.log"
+        stderr_log = self.dir / "stderr.log"
         stdout_log.touch()
         stderr_log.touch()
 
-        cmd = [
-                self.global_config.compgen_bin,
-                "compile", self.benchmark,
-                "--dios-bin", self.global_config.dios_bin,
-                "--dios-example-bin", self.global_config.dios_example_bin,
-                "--dios-params", str(params_path),
-                "--vector-width", "4",
-                "--rules", str(self.rules_path),
-                "--config", str(self.config_path),
-                "--output-dir", str(self.output_dir),
-            ]
-        if self.cost_function == "alternative":
-            cmd += ["--alt_cost"]
-
         # run the comp-gen binary, storing stdout and stderr in logs
         self.proc = subprocess.Popen(
-            cmd,
-            env={"RUST_LOG": "debug,egg=info"},
+            f"{self.command}",
+            env=self.global_config.env,
             stdout=stdout_log.open("w"),
-            stderr=stderr_log.open("w")
+            stderr=stderr_log.open("w"),
+            cwd=self.dir
         )
         return self.proc
 
     def complete(self):
-        completed_dir = unique_name(
-            self.global_config.completed / self.task_dir.name
+        parent_dir = self.global_config.completed / self.name
+        parent_dir.mkdir(exist_ok=True)
+        children = filter(
+            lambda x: str(x.name).isnumeric(),
+            parent_dir.glob("*")
         )
-        completed_dir.mkdir(exist_ok=False)
+        print(list(map(lambda x: x.name, parent_dir.glob("*"))))
+        results = parent_dir / str(len(list(children)))
+
+        assert not results.exists()
 
         # copy over results, job config, and params.json
-        shutil.copytree(self.output_dir, completed_dir / "results")
-        json.dump(
-            self.config,
-            (completed_dir / "config.json").open("w"),
-            indent=2
-        )
+        shutil.copytree(self.dir, results)
 
         # remove the job directory
-        print(self.task_dir)
-        shutil.rmtree(self.task_dir)
+        shutil.rmtree(self.dir)
 
     def __repr__(self):
-        return " ".join([
-            f"<Task bench={self.benchmark}",
-            f"name={self.task_dir}>",
-        ])
-
-    def __eq__(self, other):
-        return self.task_dir == other.task_dir
-
-    def __hash__(self):
-        return hash(self.task_dir)
+        return f"<Job {self.name} {self.date}>"
 
 
 def memory_used_by(pid):
@@ -194,7 +157,6 @@ def single_run(config, alive):
         # start a new process for it
         if job not in alive and len(alive) < config.jobs_at_once:
             print(f"Found {job}")
-            # p = Process(target=job.exec, args=())
             alive[job] = job.exec()
 
     # keep track of the things that are dead on this time around
@@ -208,22 +170,20 @@ def single_run(config, alive):
             print(f"{job} ({proc.pid}) {memory_used=} GB")
 
             # where to write the memory report
-            memory_csv = job.output_dir / "memory.csv"
+            memory_csv = job.dir / "memory.csv"
 
-            # if the job output dir has been created.
-            # start recording memory usage
-            if job.output_dir.exists():
-                memory_csv.touch()
-                with memory_csv.open("a") as f:
-                    print(
-                        "{},{}".format(time.time(), memory_used),
-                        file=f,
-                        flush=True
-                    )
+            # record memory usage
+            memory_csv.touch()
+            with memory_csv.open("a") as f:
+                print(
+                    "{},{}".format(time.time(), memory_used),
+                    file=f,
+                    flush=True
+                )
 
             # if we have exceeded the memory limit, kill this
             # process and write a line out to memory.csv
-            if memory_used > int(job.config["memory_limit"]):
+            if memory_used > int(job.memory_limit):
                 print("To much memory used! Killing!", job)
                 proc.terminate()
                 print("Waiting for process to die...", end="")
@@ -249,15 +209,15 @@ def single_run(config, alive):
 
 def main():
     config = GlobalConfig(Path("."))
-    config.reload()
 
     try:
         alive = {}
         while True:
+            config.reload()
             single_run(config, alive)
 
             print(f"Alive jobs: {alive}")
-            time.sleep(5)
+            time.sleep(1)
 
     except KeyboardInterrupt:
         print("Stopping...")
