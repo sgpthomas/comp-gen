@@ -305,7 +305,7 @@ cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
     --dios-example-bin ../diospyros/dios-example-gen \
     --dios-params ../diospyros/$bench-params \
     --vector-width 4 \
-    --rules experiments/expanding_rules.json \
+    --rules experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json \
     --config experiments/compile_alt_cost.json --alt-cost
     # --config experiments/compile.json
 #+end_src

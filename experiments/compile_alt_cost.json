@@ -15,7 +15,7 @@
           {
             "name": "pre-compile",
             "cd": [null, 25.0],
-            "ca": [10, 1000.0],
+            "ca": [5.0, 1000.0],
             "node_limit": 500000,
             "iter_limit": 2,
             "fresh_egraph": true,
@@ -25,10 +25,11 @@
             "name": "compile",
             "cd": [-0.1, null],
             "ca": [2000.0, 3000.0],
+            "iter_limit": 2,
             "disabled": false
           }
         ],
-        "loops": 3
+        "loops": 20
       },
       {
         "name": "litvec",
@@ -41,7 +42,7 @@
         "cd": [-5.0, 5.0],
         "ca": [null, 9.0],
         "fresh_egraph": true,
-        "iter_limit": 20,
+        "iter_limit": 10,
         "disabled": false
       },
       {

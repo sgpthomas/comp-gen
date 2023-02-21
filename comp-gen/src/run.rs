@@ -48,6 +48,7 @@ where
     N: egg::Analysis<L> + Default + Clone + std::fmt::Debug,
     C: CostMetrics<L, N> + egg::CostFunction<L> + Clone + std::fmt::Debug,
     <C as egg::CostFunction<L>>::Cost: PartialOrd<f64>,
+    <C as egg::CostFunction<L>>::Cost: PartialEq,
 {
     fn equality_saturate(
         &self,
@@ -166,20 +167,28 @@ where
         }
     }
 
+    /// Recursively walk over the phase definitions, calling `self.equality_saturate`
+    /// on the leaf phases. This is the function that threads through egraphs and progs
+    /// through the different phases.
     fn run_phase(
         &self,
         phase: &Phase<L, N, C>,
         mut eqsat: EqSatResult<L, N, C>,
     ) -> EqSatResult<L, N, C> {
         match phase {
-            crate::phases::Phase::Single(single) => {
+            Phase::Single(single) => {
                 eqsat = self.equality_saturate(single, eqsat)
             }
-            crate::phases::Phase::Loop { phases, loops } => {
+            Phase::Loop { phases, loops } => {
                 for i in 0..*loops {
                     info!("loop {i}");
+                    let old_cost = eqsat.cost.clone();
                     for p in phases {
                         eqsat = self.run_phase(p, eqsat);
+                    }
+                    if old_cost == eqsat.cost {
+                        info!("Cost didn't change from this iteration, stopping early!");
+                        break;
                     }
                 }
             }
@@ -191,6 +200,8 @@ where
         &mut self,
         prog: egg::RecExpr<L>,
     ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
+        log::debug!("Phase config: {:#?}", self.phases);
+
         // initialize eqsat to the default egraph and the
         // program that we were given
         let eqsat = EqSatResult {
