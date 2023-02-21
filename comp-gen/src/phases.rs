@@ -156,10 +156,14 @@ impl<
         self
     }
 
-    pub fn build(self) -> Phase<L, N, C> {
-        Phase::Loop {
-            phases: self.phases,
-            loops: 1,
+    pub fn build(mut self) -> Phase<L, N, C> {
+        if self.phases.len() == 1 {
+            self.phases.remove(0)
+        } else {
+            Phase::Loop {
+                phases: self.phases,
+                loops: 1,
+            }
         }
     }
 }

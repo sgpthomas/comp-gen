@@ -89,7 +89,17 @@ where
             }
             PhaseConfiguration::Phases { phases, loops } => {
                 pb.add_loop(
-                    phases.into_iter().map(|x| x.into()).collect::<Vec<_>>(),
+                    phases
+                        .into_iter()
+                        .map(|x| x.into())
+                        // only keep non-empty phases
+                        .filter(|p| match p {
+                            phases::Phase::Single(_) => true,
+                            phases::Phase::Loop { phases, .. } => {
+                                phases.len() > 0
+                            }
+                        })
+                        .collect::<Vec<_>>(),
                     loops.unwrap_or(1),
                 );
             }
