@@ -114,8 +114,8 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
 
 
 rulesets = {
-    "expanding": "../experiments/expanding_rules.json",
-    "ruler": "../experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json",
+    "expanding": "../experiments/rulesets/expanding_rules.json",
+    "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
     # "t2": "~/Research/diospyros/t2.json"
 }
 
@@ -124,9 +124,9 @@ for key, val in rulesets.items():
     rulesets[key] = Path(val).expanduser().resolve()
 
 configs = {
-    "wack": "../experiments/wack.json",
-    "phased": "../experiments/compile.json",
-    # "loop": "../experiments/compile_alt_cost.json"
+    "wack": "../experiments/configs/wack.json",
+    "phased": "../experiments/configs/compile.json",
+    "loop": "../experiments/configs/compile_alt_cost.json"
 }
 
 # resolve the ruleset paths
