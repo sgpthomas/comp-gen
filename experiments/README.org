@@ -268,8 +268,8 @@ function rs() {
 # r $rule_config ubuntu@$IP:~/rules.json
 # rs $compile_config ubuntu@$IP:~/compile.json
 # rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
-rs "experiments/manual_expansion/manual_rules.json" ubuntu@$IP:~/manual_rules.json
-rs "experiments/manual_expansion/expanding_rules.json" ubuntu@$IP:~/expanding.json
+# rs "experiments/manual_expansion/manual_rules.json" ubuntu@$IP:~/manual_rules.json
+# rs "experiments/manual_expansion/expanding_rules.json" ubuntu@$IP:~/expanding.json
 
 cargo build --release --manifest-path dios-lang/Cargo.toml
 rs dios-lang/target/release/dios-lang ubuntu@$IP:
@@ -389,10 +389,11 @@ The backend doesn't correctly compile Vector expressions that have accesses to d
 #+end_src
 
 #+begin_src async-shell :dir (concat (magit-toplevel) "/../diospyros") :results silent :name dios
+EXP=~/Research/comp-gen/server/completed/mat-mul_16x16_16x16/0/results
 make dios
-# ./dios-example-gen -b 2d-conv -p 2d-conv-params -o fix-backend-out/ -w 4
-./dios -w 4 --egg --suppress-git --validation \
-    -o fix-backend-out/kernel.c fix-backend-out
+./dios -w 4 --egg --suppress-git \
+    -o $EXP/kernel.c \
+    $EXP
 #+end_src
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t

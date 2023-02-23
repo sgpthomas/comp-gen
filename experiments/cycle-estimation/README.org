@@ -277,3 +277,18 @@ data %>%
 | qr-decomp/3_4r         | killed    | killed |
 | qr-decomp/4_4r         | killed    | killed |
 
+** some tables
+
+| Benchmark              | Ruleset | Looping |
+|------------------------+---------+---------|
+| mat-mul/2x2_2x2_4r     |         |         |
+| mat-mul/2x3_3x3_4r     |         |         |
+| mat-mul/3x3_3x3_4r     |         |         |
+| mat-mul/4x4_4x4_4r     |         |         |
+| mat-mul/8x8_8x8_4r     |         |         |
+| mat-mul/10x10_10x10_4r |         |         |
+| mat-mul/16x16_16x16_4r |         |         |
+   
+   
+   
+   
