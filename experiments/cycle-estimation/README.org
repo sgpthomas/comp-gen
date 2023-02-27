@@ -290,6 +290,17 @@ data %>%
 | mat-mul/16x16_16x16_4r |         |         |
 
 ** egraph cost for all benchmarks, new cost vs old cost with looping (expanding rules)
+
+| Benchmark              | Ruleset   | Looping |    Cost |
+|------------------------+-----------+---------+---------|
+| mat-mul/2x2_2x2_4r     |           |         |         |
+| mat-mul/2x3_3x3_4r     |           |         |         |
+| mat-mul/3x3_3x3_4r     |           |         |         |
+| mat-mul/4x4_4x4_4r     |           |         |         |
+| mat-mul/8x8_8x8_4r     |           |         |         |
+| mat-mul/10x10_10x10_4r |           |         |         |
+| mat-mul/16x16_16x16_4r | expansion | y       | 2546.98 |
+|                        | ruler     | y       | 2829.72 |
    
 This is showing that when we have this looping config, the greedy cost function is essential
 
