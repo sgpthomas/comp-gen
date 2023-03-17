@@ -79,6 +79,10 @@ class Job:
         self.name = data["name"]
         self.memory_limit = data["memory_limit"]
         self.command = data["command"]
+        if "timeout" in data:
+            self.timeout = data["timeout"]
+        else:
+            self.timeout = None
 
     def valid(job_dir: Path):
         """Check if `job_dir` contains a valid job."""

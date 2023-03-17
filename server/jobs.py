@@ -63,7 +63,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_2d_conv(base, jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost):
+def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -123,6 +123,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = "q-prod"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
+    job_dir.mkdir(exist_ok=False)
     config = {
         "date": date_str,
         "name": name,
@@ -141,7 +142,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost):
 
     command = [
         "RUST_LOG=debug,egg=info",
-        "$compgen_bin", "compile", "qr-decomp",
+        "$compgen_bin", "compile", "q-prod",
         "--dios-bin", "$dios_bin",
         "--dios-example-bin", "$dios_example_bin",
         "--dios-params", "params.json",
@@ -274,24 +275,32 @@ conv_2d_sizes = [
     [8, 8, 3, 3],
     [10, 10, 2, 2],
     [10, 10, 3, 3],
-    [10, 10, 4, 4]
+    [10, 10, 4, 4],
     [16, 16, 2, 2],
     [16, 16, 3, 3],
     [16, 16, 4, 4]
 ]
 
+conv_2d_exps = itertools.product(conv_2d_sizes, rulesets, configs, alt_cost)
+# for (s, r, c, b) in conv_2d_exps:
+#     make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
+
 ##########
 # q prod #
 ##########
+
+q_prod_exps = itertools.product(rulesets, configs, alt_cost)
+for (r, c, b) in q_prod_exps:
+    q_prod(Path("jobs"), rulesets[r], configs[c], b)
 
 #############
 # QR Decomp #
 #############
 qr_decomp_sizes = [3, 4]
 
-qr_exps = itertools.product(qr_decomp_sizes, rulesets, configs, alt_cost)
-for (s, r, c, b) in qr_exps:
-    qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
+# qr_exps = itertools.product(qr_decomp_sizes, rulesets, configs, alt_cost)
+# for (s, r, c, b) in qr_exps:
+#     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
 
 
 #             # qr_decomp(base, jobs, 3)
