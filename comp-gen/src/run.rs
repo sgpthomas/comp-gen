@@ -46,7 +46,11 @@ where
         + std::fmt::Display
         + 'static,
     N: egg::Analysis<L> + Default + Clone + std::fmt::Debug,
-    C: CostMetrics<L, N> + egg::CostFunction<L> + Clone + std::fmt::Debug,
+    C: CostMetrics<L, N>
+        + egg::CostFunction<L>
+        + Clone
+        + std::fmt::Debug
+        + 'static,
     <C as egg::CostFunction<L>>::Cost: PartialOrd<f64>,
     <C as egg::CostFunction<L>>::Cost: PartialEq,
 {
@@ -106,6 +110,7 @@ where
             egraph = self.new_egraph();
         }
 
+        let iter_cost_fn = self.cost_fn.clone();
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
                 .with_egraph(egraph)
@@ -116,6 +121,15 @@ where
                 .with_iter_limit(
                     phase.iter_limit.unwrap_or(self.total_iter_limit),
                 )
+                .with_hook(move |runner| {
+                    let extractor = egg::Extractor::new(
+                        &runner.egraph,
+                        iter_cost_fn.clone(),
+                    );
+                    let cost = extractor.find_best_cost(runner.roots[0]);
+                    info!("Best cost so far: {cost:?}");
+                    Ok(())
+                })
                 .with_time_limit(std::time::Duration::from_secs(self.timeout));
 
         // set the scheduler according to the options

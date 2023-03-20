@@ -321,7 +321,7 @@ data %>%
   ##   color="black",
   ##   size=3.5,
   ##   position=position_dodge(0.9)) +
-  labs(x="Params", y="EGraph Cost", fill="Cost Fn") +
+  labs(x="Params", y="EGraph Cost", fill="Cost Function") +
   coord_flip() + theme_minimal() +
   theme(
     legend.position = c(0.90, 0.90),

@@ -257,7 +257,7 @@ def filter_log(log):
 
 
 def process_single(data_path):
-    stderr_log = data_path / "results" / "stderr.log"
+    stderr_log = data_path / "stderr.log"
     log = stderr_log.open("r").readlines()
     log = map(lambda x: x.strip(), log)
 
@@ -295,10 +295,10 @@ def all(parent_dir):
     parent_dir = Path(parent_dir)
 
     # find all directories that have a stderr.log
-    for log_path in parent_dir.glob("**/results/stderr.log"):
+    for log_path in parent_dir.glob("**/stderr.log"):
         # call process single on the containing directory
         # that's what `.parents[1]` gets use.
-        process_single(log_path.parents[1])
+        process_single(log_path.parents[0])
 
 
 if __name__ == "__main__":
