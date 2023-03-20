@@ -1,8 +1,0 @@
-{
-  "env": {
-    "compgen_bin": "~/Research/comp-gen/dios-lang/target/release/dios-lang",
-    "dios_bin": "~/Research/diospyros/dios",
-    "dios_example_bin": "~/Research/diospyros/dios-example-gen"
-  },
-  "jobs_at_once": 1
-}
