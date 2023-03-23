@@ -75,7 +75,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
-            "compile.json": str(),
+            "compile.json": str(compile),
             "alt_cost": alt_cost
         }
     }
@@ -221,7 +221,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost):
 
 
 rulesets = {
-    "expanding": "../experiments/rulesets/expanding.json",
+    # "expanding": "../experiments/rulesets/expanding.json",
     "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
     # "t2": "~/Research/diospyros/t2.json"
 }
@@ -233,7 +233,9 @@ for key, val in rulesets.items():
 configs = {
     # "wack": "../experiments/configs/wack.json",
     # "phased": "../experiments/configs/compile.json",
-    "loop": "../experiments/configs/compile_alt_cost.json"
+    # "loop": "../experiments/configs/compile_alt_cost.json",
+    "all-simple": "../experiments/configs/all-simple.json",
+    "all-backoff": "../experiments/configs/all-backoff.json"
 }
 
 # resolve the ruleset paths
@@ -241,7 +243,7 @@ for key, val in configs.items():
     configs[key] = Path(val).expanduser().resolve()
 
 alt_cost = [
-    True,
+    # True,
     False
 ]
 
@@ -250,18 +252,18 @@ alt_cost = [
 ###########
 
 mat_mul_sizes = [
-    # [2, 2, 2, 2],
-    # [2, 3, 3, 3],
-    # [3, 3, 3, 3],
+    [2, 2, 2, 2],
+    [2, 3, 3, 3],
+    [3, 3, 3, 3],
     # [4, 4, 4, 4],
     # [8, 8, 8, 8],
     # [10, 10, 10, 10],
-    [16, 16, 16, 16]
+    # [16, 16, 16, 16]
 ]
 
-# exps = itertools.product(mat_mul_sizes, rulesets, configs, alt_cost)
-# for (size, r, c, b) in exps:
-#     mat_mul(Path("jobs"), *size, rulesets[r], configs[c], b)
+exps = itertools.product(mat_mul_sizes, rulesets, configs, alt_cost)
+for (size, r, c, b) in exps:
+    mat_mul(Path("jobs"), *size, rulesets[r], configs[c], b)
 
 ###########
 # 2d conv #
@@ -270,61 +272,42 @@ mat_mul_sizes = [
 conv_2d_sizes = [
     [3, 3, 2, 2],
     [3, 3, 3, 3],
-    [3, 5, 3, 3],
-    [4, 4, 3, 3],
-    [8, 8, 3, 3],
-    [10, 10, 2, 2],
-    [10, 10, 3, 3],
-    [10, 10, 4, 4],
-    [16, 16, 2, 2],
-    [16, 16, 3, 3],
-    [16, 16, 4, 4]
+    # [3, 5, 3, 3],
+    # [4, 4, 3, 3],
+    # [8, 8, 3, 3],
+    # [10, 10, 2, 2],
+    # [10, 10, 3, 3],
+    # [10, 10, 4, 4],
+    # [16, 16, 2, 2],
+    # [16, 16, 3, 3],
+    # [16, 16, 4, 4]
 ]
 
-conv_2d_exps = itertools.product(conv_2d_sizes, rulesets, configs, alt_cost)
-# for (s, r, c, b) in conv_2d_exps:
-#     make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
+conv_2d_exps = itertools.product(
+    conv_2d_sizes,
+    rulesets,
+    configs,
+    alt_cost
+)
+for (s, r, c, b) in conv_2d_exps:
+    make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
 
 ##########
 # q prod #
 ##########
 
-q_prod_exps = itertools.product(rulesets, configs, alt_cost)
-for (r, c, b) in q_prod_exps:
-    q_prod(Path("jobs"), rulesets[r], configs[c], b)
+# q_prod_exps = itertools.product(rulesets, configs, alt_cost)
+# for (r, c, b) in q_prod_exps:
+#     q_prod(Path("jobs"), rulesets[r], configs[c], b)
 
 #############
 # QR Decomp #
 #############
-qr_decomp_sizes = [3, 4]
+qr_decomp_sizes = [
+    3
+    # , 4
+]
 
 # qr_exps = itertools.product(qr_decomp_sizes, rulesets, configs, alt_cost)
 # for (s, r, c, b) in qr_exps:
 #     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
-
-
-#             # qr_decomp(base, jobs, 3)
-#             # qr_decomp(base, jobs, 4)
-
-# for rule in rulesets:
-#     for config in configs:
-#         for cf in cost_function:
-#             jobs = Path("jobs")
-#             base = base_job(rule, config, cf)
-
-#             # make_2d_conv(base, jobs, 3, 3, 2, 2)
-#             # make_2d_conv(base, jobs, 3, 3, 3, 3)
-#             # make_2d_conv(base, jobs, 3, 5, 3, 3)
-#             # make_2d_conv(base, jobs, 4, 4, 3, 3)
-#             # make_2d_conv(base, jobs, 8, 8, 3, 3)
-
-#             # make_2d_conv(base, jobs, 10, 10, 2, 2)
-#             # make_2d_conv(base, jobs, 10, 10, 3, 3)
-#             # make_2d_conv(base, jobs, 10, 10, 4, 4)
-
-#             # make_2d_conv(base, jobs, 16, 16, 2, 2)
-#             # make_2d_conv(base, jobs, 16, 16, 3, 3)
-#             # make_2d_conv(base, jobs, 16, 16, 4, 4)
-
-#             q_prod(base, jobs)
-

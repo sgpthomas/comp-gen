@@ -177,22 +177,23 @@ def dict_combine(res):
         return reduce(lambda a, b: {**a, **b}, res)
 
 
+def unique_dict_append(inp):
+    res = {}
+    for i, d in enumerate(inp):
+        for k, v in d.items():
+            res[f"{k}-{i}"] = v
+    return res
+
+
+def pp(f):
+    def inner(x):
+        print("")
+        print("input:", x)
+        return f(x)
+    return inner
+
+
 def filter_log(log):
-    egraph_stats = LineFilter(
-        r"Size: n=(\d+), e=(\d+)",
-        lambda m: {"nodes": int(m.group(1)), "classes": int(m.group(2))}
-    )
-
-    search_time = LineFilter(
-        r"Search time: (\d+\.\d+)",
-        lambda m: {"search": float(m.group(1))}
-    )
-
-    apply_time = LineFilter(
-        r"Apply time: (\d+\.\d+)",
-        lambda m: {"apply": float(m.group(1))}
-    )
-
     cost = Chunker(
         start=matches("Runner report", lambda m: "report"),
         # end=matches("Egraph size:", lambda x: x.group(0)),
@@ -222,9 +223,24 @@ def filter_log(log):
         )
     )
 
+    egraph_stats = LineFilter(
+        r"Size: n=(\d+), e=(\d+)",
+        lambda m: {"nodes": int(m.group(1)), "classes": int(m.group(2))}
+    )
+
+    search_time = LineFilter(
+        r"Search time: (\d+\.\d+)",
+        lambda m: {"search": float(m.group(1))}
+    )
+
+    apply_time = LineFilter(
+        r"Apply time: (\d+\.\d+)",
+        lambda m: {"apply": float(m.group(1))}
+    )
+
     phases_f = Chunker(
         start=matches(r"Starting Phase (\w+)", lambda m: m.group(1)),
-        combine=dict_combine,
+        combine=unique_dict_append,
         data=Combine(
             Chunker(
                 start=matches(r"Iteration (\d+)", lambda m: int(m.group(1))),
@@ -233,6 +249,10 @@ def filter_log(log):
                     search_time,
                     egraph_stats,
                     apply_time,
+                    LineFilter(
+                        r"Best cost so far: (\d+\.\d+)",
+                        lambda m: {"cost": float(m.group(1))}
+                    ),
                     combine=lambda x: dict_combine(sum(x, []))
                 ),
             ),

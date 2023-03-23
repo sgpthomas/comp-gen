@@ -304,9 +304,13 @@ data %>%
    
 This is showing that when we have this looping config, the greedy cost function is essential
 
-#+begin_src R :session cycest :colnames yes :results graphics file :file greedy_cost.svg
+#+begin_src R :session cycest :results none
 library(tidyverse)
+library(extrafont)
+library(dplyr)
+#+end_src
 
+#+begin_src R :session cycest :colnames yes :results graphics file :file greedy_cost.svg
 data <- read.csv("greedy_cost_works.csv")
 
 # fix the order of the df in place
@@ -324,13 +328,73 @@ data %>%
   labs(x="Params", y="EGraph Cost", fill="Cost Function") +
   coord_flip() + theme_minimal() +
   theme(
-    legend.position = c(0.90, 0.90),
-    legend.background = element_rect(fill = "white")
+    legend.position = c(0.80, 0.90),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
   )
   ## theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1))
 #+end_src
 
 #+RESULTS:
 [[file:greedy_cost.svg]]
+
+Shows how the cost evolves over different iterations. This is ignoring phase differences
+
+#+begin_src R :session cycest :colnames yes :results graphics file :file iter_cost.svg
+data <- read.csv("2d-conv-3x3_3x3_iter.csv")
+
+## data %>%
+data %>%
+  group_by(costfn) %>%
+  mutate(cost = cost / max(cost)) %>%
+  ggplot(aes(x=index, y=cost, group=costfn, color=costfn)) +
+  geom_line() + geom_point() +
+  theme_minimal() +
+  labs(x="Iteration", y="Cost / max(Cost)", color="Cost Function") +
+  theme(
+    legend.position = c(0.80, 0.90),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:iter_cost.svg]]
+
+Plot the size of the graph over time.
+
+#+begin_src R :session cycest :colnames yes :results graphics file :file iter_size.png
+data <- read.csv("2d-conv-3x3_3x3_iter.csv")
+data %>%
+  group_by(costfn) %>%
+  mutate(cost = cost / max(cost)) %>%
+  ggplot(aes(
+    x=log10(nodes),
+    y=cost,
+    group=costfn,
+    color=costfn,
+    linetype=costfn,
+  )) +
+  geom_path(size=1.5, arrow=arrow()) + geom_point(size=4) +
+  scale_color_discrete(labels=c("Pruning", "No pruning")) +
+  labs(
+    x="Log10(Node Count)",
+    y="Normalized Cost",
+    color="Cost Function"
+  ) +
+  guides(linetype="none") +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:iter_size.png]]
+
+Try plotting something like the ratio of cost to size of graph.
+
 
 
