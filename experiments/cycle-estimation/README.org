@@ -307,7 +307,6 @@ This is showing that when we have this looping config, the greedy cost function 
 #+begin_src R :session cycest :results none
 library(tidyverse)
 library(extrafont)
-library(dplyr)
 #+end_src
 
 #+begin_src R :session cycest :colnames yes :results graphics file :file greedy_cost.svg
@@ -343,11 +342,10 @@ Shows how the cost evolves over different iterations. This is ignoring phase dif
 #+begin_src R :session cycest :colnames yes :results graphics file :file iter_cost.svg
 data <- read.csv("2d-conv-3x3_3x3_iter.csv")
 
-## data %>%
 data %>%
-  group_by(costfn) %>%
+  group_by(pruning) %>%
   mutate(cost = cost / max(cost)) %>%
-  ggplot(aes(x=index, y=cost, group=costfn, color=costfn)) +
+  ggplot(aes(x=index, y=cost, group=pruning, color=pruning)) +
   geom_line() + geom_point() +
   theme_minimal() +
   labs(x="Iteration", y="Cost / max(Cost)", color="Cost Function") +
@@ -363,7 +361,7 @@ data %>%
 
 Plot the size of the graph over time.
 
-#+begin_src R :session cycest :colnames yes :results graphics file :file iter_size.png
+#+begin_src R :session cycest :colnames yes :results graphics file :file iter_size.svg
 data <- read.csv("2d-conv-3x3_3x3_iter.csv")
 data %>%
   group_by(costfn) %>%
@@ -392,9 +390,93 @@ data %>%
 #+end_src
 
 #+RESULTS:
-[[file:iter_size.png]]
+[[file:iter_size.svg]]
 
 Try plotting something like the ratio of cost to size of graph.
 
+#+begin_src R :session cycest :colnames yes :results graphics file :file scheduler-backoff.png
+data <- read.csv("~/Research/comp-gen/server/completed/2d-conv_3x3_3x3/20/data.csv")
 
+data %>%
+  filter(name == "nodes" | name == "cost" & iteration != "report") %>%
+  pivot_wider(
+    names_from = name,
+    values_from = value
+  ) %>%
+  mutate(
+    cost = as.numeric(cost),
+    nodes = as.numeric(nodes),
+  ) %>%
+  ggplot(aes(
+    x=log10(nodes),
+    y=cost/max(cost)
+  )) +
+  geom_path(linewidth=1.5) + geom_point(size=2) +
+  ylim(0, 1) +
+  theme_minimal() + theme(
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:scheduler-backoff.png]]
+
+Cycle counts, stock dios vs compgen
+
+#+begin_src R :session cycest :colnames yes :results graphics file :file cycles-performance.svg
+data <- read.csv("cycles.csv")
+
+data$benchmark <- factor(data$benchmark, levels=unique(data$benchmark))
+
+data %>%
+  group_by(benchmark) %>%
+  mutate(
+    stock_norm = 1,
+    compgen_norm = compgen / stock
+  ) %>%
+  pivot_longer(
+    cols = !benchmark,
+    names_to = "compiler",
+    values_to = "cycles"
+  ) %>% 
+  filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
+  ggplot(aes(
+    x=benchmark,
+    y=cycles,
+    fill=compiler
+  )) +
+  geom_bar(position="dodge", stat="identity") +
+  ylim(0, 1.5) +
+  scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  labs(y="Normalized Cycles", fill="Compiler") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
+    axis.title.x = element_blank(),
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:cycles-performance.svg]]
+
+#+begin_src R :session cycest :colnames yes
+data <- read.csv("~/Research/comp-gen/server/completed/2d-conv_3x3_3x3/13/data.csv")
+data %>%
+  filter((name == "nodes" | name == "cost") & iteration != "report") %>%
+  pivot_wider(
+    names_from=name,
+    values_from=value
+  ) %>%
+  select(cost, nodes) %>%
+  mutate(type="pruning", iteration=row_number()) %>%
+  select(iteration, type, name, value)
+#+end_src
+
+#+RESULTS:
+: Could not parse R result
 

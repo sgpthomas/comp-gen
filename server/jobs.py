@@ -234,7 +234,7 @@ configs = {
     # "wack": "../experiments/configs/wack.json",
     # "phased": "../experiments/configs/compile.json",
     # "loop": "../experiments/configs/compile_alt_cost.json",
-    "all-simple": "../experiments/configs/all-simple.json",
+    # "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
 

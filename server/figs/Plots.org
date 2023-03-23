@@ -1,0 +1,195 @@
+* Sync jobs and data
+
+#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
+./sync.py both
+#+end_src
+
+* Data processing
+
+#+begin_src async-shell :dir (sgt/dir "server") :results none :name query
+python3 query.py
+#+end_src
+
+
+* R code for making the figures for evaluation
+:PROPERTIES:
+:header-args:R: :session cycest :colnames yes
+:END:
+
+Import the R libraries that we will use.
+
+#+begin_src R :results none
+library(tidyverse)
+library(extrafont)
+#+end_src
+
+** Performance graphs
+
+*** TODO Cycle count
+
+TODO: generate the cycles csv file here.
+TODO: use real data
+
+#+begin_src R :results graphics file :file cycles-performance.svg
+data <- read.csv("data/cycles.csv")
+
+data$benchmark <- factor(data$benchmark, levels=unique(data$benchmark))
+
+data %>%
+  group_by(benchmark) %>%
+  mutate(
+    stock_norm = 1,
+    compgen_norm = compgen / stock
+  ) %>%
+  pivot_longer(
+    cols = !benchmark,
+    names_to = "compiler",
+    values_to = "cycles"
+  ) %>% 
+  filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
+  ggplot(aes(
+    x=benchmark,
+    y=cycles,
+    fill=compiler
+  )) +
+  geom_bar(position="dodge", stat="identity") +
+  ylim(0, 1.5) +
+  scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  labs(y="Normalized Cycles", fill="Compiler") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
+    axis.title.x = element_blank(),
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:cycles-performance.svg]]
+
+*** TODO Compilation time
+
+** TODO Greedy Cost Works
+
+The data here is wrong I think. Fix the data
+
+#+begin_src R :results graphics file :file greedy_cost.svg
+data <- read.csv("data/greedy_cost_works.csv")
+
+# fix the order of the df in place
+data$params <- factor(data$params, levels=rev(unique(data$params)))
+
+data %>%
+  filter(benchmark == "2d-conv") %>%
+  ggplot(aes(fill=costfn, x=params, y=egraph_cost)) +
+  geom_bar(position="dodge", stat="identity", color="black") +
+  ## geom_text(
+  ##   aes(label=round(egraph_cost)),
+  ##   color="black",
+  ##   size=3.5,
+  ##   position=position_dodge(0.9)) +
+  labs(x="Params", y="EGraph Cost", fill="Cost Function") +
+  coord_flip() + theme_minimal() +
+  theme(
+    legend.position = c(0.80, 0.90),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+  ## theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1))
+#+end_src
+
+#+RESULTS:
+[[file:greedy_cost.svg]]
+
+** TODO Pruning Works
+
+Things to fix:
+- [ ] Put true first in the legend
+- [ ] Get rid of the last data point (from the python generation script)
+- [ ] Make the =y-axis= use estimated cycles rather than cost (so that we know that we are doing the right thing)
+
+#+begin_src R :results graphics file :file iter_size.svg
+data <- read.csv("data/2d-conv-3x3_3x3_iter.csv")
+data %>%
+  group_by(pruning) %>%
+  mutate(cost = cost / max(cost)) %>%
+  ggplot(aes(
+    x=log10(nodes),
+    y=cost,
+    group=pruning,
+    color=pruning,
+    linetype=pruning,
+  )) +
+  geom_path(size=1.5, arrow=arrow()) + geom_point(size=4) +
+  ## scale_color_discrete(labels=c("Pruning", "No pruning")) +
+  labs(
+    x="Log10(Node Count)",
+    y="Normalized Cost",
+    color="Pruning"
+  ) +
+  guides(linetype="none") +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:iter_size.svg]]
+
+** Backoff scheduler doesn't work
+
+#+begin_src R :results graphics file :file scheduler-backoff.svg
+data <- read.csv("~/Research/comp-gen/server/completed/2d-conv_3x3_3x3/20/data.csv")
+
+data %>%
+  filter(name == "nodes" | name == "cost" & iteration != "report") %>%
+  pivot_wider(
+    names_from = name,
+    values_from = value
+  ) %>%
+  mutate(
+    cost = as.numeric(cost),
+    nodes = as.numeric(nodes),
+  ) %>%
+  ggplot(aes(
+    x=log10(nodes),
+    y=cost/max(cost)
+  )) +
+  geom_path(linewidth=1.5) + geom_point(size=2) +
+  ylim(0, 1) +
+  theme_minimal() + theme(
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:scheduler-backoff.svg]]
+
+** Misc
+
+#+begin_src R :results graphics file :file iter_cost.svg
+data <- read.csv("data/2d-conv-3x3_3x3_iter.csv")
+
+data %>%
+  group_by(pruning) %>%
+  mutate(cost = cost / max(cost)) %>%
+  ggplot(aes(x=index, y=cost, group=pruning, color=pruning)) +
+  geom_line() + geom_point() +
+  theme_minimal() +
+  labs(x="Iteration", y="Cost / max(Cost)", color="Cost Function") +
+  theme(
+    legend.position = c(0.80, 0.90),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:iter_cost.svg]]
