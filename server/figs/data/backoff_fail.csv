@@ -1,0 +1,3 @@
+index,benchmark,runtime
+0,mat-mul_2x2_2x2,29861.938024044037
+1,mat-mul_2x3_3x3,47313.389615535736

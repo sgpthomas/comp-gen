@@ -1,82 +1,11 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, head, X, spread, dfpipe, select, mutate
-
-# parent_dir = Path("completed")
-# res = []
-# for exp_path in parent_dir.glob("**/stderr.log"):
-#     try:
-#         exp_path = Path(exp_path.parents[0])
-#         config = json.load((exp_path / "config.json").open("r"))
-#         if all(
-#             [
-#                 "Mar22-1934" in config["date"],
-#                 "simple" in config["metadata"]["compile.json"],
-#                 # "2d-conv_3x3_3x3" in config["name"],
-#                 # "expanding" in config["metadata"]["rules.json"],
-#                 # config["metadata"]["alt_cost"]
-#             ]
-#         ):
-#             print(exp_path, json.dumps(config, indent=2))
-#             df = pd.read_csv(exp_path / "data.csv")
-#             print(df)
-#             # print(df)
-#             # cost = df[
-#             #     (df["phase"] == "opt")
-#             #     & (df["iteration"] == "report")
-#             #     & (df["name"] == "cost")
-#             # ]["value"].values[0]
-#             # if config["metadata"]["alt_cost"]:
-#             #     res.append([
-#             #         "2d-conv",
-#             #         config["name"].split("_", 1)[1],
-#             #         "greedy",
-#             #         cost,
-#             #         config["metadata"]["compile.json"].split("/")[-1]
-#             #     ])
-#             # else:
-#             #     res.append([
-#             #         "2d-conv",
-#             #         config["name"].split("_", 1)[1],
-#             #         "diospyros",
-#             #         cost,
-#             #         config["metadata"]["compile.json"].split("/")[-1]
-#             #     ])
-#             # nodes = df[
-#             #     (df["name"] == "nodes") &
-#             #     (df["iteration"] != "report")
-#             # ]
-#             # cost = df[
-#             #     (df["name"] == "cost") &
-#             #     (df["iteration"] != "report")
-#             # ]
-#             # name = "greedy" if config["metadata"]["alt_cost"] else "normal"
-#             # res += list(map(
-#             #     lambda x: [str(x[0]), name, str(x[1][0]), str(x[1][1])],
-#             #     list(
-#             #         enumerate(
-#             #             zip(
-#             #                 cost["value"].values,
-#             #                 nodes["value"].values
-#             #             )
-#             #         )
-#             #     )
-#             # ))
-#             # if config["metadata"]["alt_cost"]:
-#             #     res.append([
-#             #         "2d-conv",
-#             #         config["name"].split("_", 1)[1],
-#             #         cost
-#             #     ])
-#     except Exception:
-#         pass
+from dfply import filter_by, X, dfpipe, select, mutate
 
 
-def cmp_params(a):
-    return list(map(int, a.replace("_", "x").split("x")))
-
-
+# def cmp_params(a):
+#     return list(map(int, a.replace("_", "x").split("x")))
 # res = sorted(res, key=lambda a: (cmp_params(a[1]), a[2]))
 # for r in res:
 #     print(r)
@@ -95,17 +24,12 @@ def pivot_table(df, **kwargs):
 
 def exp_iter(name, date=None):
     res = []
-    for exp_path in Path("completed").glob("**/stderr.log"):
-        exp_path = Path(exp_path.parents[0])
-        config_path = exp_path / "config.json"
-
-        if not config_path.exists():
-            continue
-
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
 
         if "metadata" not in config:
-            break
+            continue
 
         if all([
                 "Mar20" in config["date"],
@@ -134,8 +58,87 @@ def exp_iter(name, date=None):
     print(f"Wrote {out}")
 
 
+def compile_times():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if "metadata" not in config:
+            continue
+
+        if all([
+                "Mar20" in config["date"],
+                "expanding" in config["metadata"]["rules.json"],
+        ]):
+            memory = pd.read_csv(
+                exp_path / "memory.csv",
+                header=None,
+                names=["timestamp", "ram_used"]
+            )
+            df = memory.agg(['min', 'max'])
+            max_ts = df.loc[['max']]['timestamp'].values[0]
+            min_ts = df.loc[['min']]['timestamp'].values[0]
+            killed = "killed" in list(memory["ram_used"].values)
+            res.append([
+                config["name"],
+                "pruning" if config["metadata"]["alt_cost"] else "stock",
+                max_ts - min_ts,
+                killed
+            ])
+
+    out = Path("figs") / "data" / "compile_times.csv"
+    df = pd.DataFrame(res, columns=["benchmark", "type", "runtime", "killed"])
+    df.to_csv(out, index_label="index")
+    print(df)
+    print(f"Wrote {out}")
+
+
+def scheduler():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if "metadata" not in config:
+            continue
+
+        if all([
+                "Mar23" in config["date"]
+        ]):
+            memory = pd.read_csv(
+                exp_path / "memory.csv",
+                header=None,
+                names=["timestamp", "ram_used"]
+            )
+            df = memory.agg(['min', 'max'])
+            max_ts = df.loc[['max']]['timestamp'].values[0]
+            min_ts = df.loc[['min']]['timestamp'].values[0]
+            res.append([config["name"], max_ts - min_ts])
+
+    # write data to csv
+    df = pd.DataFrame(res, columns=["benchmark", "runtime"])
+    out = Path("figs") / "data" / "backoff_fail.csv"
+    df.to_csv(out, index_label="index")
+    print(f"Wrote {out}")
+
+
+def play():
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if all([
+                "Mar20" in config["date"]
+        ]):
+            print(exp_path)
+
+
 def main():
-    exp_iter("2d-conv_3x3_3x3")
+    # exp_iter("2d-conv_3x3_3x3")
+    # compile_times()
+    # scheduler()
+    play()
 
 
 # if __name__ == "__main__":

@@ -5,11 +5,54 @@
 #+end_src
 
 * Data processing
+:PROPERTIES:
+:header-args:async-shell: :dir (sgt/dir "server") :results none
+:END:
 
-#+begin_src async-shell :dir (sgt/dir "server") :results none :name query
-python3 query.py
+Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
+
+#+begin_src async-shell :name estimation
+# ./estimate.py completed/2d-conv_3x3_2x2/11
+# ./estimate.py completed/2d-conv_3x3_2x2/12
+# ./estimate.py completed/2d-conv_3x3_2x2/13
+# ./estimate.py completed/2d-conv_3x3_2x2/14
+# ./estimate.py completed/2d-conv_3x3_3x3/12
+# ./estimate.py completed/2d-conv_3x3_3x3/13
+# ./estimate.py completed/2d-conv_3x3_3x3/14
+# ./estimate.py completed/2d-conv_3x3_3x3/15
+./estimate.py completed/2d-conv_3x5_3x3/12
+./estimate.py completed/2d-conv_3x5_3x3/13
+./estimate.py completed/2d-conv_4x4_3x3/11
+./estimate.py completed/2d-conv_4x4_3x3/12
+./estimate.py completed/2d-conv_4x4_3x3/13
+./estimate.py completed/2d-conv_4x4_3x3/14
+./estimate.py completed/2d-conv_8x8_3x3/10
+./estimate.py completed/2d-conv_8x8_3x3/11
+./estimate.py completed/2d-conv_8x8_3x3/12
+./estimate.py completed/2d-conv_8x8_3x3/13
+./estimate.py completed/mat-mul_16x16_16x16/4
+./estimate.py completed/q-prod/4
+./estimate.py completed/qr-decomp_3/4
+./estimate.py completed/mat-mul_10x10_10x10/0
+./estimate.py completed/mat-mul_2x2_2x2/0
+./estimate.py completed/mat-mul_2x3_3x3/0
+./estimate.py completed/mat-mul_3x3_3x3/0
+./estimate.py completed/mat-mul_4x4_4x4/0
+./estimate.py completed/mat-mul_8x8_8x8/0
 #+end_src
 
+
+Process all the log files and generate data csvs.
+
+#+begin_src async-shell :name processed
+./process.py all completed/
+#+end_src
+
+Run query to generate aggregated data files
+
+#+begin_src async-shell :name query
+python3 query.py
+#+end_src
 
 * R code for making the figures for evaluation
 :PROPERTIES:
@@ -21,6 +64,7 @@ Import the R libraries that we will use.
 #+begin_src R :results none
 library(tidyverse)
 library(extrafont)
+library(ggpattern)
 #+end_src
 
 ** Performance graphs
@@ -70,6 +114,47 @@ data %>%
 [[file:cycles-performance.svg]]
 
 *** TODO Compilation time
+
+#+begin_src R :results graphics file :file compile-times.svg
+data <- read.csv("data/compile_times.csv")
+
+data$benchmark <- factor(data$benchmark, levels=unique(data$benchmark))
+
+data %>%
+  ## group_by(benchmark) %>%
+  mutate(
+    name=str_split(benchmark, "_", n=2, simplify=TRUE)[,1],
+    params=str_split(benchmark, "_", n=2, simplify=TRUE)[,2]
+  ) %>%
+  ## pivot_longer(
+  ##   cols = !benchmark,
+  ##   names_to = "compiler",
+  ##   values_to = "cycles"
+  ## ) %>% 
+  ## filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
+  ggplot(aes(
+    x=params,
+    y=runtime,
+    fill=type,
+    pattern=killed
+  )) +
+  geom_col_pattern(position="dodge", stat="identity") +
+  ## ylim(0, 1.5) +
+  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  ## labs(y="Normalized Cycles", fill="Compiler") +
+  facet_wrap(~name, strip.position = "bottom") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
+    axis.title.x = element_blank(),
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:compile-times.svg]]
 
 ** TODO Greedy Cost Works
 

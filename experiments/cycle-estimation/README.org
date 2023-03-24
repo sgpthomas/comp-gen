@@ -23,7 +23,11 @@ The file that you download will be an =.xws= file. This is really just a renamed
 
 That's it! Now running =xt-clang= and corresponding compilers should just "work". They'll use whatever core you have set as default. I think you can also specify the name of a particular core on the command line.
 
-You also have to setup the license server. I honestly don't remember how I did that. You have to download the license file and then start up the license server with that file. It was relatively straightforward. I'll come back and document it next time I have to start it.
+Here is the command to start the license server:
+
+#+begin_src async-shell :dir ~/Research/xtensa :results silent
+LM_LICENSE_FILE=licenses/LICENSE ./x64_lsb/lmgrd
+#+end_src
 
 ** q-prod
 
