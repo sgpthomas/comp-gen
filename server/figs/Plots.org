@@ -11,7 +11,8 @@
 
 Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
 
-#+begin_src async-shell :name estimation
+#+header: :dir /ssh:samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server
+#+begin_src async-shell :name estimation 
 # ./estimate.py completed/2d-conv_3x3_2x2/11
 # ./estimate.py completed/2d-conv_3x3_2x2/12
 # ./estimate.py completed/2d-conv_3x3_2x2/13
@@ -32,13 +33,17 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 ./estimate.py completed/2d-conv_8x8_3x3/13
 ./estimate.py completed/mat-mul_16x16_16x16/4
 ./estimate.py completed/q-prod/4
-./estimate.py completed/qr-decomp_3/4
+# ./estimate.py completed/qr-decomp_3/4
 ./estimate.py completed/mat-mul_10x10_10x10/0
 ./estimate.py completed/mat-mul_2x2_2x2/0
 ./estimate.py completed/mat-mul_2x3_3x3/0
 ./estimate.py completed/mat-mul_3x3_3x3/0
 ./estimate.py completed/mat-mul_4x4_4x4/0
 ./estimate.py completed/mat-mul_8x8_8x8/0
+#+end_src
+
+#+begin_src async-shell :name estimation
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
 
 
@@ -64,7 +69,6 @@ Import the R libraries that we will use.
 #+begin_src R :results none
 library(tidyverse)
 library(extrafont)
-library(ggpattern)
 #+end_src
 
 ** Performance graphs
@@ -75,38 +79,48 @@ TODO: generate the cycles csv file here.
 TODO: use real data
 
 #+begin_src R :results graphics file :file cycles-performance.svg
-data <- read.csv("data/cycles.csv")
+data <- full_join(
+  read.csv("data/stock_cycles.csv"),
+  read.csv("data/est_cycles.csv") %>%
+    filter(ruleset == "ruleset_timeout432000") %>%
+    filter(greedy == "True")
+  ## comment
+)
 
-data$benchmark <- factor(data$benchmark, levels=unique(data$benchmark))
+data$params <- factor(data$params, levels=unique(data$params))
 
+data <- data %>%
+  ##  %>%
+  ## filter(greedy == "True") %>%
+  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  group_by(benchmark)
+  ## mutate(
+  ##   cycles_norm = compgen / stock
+  ## ) %>%
+  ## pivot_longer(
+  ##   cols = !benchmark,
+  ##   names_to = "compiler",
+  ##   values_to = "cycles"
+  ## ) %>% 
+  ## filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
 data %>%
-  group_by(benchmark) %>%
-  mutate(
-    stock_norm = 1,
-    compgen_norm = compgen / stock
-  ) %>%
-  pivot_longer(
-    cols = !benchmark,
-    names_to = "compiler",
-    values_to = "cycles"
-  ) %>% 
-  filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
   ggplot(aes(
-    x=benchmark,
+    x=params,
     y=cycles,
-    fill=compiler
+    fill=kernel
   )) +
+  ## facet_wrap(~benchmark, strip.position = "bottom") +
   geom_bar(position="dodge", stat="identity") +
-  ylim(0, 1.5) +
-  scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Normalized Cycles", fill="Compiler") +
+  ## ylim(0, 1.5) +
+  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  ## labs(y="Normalized Cycles", fill="Compiler") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.85, 0.9),
+    legend.position = c(0.15, 0.9),
     legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold")
+    text = element_text(size=12, face="bold")
   )
 #+end_src
 
