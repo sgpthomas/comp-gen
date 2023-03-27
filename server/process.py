@@ -6,6 +6,7 @@ import re
 from functools import reduce
 import click
 import csv
+from datetime import datetime
 
 
 def matches(regex, fun: Callable) -> Callable:
@@ -252,6 +253,15 @@ def filter_log(log):
                     LineFilter(
                         r"Best cost so far: (\d+\.\d+)",
                         lambda m: {"cost": float(m.group(1))}
+                    ),
+                    LineFilter(
+                        r"\[(.*) INFO .*\] Best cost so far",
+                        lambda m: {
+                            "timestamp": datetime.timestamp(datetime.strptime(
+                                m.group(1),
+                                "%Y-%m-%dT%H:%M:%SZ"
+                            ))
+                        }
                     ),
                     combine=lambda x: dict_combine(sum(x, []))
                 ),

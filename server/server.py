@@ -134,7 +134,7 @@ class Job:
         shutil.rmtree(self.dir)
 
     def __repr__(self):
-        return f"<Job {self.name} {self.date}>"
+        return f"<Job {self.dir} {self.date}>"
 
 
 def memory_used_by(pid):
@@ -157,6 +157,7 @@ def single_run(config, alive):
     config.reload()
 
     for job in config.list_jobs():
+        print(f"considering: {job}")
         # if we have found a job that we haven't seen before
         # start a new process for it
         if job not in alive and len(alive) < config.jobs_at_once:
@@ -221,7 +222,7 @@ def main():
             single_run(config, alive)
 
             print(f"Alive jobs: {alive}")
-            time.sleep(1)
+            time.sleep(10)
 
     except KeyboardInterrupt:
         print("Stopping...")

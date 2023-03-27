@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, X, dfpipe, select, mutate
+from dfply import filter_by, X, dfpipe, select, mutate, head
 from functools import reduce
 from datetime import datetime
 
@@ -23,6 +23,7 @@ def latest_date():
 
         dates.add(datetime.strptime(config["date"], "%b%d-%H%M"))
 
+    print("\n".join(map(lambda x: x.strftime("%b%d-%H%M"), sorted(dates))))
     latest = list(sorted(dates))[-1]
     return latest.strftime("%b%d-%H%M")
 
@@ -67,9 +68,9 @@ def exp_iter(name, date=None):
 
         if all(
             [
-                "Mar20" in config["date"],
-                "expanding" in config["metadata"]["rules.json"],
+                "Mar27" in config["date"],
                 name in config["name"],
+                "pruning" in config["metadata"]
             ]
         ):
             df = (
@@ -91,6 +92,37 @@ def exp_iter(name, date=None):
     final = pd.concat(res)
     final.to_csv(out, index_label="index")
     print(final)
+    print(f"Wrote {out}")
+
+
+def pruning():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if all([
+                "Mar27-1209" in config["date"],
+                "key" in config and config["key"] == "pruning"
+        ]):
+            print(config["date"])
+            print(exp_path)
+            df = (pd.read_csv(exp_path / "data.csv")
+                  >> filter_by((X.name == "cost") | (X.name == "timestamp"))
+                  >> filter_by(X.iteration != "report")
+                  >> mutate(
+                      benchmark=config["name"],
+                      pruning=config["metadata"]["alt_cost"]
+                  )
+                  >> select(["pruning", "name", "value"])
+                  >> reset_index(drop=True)
+                  )
+            res.append(df)
+
+    df = pd.concat(res)
+    print(df.to_string())
+    out = Path("figs") / "data" / "pruning.csv"
+    df.to_csv(out, index_label="iter")
     print(f"Wrote {out}")
 
 
@@ -140,7 +172,7 @@ def compile_est_cycles():
           >> to_csv(
               Path("figs") / "data" / "est_cycles.csv",
               index=False
-          ))
+    ))
 
 
 def compile_times():
@@ -192,6 +224,7 @@ def scheduler():
             continue
 
         if all(["Mar23" in config["date"]]):
+            print(exp_path)
             memory = pd.read_csv(
                 exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
             )
@@ -222,7 +255,8 @@ def scheduler():
 
 
 def play():
-    pass
+    _ = latest_date()
+
     # res = []
     # for config_path in Path("completed").glob("**/config.json"):
     #     exp_path = Path(config_path.parents[0])
@@ -236,9 +270,10 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
+    pruning()
     # compile_est_cycles()
     # compile_times()
-    scheduler()
+    # scheduler()
     # play()
 
 

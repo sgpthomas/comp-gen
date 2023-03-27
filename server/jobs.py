@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import json
 from datetime import datetime
 from server import unique_name
@@ -63,7 +65,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost):
+def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost, key=None):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -71,6 +73,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
     config = {
         "date": date_str,
         "name": name,
+        "key": key,
         "memory_limit": 220,
         "command": "./run.sh",
         "metadata": {
@@ -221,9 +224,9 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost):
 
 
 rulesets = {
-    # "expanding": "../experiments/rulesets/expanding.json",
+    "expanding": "../experiments/rulesets/expanding.json",
     "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
-    # "t2": "~/Research/diospyros/t2.json"
+    "t2": "~/Research/diospyros/t2.json"
 }
 
 # resolve the ruleset paths
@@ -231,10 +234,10 @@ for key, val in rulesets.items():
     rulesets[key] = Path(val).expanduser().resolve()
 
 configs = {
-    # "wack": "../experiments/configs/wack.json",
-    # "phased": "../experiments/configs/compile.json",
+    "wack": "../experiments/configs/wack.json",
+    "phased": "../experiments/configs/compile.json",
     "loop": "../experiments/configs/compile_alt_cost.json",
-    # "all-simple": "../experiments/configs/all-simple.json",
+    "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
 
@@ -262,8 +265,8 @@ mat_mul_sizes = [
 ]
 
 exps = itertools.product(mat_mul_sizes, rulesets, configs, alt_cost)
-for (size, r, c, b) in exps:
-    mat_mul(Path("jobs"), *size, rulesets[r], configs[c], b)
+# for (size, r, c, b) in exps:
+#     mat_mul(Path("jobs"), *size, rulesets[r], configs[c], b)
 
 ###########
 # 2d conv #
@@ -311,3 +314,39 @@ qr_decomp_sizes = [
 # qr_exps = itertools.product(qr_decomp_sizes, rulesets, configs, alt_cost)
 # for (s, r, c, b) in qr_exps:
 #     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
+
+
+def pruning_experiments():
+    print("Creating pruning experiments")
+
+    params = [
+        [3, 3, 3, 3]
+    ]
+
+    for p in params:
+        # pruning config
+        make_2d_conv(
+            Path("jobs"),
+            *p,
+            rulesets["ruler"],
+            configs["loop"],
+            True,
+            key="pruning"
+        )
+        # no pruning config
+        make_2d_conv(
+            Path("jobs"),
+            *p,
+            rulesets["ruler"],
+            configs["phased"],
+            False,
+            key="pruning"
+        )
+
+
+def main():
+    pruning_experiments()
+
+
+if __name__ == "__main__":
+    main()
