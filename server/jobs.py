@@ -233,7 +233,7 @@ for key, val in rulesets.items():
 configs = {
     # "wack": "../experiments/configs/wack.json",
     # "phased": "../experiments/configs/compile.json",
-    # "loop": "../experiments/configs/compile_alt_cost.json",
+    "loop": "../experiments/configs/compile_alt_cost.json",
     # "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
@@ -243,8 +243,8 @@ for key, val in configs.items():
     configs[key] = Path(val).expanduser().resolve()
 
 alt_cost = [
-    # True,
-    False
+    True,
+    # False
 ]
 
 ###########
@@ -253,8 +253,8 @@ alt_cost = [
 
 mat_mul_sizes = [
     [2, 2, 2, 2],
-    [2, 3, 3, 3],
-    [3, 3, 3, 3],
+    # [2, 3, 3, 3],
+    # [3, 3, 3, 3],
     # [4, 4, 4, 4],
     # [8, 8, 8, 8],
     # [10, 10, 10, 10],
@@ -289,8 +289,8 @@ conv_2d_exps = itertools.product(
     configs,
     alt_cost
 )
-for (s, r, c, b) in conv_2d_exps:
-    make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
+# for (s, r, c, b) in conv_2d_exps:
+#     make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
 
 ##########
 # q prod #

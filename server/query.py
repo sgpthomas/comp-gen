@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from dfply import filter_by, X, dfpipe, select, mutate
 from functools import reduce
+from datetime import datetime
 
 
 def cmp_params(a):
@@ -12,6 +13,18 @@ def cmp_params(a):
         )
     else:
         return a
+
+
+def latest_date():
+    dates = set()
+    for config_path in Path("completed").glob("**/config.json"):
+        # exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        dates.add(datetime.strptime(config["date"], "%b%d-%H%M"))
+
+    latest = list(sorted(dates))[-1]
+    return latest.strftime("%b%d-%H%M")
 
 
 @dfpipe
@@ -169,7 +182,8 @@ def compile_times():
 
 
 def scheduler():
-    res = []
+    runtime = []
+    cost = []
     for config_path in Path("completed").glob("**/config.json"):
         exp_path = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
@@ -184,29 +198,47 @@ def scheduler():
             df = memory.agg(["min", "max"])
             max_ts = df.loc[["max"]]["timestamp"].values[0]
             min_ts = df.loc[["min"]]["timestamp"].values[0]
-            res.append([config["name"], max_ts - min_ts])
+            runtime.append([config["name"], max_ts - min_ts])
+
+            benchmark, params = config["name"].split("_", 1)
+            df = (pd.read_csv(exp_path / "data.csv")
+                  >> filter_by(X.name == "cost")
+                  >> filter_by(X.iteration != "report")
+                  >> mutate(benchmark=benchmark, params=params)
+                  >> select(["benchmark", "params", "iteration", "value"]))
+            cost += [df]
 
     # write data to csv
-    df = pd.DataFrame(res, columns=["benchmark", "runtime"])
+    df = pd.DataFrame(runtime, columns=["benchmark", "runtime"])
     out = Path("figs") / "data" / "backoff_fail.csv"
     df.to_csv(out, index_label="index")
     print(f"Wrote {out}")
 
+    # write cost data to csv
+    df = (pd.concat(cost) >> reset_index(drop=True))
+    out = Path("figs") / "data" / "backoff_cost.csv"
+    df.to_csv(out)
+    print(f"Wrote {out}")
+
 
 def play():
-    for config_path in Path("completed").glob("**/config.json"):
-        exp_path = Path(config_path.parents[0])
-        config = json.load(config_path.open("r"))
+    pass
+    # res = []
+    # for config_path in Path("completed").glob("**/config.json"):
+    #     exp_path = Path(config_path.parents[0])
+    #     config = json.load(config_path.open("r"))
 
-        if all(["Mar20" in config["date"]]):
-            print(exp_path)
+    #     if all(["Mar23" in config["date"]]):
+    #         print(json.dumps(config, indent=2))
+    # df = pd.concat(res)
+    # print(df.to_string())
 
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    compile_est_cycles()
+    # compile_est_cycles()
     # compile_times()
-    # scheduler()
+    scheduler()
     # play()
 
 

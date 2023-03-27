@@ -314,7 +314,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
 }
 
 fn main() -> Res<()> {
-    let _ = env_logger::builder().format_timestamp(None).try_init();
+    let _ = env_logger::builder().try_init();
 
     let args: Cmdline = argh::from_env();
 
