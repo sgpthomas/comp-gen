@@ -36,12 +36,6 @@
         "ca": [null, 10.0],
         "fresh_egraph": true,
         "disabled": false
-      },
-      {
-        "name": "all",
-        "cd": [null, null],
-        "ca": [null, null],
-        "disabled": true
       }
     ]
   }

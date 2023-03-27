@@ -235,8 +235,10 @@ for key, val in rulesets.items():
 
 configs = {
     "wack": "../experiments/configs/wack.json",
-    "phased": "../experiments/configs/compile.json",
-    "loop": "../experiments/configs/compile_alt_cost.json",
+    "phased": "../experiments/configs/phased.json",
+    "phased_no_opt": "../experiments/configs/phased_no_opt.json",
+    "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
+    "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
     "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
@@ -316,11 +318,17 @@ qr_decomp_sizes = [
 #     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
 
 
-def pruning_experiments():
+def pruning_experiment():
+    """
+    This experiment is meant to show that pruning dramatically decreases
+    the how long it takes to find a low-cost program.
+    """
+
     print("Creating pruning experiments")
 
     params = [
-        [3, 3, 3, 3]
+        [3, 3, 3, 3],
+        [8, 8, 3, 3],
     ]
 
     for p in params:
@@ -329,7 +337,7 @@ def pruning_experiments():
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["loop"],
+            configs["loop_alt_cost"],
             True,
             key="pruning"
         )
@@ -338,14 +346,14 @@ def pruning_experiments():
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["phased"],
+            configs["phased_no_opt_alt_cost"],
             False,
             key="pruning"
         )
 
 
 def main():
-    pruning_experiments()
+    pruning_experiment()
 
 
 if __name__ == "__main__":

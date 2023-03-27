@@ -10,7 +10,7 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py retreive
+./sync.py both
 #+end_src
 
 * Data processing
@@ -219,28 +219,34 @@ Things to fix:
 
 old R code
 #+begin_src R :results graphics file :file iter_size.svg
-data <- read.csv("data/2d-conv-3x3_3x3_iter.csv")
+data <- read_csv("data/2d-conv-3x3_3x3_iter.csv")
 data %>%
   group_by(pruning) %>%
   mutate(cost = cost / max(cost)) %>%
   ggplot(aes(
-    x=log10(nodes),
+    x=nodes,
     y=cost,
     group=pruning,
     color=pruning,
-    linetype=pruning,
   )) +
-  geom_path(size=1.5, arrow=arrow()) + geom_point(size=4) +
-  ## scale_color_discrete(labels=c("Pruning", "No pruning")) +
+  geom_path(
+    linewidth=1.5,
+    arrow=arrow(),
+    show.legend=F
+    ) + geom_point(size=4) +
+  scale_x_log10() +
+  scale_color_discrete(
+    breaks=c(TRUE, FALSE),
+    labels=c("Enabled", "Disabled")
+    ) +
   labs(
     x="Log10(Node Count)",
     y="Normalized Cost",
     color="Pruning"
   ) +
-  guides(linetype="none") +
   theme_minimal() +
   theme(
-    legend.position = c(0.85, 0.9),
+    legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )
@@ -253,10 +259,13 @@ data %>%
 data <- read_csv("data/pruning.csv")
 data %>%
   select(-iter) %>%
+  filter(benchmark == "2d-conv_3x3_3x3") %>%
+  print(n=10) %>%
   pivot_wider(
     names_from=name,
     values_from=value
   ) %>%
+  print(n=10) %>%
   group_by(pruning) %>%
   mutate(
     cost=cost / max(cost),
@@ -268,11 +277,14 @@ data %>%
     color=pruning,
   )) +
   geom_line(
-    size=1.5,
+    linewidth=1.5,
     show.legend=F
-  ) + geom_point(size=4) +
-  scale_color_discrete(breaks=c(TRUE, FALSE)) +
-  scale_x_continuous(trans='log10') +
+  ) + geom_point(size=3) +
+  scale_color_discrete(
+    breaks=c(TRUE, FALSE),
+    labels=c("Enabled", "Disabled")
+    ) +
+  scale_x_log10() +
   annotation_logticks(sides = "b") +
   labs(
     x="Log Timestamp (secs)",
@@ -282,7 +294,7 @@ data %>%
   ## guides(linetype="none") +
   theme_minimal() +
   theme(
-    legend.position = c(0.85, 0.9),
+    legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )

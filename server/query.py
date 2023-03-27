@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, X, dfpipe, select, mutate, head
+from dfply import filter_by, X, dfpipe, select, mutate
 from functools import reduce
 from datetime import datetime
 
@@ -102,7 +102,7 @@ def pruning():
         config = json.load(config_path.open("r"))
 
         if all([
-                "Mar27-1209" in config["date"],
+                "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
                 "key" in config and config["key"] == "pruning"
         ]):
             print(config["date"])
@@ -111,10 +111,10 @@ def pruning():
                   >> filter_by((X.name == "cost") | (X.name == "timestamp"))
                   >> filter_by(X.iteration != "report")
                   >> mutate(
+                      date=config["date"],
                       benchmark=config["name"],
-                      pruning=config["metadata"]["alt_cost"]
-                  )
-                  >> select(["pruning", "phase", "iteration", "name", "value"])
+                      pruning=config["metadata"]["alt_cost"])
+                  >> select(["date", "benchmark", "pruning", "phase", "iteration", "name", "value"])
                   )
             res.append(df)
 
