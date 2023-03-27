@@ -55,7 +55,6 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
 
-
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
@@ -253,33 +252,35 @@ data %>%
 #+begin_src R :results graphics file :file pruning.svg
 data <- read.csv("data/pruning.csv")
 data %>%
-  ## group_by(pruning) %>%
+  select(-iter) %>%
   pivot_wider(
     names_from=name,
     values_from=value
-  )
-  ## ggplot(aes(
-  ##   x=nodes,
-  ##   y=cost,
-  ##   ## group=pruning,
-  ##   color=pruning,
-  ##   ## linetype=pruning,
-  ## )) +
-  ## geom_line() +
-  ## ## geom_path(size=1.5, arrow=arrow()) + geom_point(size=4) +
+  ) %>%
+  group_by(pruning) %>%
+  mutate(
+    cost=cost / max(cost),
+    timestamp=timestamp - min(timestamp)
+  ) %>%
+  ggplot(aes(
+    x=timestamp,
+    y=cost,
+    color=pruning,
+  )) +
+  geom_line(size=1.5) + geom_point(size=4) +
   ## ## scale_color_discrete(labels=c("Pruning", "No pruning")) +
-  ## ## labs(
-  ## ##   x="Log10(Node Count)",
-  ## ##   y="Normalized Cost",
-  ## ##   color="Pruning"
-  ## ## ) +
-  ## ## guides(linetype="none") +
-  ## theme_minimal() +
-  ## theme(
-  ##   legend.position = c(0.85, 0.9),
-  ##   legend.background = element_rect(fill = "white"),
-  ##   text = element_text(size=16, face="bold")
-  ## )
+  labs(
+    x="Timestamp (secs)",
+    y="Normalized Cost",
+    color="Pruning"
+  ) +
+  ## guides(linetype="none") +
+  theme_minimal() +
+  theme(
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
 #+end_src
 
 #+RESULTS:

@@ -114,12 +114,11 @@ def pruning():
                       benchmark=config["name"],
                       pruning=config["metadata"]["alt_cost"]
                   )
-                  >> select(["pruning", "name", "value"])
-                  >> reset_index(drop=True)
+                  >> select(["pruning", "phase", "iteration", "name", "value"])
                   )
             res.append(df)
 
-    df = pd.concat(res)
+    df = pd.concat(res) >> reset_index(drop=True)
     print(df.to_string())
     out = Path("figs") / "data" / "pruning.csv"
     df.to_csv(out, index_label="iter")
