@@ -10,7 +10,7 @@
 #include <xtensa/xt_profiling.h>
 
 /* #include "quaternion_product.h" */
-#include "../utils.h"
+#include "utils.h"
 
 float a_q[4] __attribute__((section(".dram0.data")));
 float a_t[3] __attribute__((section(".dram0.data")));
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   zero_matrix(r_q, 4, 1);
   zero_matrix(r_t, 3, 1);
   printf("Naive hard size : %d cycles\n", time);
-  fprintf(file, "%s,%d\n","Naive hard size",time);
+  /* fprintf(file, "%s,%d\n","Naive hard size",time); */
 
   /* // Eigen */
   /* Eigen::Map<Eigen::Vector4f> aq_(a_q, 4, 1); */
@@ -156,8 +156,8 @@ int main(int argc, char **argv) {
   output_check(r_t, r_t_spec, 3, 1);
   zero_matrix(r_q, 4, 1);
   zero_matrix(r_t, 3, 1);
-  printf("Comp-gen : %d cycles\n", time);
-  fprintf(file, "%s,%d\n","Comp-gen",time);
+  printf("compgen : %d cycles\n", time);
+  fprintf(file, "%s,%d\n","compgen",time);
 
   return 0;
 }

@@ -57,6 +57,11 @@ def display(df):
     return df
 
 
+@dfpipe
+def agg(df, list):
+    return df.agg(list)
+
+
 def exp_iter(name, date=None):
     res = []
     for config_path in Path("completed").glob("**/config.json"):
@@ -109,7 +114,7 @@ def pruning():
             print(config["date"])
             print(exp_path)
             df = (pd.read_csv(exp_path / "data.csv")
-                  >> filter_by((X.name == "cost") | (X.name == "timestamp"))
+                  >> filter_by((X.name == "cost") | (X.name == "timestamp") | (X.name == "nodes"))
                   >> filter_by(X.iteration != "report")
                   >> mutate(
                       date=config["date"],
@@ -135,22 +140,33 @@ def compile_est_cycles():
         if "metadata" not in config:
             continue
 
-        name, params = config["name"].split("_", 1)
+        if "_" in config["name"]:
+            name, params = config["name"].split("_", 1)
+        else:
+            name = config["name"]
+            params = "0"
         cycles_csv = exp_path / "results" / f"{name}.csv"
 
         if all([
-                "Mar20" in config["date"],
+                "Mar28" in config["date"],
                 cycles_csv.exists(),
         ]):
             ruleset = Path(config["metadata"]["rules.json"]).stem
-            print(ruleset)
+            memory = pd.read_csv(exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"])
+            memory = (memory
+                      >> agg(["min", "max"]))
+            compile_time = (memory >> agg(lambda x: x['max'] - x['min']))["timestamp"]
+            ram_used = memory["ram_used"]["max"]
+
             df = (
                 pd.read_csv(cycles_csv)
                 >> mutate(
                     benchmark=name,
                     params=params,
                     ruleset=ruleset,
-                    greedy=config["metadata"]["alt_cost"]
+                    greedy=config["metadata"]["alt_cost"],
+                    compile_time=compile_time,
+                    max_ram_used=ram_used
                 )
                 >> select([
                     "kernel",
@@ -158,11 +174,12 @@ def compile_est_cycles():
                     "params",
                     "ruleset",
                     "greedy",
-                    "cycles"
+                    "cycles",
+                    "compile_time",
+                    "max_ram_used"
                 ])
             )
             res.append(df)
-            print(json.dumps(config, indent=2))
             # print(df[df["kernel"] == "compgen"]["cycles"])
 
     df = (pd.concat(res)
@@ -270,8 +287,8 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    pruning()
-    # compile_est_cycles()
+    # pruning()
+    compile_est_cycles()
     # compile_times()
     # scheduler()
     # play()

@@ -17,6 +17,6 @@ dios,mat-mul,4x4_4x4,48
 dios,mat-mul,8x8_8x8,207
 dios,mat-mul,10x10_10x10,724
 dios,mat-mul,16x16_16x16,14115
-dios,q-prod,,63
+dios,q-prod,0,63
 dios,qr-decomp,3,616
 dios,qr-decomp,4,586

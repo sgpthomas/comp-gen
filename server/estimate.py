@@ -6,6 +6,7 @@ import json
 import shutil
 import subprocess
 import pandas as pd
+from datetime import datetime
 
 
 def param_strings(benchmark, params):
@@ -38,7 +39,12 @@ def param_strings(benchmark, params):
 def estimate_kernel(exp_dir):
     exp_path = Path(exp_dir)
     config = json.load((exp_path / "config.json").open("r"))
-    benchmark_name, params = config["name"].split("_", 1)
+
+    if "_" in config["name"]:
+        benchmark_name, params = config["name"].split("_", 1)
+    else:
+        benchmark_name = config["name"]
+        params = None
 
     # find the harness file that is associated with this benchmark
     # looks in `harnesses/benchmark_name.c`
@@ -73,9 +79,10 @@ def estimate_kernel(exp_dir):
     ]
 
     # run xt compiler
-    print("Compiling", end="...", flush=True)
-    subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / "results")
-    print("Done")
+    if not (exp_path / "results" / f"{benchmark_name}.o").exists():
+        print("Compiling", end="...", flush=True)
+        subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / "results")
+        print("Done")
 
     # simulate the resulting object file
     print("Simulating", end="...", flush=True)
@@ -89,11 +96,47 @@ def estimate_kernel(exp_dir):
     print(df)
 
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
 @click.argument("exp_dir")
-def cli(exp_dir):
+def single(exp_dir):
     print(f"Estimating cycles for {exp_dir}")
     estimate_kernel(exp_dir)
+
+
+@cli.command()
+@click.argument("date")
+def all(date):
+
+    experiments = {}
+
+    # gather all experiments with "performance" key
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_dir = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if "key" in config and config["key"] == "performance":
+            exp_date = config["date"]
+            if len(list((exp_dir / "results").glob("*.csv"))) == 0 and exp_date in experiments:
+                experiments[exp_date].append(exp_dir)
+            else:
+                experiments[exp_date] = [exp_dir]
+    if date == "latest":
+        date = sorted(
+            experiments.keys(),
+            key=lambda x: datetime.strptime(x, "%b%d-%H%M")
+        )[-1]
+
+    if date in experiments:
+        for exp_dir in experiments[date]:
+            print(f"Running {exp_dir}")
+            estimate_kernel(exp_dir)
+    else:
+        raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
 
 
 if __name__ == "__main__":

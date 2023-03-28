@@ -126,8 +126,9 @@ where
                         &runner.egraph,
                         iter_cost_fn.clone(),
                     );
-                    let cost = extractor.find_best_cost(runner.roots[0]);
+                    let (cost, prog) = extractor.find_best(runner.roots[0]);
                     info!("Best cost so far: {cost:?}");
+                    info!("Best program: {prog}");
                     Ok(())
                 })
                 .with_time_limit(std::time::Duration::from_secs(self.timeout));
