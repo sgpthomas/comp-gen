@@ -16,6 +16,21 @@ def unique_name(path: Path, suffix: int = 0) -> Path:
         return unique_name(path, suffix + 1)
 
 
+def sort_path(path):
+    """
+    Sort a path by attempting to split it by some common
+    seperating characters and converting things into ints.
+    """
+
+    # path.replace()
+    stem = path.stem.replace("_", "-").replace("x", "-").split("-")
+    stem = list(map(
+        lambda x: int(x) if x.isnumeric() else x,
+        stem
+    ))
+    return stem
+
+
 class GlobalConfig:
     def __init__(self, root: Path):
         self.config_path = root / "config.json"
@@ -33,7 +48,7 @@ class GlobalConfig:
     def list_jobs(self):
         """Read jobs directory and produce an iterator of tasks to perform."""
 
-        for task_dir in sorted(self.jobs.glob("*")):
+        for task_dir in sorted(self.jobs.glob("*"), key=sort_path):
             if Job.valid(task_dir):
                 yield Job(self, task_dir)
 
@@ -174,7 +189,7 @@ def single_run(config, alive):
     dead = []
 
     # check if anything in the currently running processes has finished
-    print(f"{len(alive)} jobs:")
+    print(f"{len(alive)} alive jobs:")
     for job, proc in alive.items():
         # proc is alive when poll() returns None
         if proc.poll() is None:
@@ -228,7 +243,6 @@ def main():
             config.reload()
             single_run(config, alive)
 
-            print(f"Alive jobs: {alive}")
             time.sleep(5)
 
     except KeyboardInterrupt:
