@@ -86,7 +86,7 @@ library(extrafont)
 TODO: generate the cycles csv file here.
 TODO: use real data
 
-#+begin_src R :results graphics file :file cycles-performance.svg
+#+begin_src R :results graphics file :file cycles-performance.pdf
 data <- full_join(
   read.csv("data/stock_cycles.csv"),
   read.csv("data/est_cycles.csv") %>%
@@ -101,10 +101,22 @@ data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
   filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
-  group_by(benchmark)
-  ## mutate(
-  ##   cycles_norm = compgen / stock
-  ## ) %>%
+  select(benchmark, params, kernel, cycles) %>%
+  group_by(benchmark) %>%
+  pivot_wider(
+    names_from=kernel,
+    values_from=cycles
+  ) %>%
+  mutate(
+    compgen = compgen / dios,
+    dios = 1.0,
+  ) %>%
+  pivot_longer(
+    cols = c("dios", "compgen"),
+    names_to = "kernel",
+    values_to = "cycles"
+  ) %>%
+  print(n=10)
   ## pivot_longer(
   ##   cols = !benchmark,
   ##   names_to = "compiler",
@@ -117,8 +129,8 @@ data %>%
     y=cycles,
     fill=kernel
   )) +
-  ## facet_wrap(~benchmark, strip.position = "bottom") +
-  geom_bar(position="dodge", stat="identity") +
+  facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
+  geom_bar(position="dodge", stat="identity", color="black") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
   ## labs(y="Normalized Cycles", fill="Compiler") +
@@ -133,7 +145,7 @@ data %>%
 #+end_src
 
 #+RESULTS:
-[[file:cycles-performance.svg]]
+[[file:cycles-performance.pdf]]
 
 *** TODO Compilation time
 
@@ -160,7 +172,7 @@ data %>%
     fill=type,
     pattern=killed
   )) +
-  geom_col_pattern(position="dodge", stat="identity") +
+  geom_bar(position="dodge", stat="identity") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
   ## labs(y="Normalized Cycles", fill="Compiler") +
@@ -213,7 +225,7 @@ data %>%
 ** TODO Pruning Works
 
 Things to fix:
-- [ ] Put true first in the legend
+- [X] Put true first in the legend
 - [ ] Get rid of the last data point (from the python generation script)
 - [ ] Make the =y-axis= use estimated cycles rather than cost (so that we know that we are doing the right thing)
 

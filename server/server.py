@@ -33,7 +33,7 @@ class GlobalConfig:
     def list_jobs(self):
         """Read jobs directory and produce an iterator of tasks to perform."""
 
-        for task_dir in self.jobs.glob("*"):
+        for task_dir in sorted(self.jobs.glob("*")):
             if Job.valid(task_dir):
                 yield Job(self, task_dir)
 
@@ -133,6 +133,12 @@ class Job:
         # remove the job directory
         shutil.rmtree(self.dir)
 
+    def __eq__(self, obj):
+        return isinstance(obj, Job) and self.dir == obj.dir
+
+    def __hash__(self):
+        return hash(self.dir)
+
     def __repr__(self):
         return f"<Job {self.dir} {self.date}>"
 
@@ -168,11 +174,12 @@ def single_run(config, alive):
     dead = []
 
     # check if anything in the currently running processes has finished
+    print(f"{len(alive)} jobs:")
     for job, proc in alive.items():
         # proc is alive when poll() returns None
         if proc.poll() is None:
             memory_used = memory_used_by(proc.pid)
-            print(f"{job} ({proc.pid}) {memory_used=} GB")
+            print(f" - {job} ({proc.pid}) {memory_used=} GB")
 
             # where to write the memory report
             memory_csv = job.dir / "memory.csv"
@@ -222,7 +229,7 @@ def main():
             single_run(config, alive)
 
             print(f"Alive jobs: {alive}")
-            time.sleep(10)
+            time.sleep(5)
 
     except KeyboardInterrupt:
         print("Stopping...")

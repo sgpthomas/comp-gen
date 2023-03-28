@@ -102,7 +102,8 @@ def pruning():
         config = json.load(config_path.open("r"))
 
         if all([
-                "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
+                # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
+                "Mar28-1016" in config["date"],
                 "key" in config and config["key"] == "pruning"
         ]):
             print(config["date"])
@@ -113,7 +114,7 @@ def pruning():
                   >> mutate(
                       date=config["date"],
                       benchmark=config["name"],
-                      pruning=config["metadata"]["alt_cost"])
+                      pruning="loop" in config["metadata"]["compile.json"])
                   >> select(["date", "benchmark", "pruning", "phase", "iteration", "name", "value"])
                   )
             res.append(df)

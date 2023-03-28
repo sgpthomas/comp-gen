@@ -9,7 +9,7 @@ import shutil
 import itertools
 
 
-def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost):
+def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost, key=None):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"mat-mul_{a_rows}x{a_cols}_{b_rows}x{b_cols}"
     job_dir = unique_name(
@@ -20,6 +20,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
     config = {
         "date": date_str,
         "name": name,
+        "key": key,
         "memory_limit": 220,
         "command": "./run.sh",
         "metadata": {
@@ -122,7 +123,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def q_prod(jobs_dir, ruleset, compile, alt_cost):
+def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = "q-prod"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -130,9 +131,15 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost):
     config = {
         "date": date_str,
         "name": name,
+        "key": key,
         "memory_limit": 220,
         "command": "./run.sh",
         "benchmark": "q-prod",
+        "metadata": {
+            "rules.json": str(ruleset),
+            "compile.json": str(compile),
+            "alt_cost": alt_cost
+        }
     }
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
     params = {
@@ -170,7 +177,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost):
+def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"qr-decomp_{N}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -178,6 +185,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost):
     config = {
         "date": date_str,
         "name": name,
+        "key": key,
         "memory_limit": 220,
         "command": "./run.sh",
         "metadata": {
@@ -225,6 +233,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost):
 
 rulesets = {
     "expanding": "../experiments/rulesets/expanding.json",
+    "expanding_vecmac": "../experiments/rulesets/expanding_vecmac.json",
     "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
     "t2": "~/Research/diospyros/t2.json"
 }
@@ -317,6 +326,80 @@ qr_decomp_sizes = [
 # for (s, r, c, b) in qr_exps:
 #     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
 
+def overall_performance():
+    """
+    This measures the overall performance of the compiler in terms of
+    1) How good are the results of the compiler?
+    2) How fast is the compiler?
+    3) How well does the compiler scale?
+
+    This is a run with all of the benchmarks that Dios uses.
+    """
+
+    print("Creating overall performance jobs")
+
+    mat_mul_sizes = [
+        [2, 2, 2, 2],
+        [2, 3, 3, 3],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [8, 8, 8, 8],
+        [10, 10, 10, 10],
+        [16, 16, 16, 16]
+    ]
+    conv_2d_sizes = [
+        [3, 3, 2, 2],
+        [3, 3, 3, 3],
+        [3, 5, 3, 3],
+        [4, 4, 3, 3],
+        [8, 8, 3, 3],
+        [10, 10, 2, 2],
+        [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
+        [16, 16, 3, 3],
+        [16, 16, 4, 4]
+    ]
+    qr_decomp_sizes = [
+        3,
+        4
+    ]
+    ruleset = rulesets["expanding_vecmac"]
+    config = configs["loop_alt_cost"]
+
+    # create all the jobs
+    for size in mat_mul_sizes:
+        mat_mul(
+            Path("jobs"),
+            *size,
+            ruleset,
+            config,
+            True,
+            key="performance"
+        )
+
+    for size in conv_2d_sizes:
+        make_2d_conv(
+            Path("jobs"),
+            *size,
+            ruleset,
+            config,
+            True,
+            key="performance"
+        )
+
+    q_prod(Path("jobs"), ruleset, config, True, key="performance")
+
+    for size in qr_decomp_sizes:
+        qr_decomp(
+            Path("jobs"),
+            size,
+            ruleset,
+            config,
+            True,
+            key="performance"
+        )
+
 
 def pruning_experiment():
     """
@@ -328,7 +411,6 @@ def pruning_experiment():
 
     params = [
         [3, 3, 3, 3],
-        [8, 8, 3, 3],
     ]
 
     for p in params:
@@ -347,13 +429,14 @@ def pruning_experiment():
             *p,
             rulesets["ruler"],
             configs["phased_no_opt_alt_cost"],
-            False,
+            True,
             key="pruning"
         )
 
 
 def main():
-    pruning_experiment()
+    overall_performance()
+    # pruning_experiment()
 
 
 if __name__ == "__main__":

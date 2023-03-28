@@ -5,7 +5,6 @@ dios,2d-conv,3x5_3x3,155
 dios,2d-conv,4x4_3x3,179
 dios,2d-conv,8x8_3x3,450
 dios,2d-conv,10x10_2x2,284
-dios,2d-conv,10x10_2x2,284
 dios,2d-conv,10x10_3x3,713
 dios,2d-conv,10x10_4x4,1517
 dios,2d-conv,16x16_2x2,741
