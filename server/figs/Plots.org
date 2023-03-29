@@ -13,37 +13,6 @@ Sync jobs.
 ./sync.py both
 #+end_src
 
-* Data processing
-:PROPERTIES:
-:header-args:async-shell: :dir (sgt/dir "server") :results none
-:END:
-
-Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
-
-(header args for doing cycle estimation from non-thelio computers)
-#+header: :dir /ssh:samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server
-
-#+header: :dir (sgt/dir "server")
-#+begin_src async-shell :name estimation 
-./estimate.py all latest
-#+end_src
-
-#+begin_src async-shell :name estimation
-rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
-#+end_src
-
-Process all the log files and generate data csvs.
-
-#+begin_src async-shell :name processed
-./process.py all completed/
-#+end_src
-
-Run query to generate aggregated data files
-
-#+begin_src async-shell :name query
-python3 query.py
-#+end_src
-
 * Getting Diospyros Numbers
 
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
@@ -91,6 +60,44 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
         -o ~/Research/comp-gen/server/diospyros-results
+#+end_src
+
+** Syncing diospyros-results between machines
+
+#+begin_src async-shell :name dios :dir (sgt/dir "server") :results none
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-results/ \
+      diospyros-results
+#+end_src
+
+* Data processing
+:PROPERTIES:
+:header-args:async-shell: :dir (sgt/dir "server") :results none
+:END:
+
+Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
+
+(header args for doing cycle estimation from non-thelio computers)
+#+header: :dir /ssh:samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server
+
+#+header: :dir (sgt/dir "server")
+#+begin_src async-shell :name estimation 
+./estimate.py all latest
+#+end_src
+
+#+begin_src async-shell :name estimation
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
+#+end_src
+
+Process all the log files and generate data csvs.
+
+#+begin_src async-shell :name processed
+./process.py all completed/
+#+end_src
+
+Run query to generate aggregated data files
+
+#+begin_src async-shell :name query
+python3 query.py
 #+end_src
 
 * R code for making the figures for evaluation

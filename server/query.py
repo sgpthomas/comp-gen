@@ -62,6 +62,11 @@ def agg(df, list):
     return df.agg(list)
 
 
+@dfpipe
+def replace(df, *args, **kwargs):
+    return df.replace(*args, **kwargs)
+
+
 def exp_iter(name, date=None):
     res = []
     for config_path in Path("completed").glob("**/config.json"):
@@ -75,7 +80,7 @@ def exp_iter(name, date=None):
             [
                 "Mar27" in config["date"],
                 name in config["name"],
-                "pruning" in config["metadata"]
+                "pruning" in config["metadata"],
             ]
         ):
             df = (
@@ -106,22 +111,38 @@ def pruning():
         exp_path = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
 
-        if all([
+        if all(
+            [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
                 "Mar28-1016" in config["date"],
-                "key" in config and config["key"] == "pruning"
-        ]):
+                "key" in config and config["key"] == "pruning",
+            ]
+        ):
             print(config["date"])
             print(exp_path)
-            df = (pd.read_csv(exp_path / "data.csv")
-                  >> filter_by((X.name == "cost") | (X.name == "timestamp") | (X.name == "nodes"))
-                  >> filter_by(X.iteration != "report")
-                  >> mutate(
-                      date=config["date"],
-                      benchmark=config["name"],
-                      pruning="loop" in config["metadata"]["compile.json"])
-                  >> select(["date", "benchmark", "pruning", "phase", "iteration", "name", "value"])
-                  )
+            df = (
+                pd.read_csv(exp_path / "data.csv")
+                >> filter_by(
+                    (X.name == "cost") | (X.name == "timestamp") | (X.name == "nodes")
+                )
+                >> filter_by(X.iteration != "report")
+                >> mutate(
+                    date=config["date"],
+                    benchmark=config["name"],
+                    pruning="loop" in config["metadata"]["compile.json"],
+                )
+                >> select(
+                    [
+                        "date",
+                        "benchmark",
+                        "pruning",
+                        "phase",
+                        "iteration",
+                        "name",
+                        "value",
+                    ]
+                )
+            )
             res.append(df)
 
     df = pd.concat(res) >> reset_index(drop=True)
@@ -147,15 +168,18 @@ def compile_est_cycles():
             params = "0"
         cycles_csv = exp_path / "results" / f"{name}.csv"
 
-        if all([
+        if all(
+            [
                 "Mar28" in config["date"],
                 cycles_csv.exists(),
-        ]):
+            ]
+        ):
             ruleset = Path(config["metadata"]["rules.json"]).stem
-            memory = pd.read_csv(exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"])
-            memory = (memory
-                      >> agg(["min", "max"]))
-            compile_time = (memory >> agg(lambda x: x['max'] - x['min']))["timestamp"]
+            memory = pd.read_csv(
+                exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
+            )
+            memory = memory >> agg(["min", "max"])
+            compile_time = (memory >> agg(lambda x: x["max"] - x["min"]))["timestamp"]
             ram_used = memory["ram_used"]["max"]
 
             df = (
@@ -166,30 +190,68 @@ def compile_est_cycles():
                     ruleset=ruleset,
                     greedy=config["metadata"]["alt_cost"],
                     compile_time=compile_time,
-                    max_ram_used=ram_used
+                    max_ram_used=ram_used,
                 )
-                >> select([
-                    "kernel",
-                    "benchmark",
-                    "params",
-                    "ruleset",
-                    "greedy",
-                    "cycles",
-                    "compile_time",
-                    "max_ram_used"
-                ])
+                >> select(
+                    [
+                        "kernel",
+                        "benchmark",
+                        "params",
+                        "ruleset",
+                        "greedy",
+                        "cycles",
+                        "compile_time",
+                        "max_ram_used",
+                    ]
+                )
             )
             res.append(df)
             # print(df[df["kernel"] == "compgen"]["cycles"])
 
+    df = (
+        pd.concat(res)
+        >> sort_values(by=["benchmark", "params"], key=cmp_params)
+        >> reset_index(drop=True, names=["index"])
+        >> display()
+        >> to_csv(Path("figs") / "data" / "est_cycles.csv", index=False))
+
+
+def stock_dios():
+    res = []
+    for egg_kernel_csv in Path("diospyros-results").glob("**/egg-kernel.csv"):
+        exp_dir = Path(egg_kernel_csv.parents[0])
+        benchmark = egg_kernel_csv.parents[1].stem
+        params = egg_kernel_csv.parents[0].stem.rsplit("_", 1)[0]
+
+        stats = json.load((exp_dir / "stats.json").open("r"))
+
+        df = (pd.read_csv(egg_kernel_csv)
+              >> mutate(
+                  benchmark=benchmark,
+                  params=params,
+                  compile_time=stats["time"],
+                  max_ram_used=stats["memory"] / float(10 ** 9))
+              >> replace({
+                  "Diospyros": "dios",
+                  "Naive": "naive",
+                  "Naive hard size": "naive-hard",
+                  "Nature": "nature",
+                  "Eigen": "eigen"
+              })
+              >> select([
+                  "kernel",
+                  "benchmark",
+                  "params",
+                  "cycles",
+                  "compile_time",
+                  "max_ram_used"
+              ]))
+        res.append(df)
+
     df = (pd.concat(res)
-          >> sort_values(by=["benchmark", "params"], key=cmp_params)
           >> reset_index(drop=True, names=["index"])
           >> display()
-          >> to_csv(
-              Path("figs") / "data" / "est_cycles.csv",
-              index=False
-    ))
+          >> to_csv(Path("figs") / "data" / "stock_cycles.csv", index=False))
 
 
 def compile_times():
@@ -251,11 +313,13 @@ def scheduler():
             runtime.append([config["name"], max_ts - min_ts])
 
             benchmark, params = config["name"].split("_", 1)
-            df = (pd.read_csv(exp_path / "data.csv")
-                  >> filter_by(X.name == "cost")
-                  >> filter_by(X.iteration != "report")
-                  >> mutate(benchmark=benchmark, params=params)
-                  >> select(["benchmark", "params", "iteration", "value"]))
+            df = (
+                pd.read_csv(exp_path / "data.csv")
+                >> filter_by(X.name == "cost")
+                >> filter_by(X.iteration != "report")
+                >> mutate(benchmark=benchmark, params=params)
+                >> select(["benchmark", "params", "iteration", "value"])
+            )
             cost += [df]
 
     # write data to csv
@@ -265,7 +329,7 @@ def scheduler():
     print(f"Wrote {out}")
 
     # write cost data to csv
-    df = (pd.concat(cost) >> reset_index(drop=True))
+    df = pd.concat(cost) >> reset_index(drop=True)
     out = Path("figs") / "data" / "backoff_cost.csv"
     df.to_csv(out)
     print(f"Wrote {out}")
@@ -288,7 +352,8 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
-    compile_est_cycles()
+    # compile_est_cycles()
+    stock_dios()
     # compile_times()
     # scheduler()
     # play()

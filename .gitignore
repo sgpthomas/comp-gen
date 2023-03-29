@@ -11,3 +11,6 @@ Cargo.lock
 .z3-trace
 /experiments/original-dios/results/
 *.Rhistory
+/server/completed/
+*.pyc
+/server/diospyros-results/
