@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 
   FILE *file = fopen(OUTFILE, "w");
   if (file == NULL) file = stdout;
-  fprintf(file, "kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles\n");
+  fprintf(file, "kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles,correct\n");
 
   init_rand(10);
 
@@ -137,10 +137,18 @@ int main(int argc, char **argv) {
   time = get_time();
   printf("\n");
   printf("compgen : %d cycles\n", time);
-  fprintf(file, "%s,%d,%d,%d,%d,%d\n", "compgen", I_ROWS, I_COLS, F_ROWS, F_COLS, time);
   print_matrix(o, O_ROWS, O_COLS);
-  output_check(o, o_spec, O_ROWS, O_COLS);
+  bool correct = output_check(o, o_spec, O_ROWS, O_COLS);
   zero_matrix(o, O_ROWS, O_COLS);
+  fprintf(file,
+          "%s,%d,%d,%d,%d,%d,%d\n",
+          "compgen",
+          I_ROWS,
+          I_COLS,
+          F_ROWS,
+          F_COLS,
+          time,
+          correct);
 
   return 0;
 }

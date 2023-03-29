@@ -36,7 +36,7 @@ def param_strings(benchmark, params):
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
 
-def estimate_kernel(exp_dir):
+def estimate_kernel(exp_dir, force=False):
     exp_path = Path(exp_dir)
     config = json.load((exp_path / "config.json").open("r"))
 
@@ -67,7 +67,7 @@ def estimate_kernel(exp_dir):
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
         "-std=c++11", "-O3", "-mlongcalls", "-LNO:SIMD", "-w", "-mtext-section-literals",
         "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
-        f"-DOUTFILE='\"{benchmark_name}.csv\"'"
+        "-DOUTFILE='\"cycles.csv\"'"
     ]
     cmd += param_strings(benchmark_name, params)
     cmd += [
@@ -75,12 +75,13 @@ def estimate_kernel(exp_dir):
         "-I", "~/Research/xtensa/fusiong3_library/include",
         "-I", "~/Research/xtensa/fusiong3_library/include_private",
         "kernel.c", "harness.c",
-        "-o", f"{benchmark_name}.o"
+        "-o", "kernel.o"
     ]
 
     # run xt compiler
-    if not (exp_path / "results" / f"{benchmark_name}.o").exists():
+    if force or not (exp_path / "results" / "kernel.o").exists():
         print("Compiling", end="...", flush=True)
+        subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / "results")
         subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / "results")
         print("Done")
 
@@ -88,11 +89,11 @@ def estimate_kernel(exp_dir):
     print("Simulating", end="...", flush=True)
     subprocess.run(" ".join([
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
-        f"{benchmark_name}.o"
+        "kernel.o"
     ]), shell=True, cwd=exp_path / "results", capture_output=True)
     print("Done")
 
-    df = pd.read_csv(exp_path / "results" / f"{benchmark_name}.csv")
+    df = pd.read_csv(exp_path / "results" / "cycles.csv")
     print(df)
 
 
@@ -110,7 +111,8 @@ def single(exp_dir):
 
 @cli.command()
 @click.argument("date")
-def all(date):
+@click.option("--force", is_flag=True)
+def many(date, force):
 
     experiments = {}
 
@@ -119,22 +121,29 @@ def all(date):
         exp_dir = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
 
-        if "key" in config and config["key"] == "performance":
+        if all([
+                "key" in config and config["key"] == "performance",
+                # force => cycles.csv doesn't exist
+                force or (not (exp_dir / "results" / "cycles.csv").exists())
+        ]):
             exp_date = config["date"]
-            if len(list((exp_dir / "results").glob("*.csv"))) == 0 and exp_date in experiments:
+            if exp_date in experiments:
                 experiments[exp_date].append(exp_dir)
             else:
                 experiments[exp_date] = [exp_dir]
+
+    # handle the case when date is the string "latest"
     if date == "latest":
-        date = sorted(
+        options = sorted(
             experiments.keys(),
             key=lambda x: datetime.strptime(x, "%b%d-%H%M")
-        )[-1]
+        )
+        date = options[-1]
 
     if date in experiments:
         for exp_dir in experiments[date]:
             print(f"Running {exp_dir}")
-            estimate_kernel(exp_dir)
+            estimate_kernel(exp_dir, force=force)
     else:
         raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
 

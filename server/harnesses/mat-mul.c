@@ -119,8 +119,7 @@ int main(int argc, char **argv) {
   stop_cycle_timing;
   time = get_time();
   print_matrix(c, A_ROWS, B_COLS);
-  bool correct;
-  correct = output_check(c, c_spec, A_ROWS, B_COLS);
+  bool correct = output_check(c, c_spec, A_ROWS, B_COLS);
   zero_matrix(c, A_ROWS, B_COLS);
   printf("compgen : %d cycles\n", time);
   fprintf(file,

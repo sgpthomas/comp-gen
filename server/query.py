@@ -166,11 +166,11 @@ def compile_est_cycles():
         else:
             name = config["name"]
             params = "0"
-        cycles_csv = exp_path / "results" / f"{name}.csv"
+        cycles_csv = exp_path / "results" / "cycles.csv"
 
         if all(
             [
-                "Mar28" in config["date"],
+                "Mar29" in config["date"],
                 "key" in config and config["key"] == "performance",
                 cycles_csv.exists(),
             ]
@@ -362,8 +362,8 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
-    # compile_est_cycles()
-    stock_dios()
+    compile_est_cycles()
+    # stock_dios()
     # compile_times()
     # scheduler()
     # play()

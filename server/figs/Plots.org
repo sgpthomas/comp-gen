@@ -81,7 +81,8 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 
 #+header: :dir (sgt/dir "server")
 #+begin_src async-shell :name estimation 
-./estimate.py all latest
+# ./estimate.py single completed/2d-conv_10x10_3x3/12
+./estimate.py many latest
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -100,7 +101,7 @@ Run query to generate aggregated data files
 python3 query.py
 #+end_src
 
-* R code for making the figures for evaluation
+* Pictures!!
 :PROPERTIES:
 :header-args:R: :session cycest :colnames yes
 :END:
@@ -119,8 +120,6 @@ CLOSED: [2023-03-29 Wed 10:03]
 :LOGBOOK:
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
-
-TODO: generate the stock_cycles csv file.
 
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(
@@ -167,7 +166,8 @@ data %>%
   geom_bar(position="dodge", stat="identity", color="black") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  ## labs(y="Normalized Cycles", fill="Compiler") +
+  labs(y="Normalized Cycles", fill="Compiler") +
+  ## scale_y_log10() +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
@@ -203,10 +203,10 @@ data <- data %>%
     names_from=kernel,
     values_from=compile_time
   ) %>%
-  mutate(
-    compgen = compgen / dios,
-    dios = 1.0,
-  ) %>%
+  ## mutate(
+  ##   compgen = compgen / dios,
+  ##   dios = 1.0,
+  ## ) %>%
   pivot_longer(
     cols = c("dios", "compgen"),
     names_to = "kernel",
@@ -226,7 +226,7 @@ data %>%
   )) +
   facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
   geom_bar(position="dodge", stat="identity", color="black") +
-  scale_y_log10() +
+  ## scale_y_log10() +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
   labs(y="Log Normalized Compile Time", fill="Compiler") +

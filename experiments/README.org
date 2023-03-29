@@ -316,84 +316,47 @@ The backend doesn't correctly compile Vector expressions that have accesses to d
 
 #+begin_src emacs-lisp :tangle (concat (magit-toplevel) "/../diospyros/fix-backend-out/res.rkt") :mkdirp t
 (Concat
- (VecAdd
-  (VecMul (Vec 1 (Get I 0) (Get F 1) 1) (Vec 0 (Get F 1) (Get I 1) 0))
-  (VecMul
-   (LitVec (Get F 0) (Get F 0) (Get F 0) (Get F 1))
-   (LitVec (Get I 0) (Get I 1) (Get I 2) (Get I 2))))
+ (VecMAC
+  (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 0) (Get I 1) 0))
+  (Vec (Get F 0) (Get F 0) (Get I 2) (Get F 1))
+  (Vec (Get I 0) (Get I 1) (Get F 0) (Get I 2)))
  (Concat
-  (VecAdd
-   (VecAdd
-    (VecMul (Vec 0 (Get I 4) (Get I 1) 1)
-            (Vec 1 (Get F 0) (Get F 3) 0))
-    (VecMul (Vec 1 (Get F 1) (Get F 2) 1)
-            (Vec 0 (Get I 3) (Get I 2) 0)))
+  (VecMinus
    (VecAdd
     (VecMul
-     (LitVec (Get F 0) (Get F 3) (Get F 1) (Get F 1))
-     (LitVec (Get I 3) (Get I 0) (Get I 4) (Get I 5)))
-    (VecMul
-     (LitVec (Get I 0) (Get I 1) (Get I 5) (Get I 2))
-     (LitVec (Get F 2) (Get F 2) (Get F 0) (Get F 3)))))
+     (Vec (Get F 2) (Get F 2) (Get F 2) (Get I 5))
+     (Vec (Get I 0) (Get I 1) (Get I 2) (Get F 1)))
+    (VecMAC
+     (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 3) (Get I 4) 0))
+     (Vec (Get F 0) (Get F 3) (Get I 1) (Get F 3))
+     (Vec (Get I 3) (Get I 0) (Get F 3) (Get I 2))))
+   (VecMul (Vec 0 (Get I 4) (Get I 5) 0) (VecNeg (Vec 0 (Get F 0) (Get F 0) 0))))
   (Concat
-   (VecAdd
-    (VecMul (Vec 0 (Get F 3) (Get F 3) 1) (Vec 1 (Get I 3) (Get I 4) 0))
+   (VecMinus
     (VecAdd
      (VecMul
       (LitVec (Get F 2) (Get F 2) (Get F 2) (Get F 3))
       (LitVec (Get I 3) (Get I 4) (Get I 5) (Get I 5)))
-     (VecAdd
-      (VecMul (Vec 1 (Get F 0) (Get F 1) 1) (Vec 0 (Get I 7) (Get I 7) 0))
-      (VecMul
-       (LitVec (Get I 6) (Get I 6) (Get I 8) (Get I 8))
-       (LitVec (Get F 0) (Get F 1) (Get F 0) (Get F 1))))))
-   (VecAdd
-    (VecMul
-     (Vec 1 (Get F 2) (Get F 3) 1)
-     (Vec 0 (Get I 7) (Get I 7) 0))
-    (VecMul
-     (LitVec (Get F 2) (Get F 3) (Get F 2) (Get F 3))
-     (LitVec (Get I 6) (Get I 6) (Get I 8) (Get I 8)))))))
-
-;; (Concat
-;;  (VecMAC
-;;   (VecMul (LitVec 0 (Get I 0) (Get I 1) 0) (LitVec 0 (Get F 1) (Get F 1) 0))
-;;   (LitVec (Get I 0) (Get I 1) (Get I 2) (Get I 2))
-;;   (LitVec (Get F 0) (Get F 0) (Get F 0) (Get F 1)))
-;;  (Concat
-;;   (VecAdd
-;;    (VecMul
-;;     (LitVec (Get I 0) (Get I 0) (Get I 1) (Get I 2))
-;;     (LitVec (Get F 2) (Get F 3) (Get F 3) (Get F 3)))
-;;    (VecAdd
-;;     (VecMul (LitVec 0 (Get I 1) (Get I 2) 0) (LitVec 0 (Get F 2) (Get F 2) 0))
-;;     (VecMAC
-;;      (VecMul (LitVec 0 (Get I 3) (Get I 4) 0) (LitVec 0 (Get F 1) (Get F 1) 0))
-;;      (LitVec (Get I 3) (Get I 4) (Get I 5) (Get I 5))
-;;      (LitVec (Get F 0) (Get F 0) (Get F 0) (Get F 1)))))
-;;   (Concat
-;;    (VecAdd
-;;     (VecMul
-;;      (LitVec (Get I 3) (Get I 3) (Get I 4) (Get I 5))
-;;      (LitVec (Get F 2) (Get F 3) (Get F 3) (Get F 3)))
-;;     (VecAdd
-;;      (VecMul (LitVec 0 (Get I 4) (Get I 5) 0) (LitVec 0 (Get F 2) (Get F 2) 0))
-;;      (VecMAC
-;;       (VecMul (LitVec 0 (Get I 6) (Get I 7) 0) (LitVec 0 (Get F 1) (Get F 1) 0))
-;;       (LitVec (Get I 6) (Get I 7) (Get I 8) (Get I 8))
-;;       (LitVec (Get F 0) (Get F 0) (Get F 0) (Get F 1)))))
-;;    (VecMAC
-;;     (VecMul (LitVec 0 (Get I 6) (Get I 7) 0) (LitVec 0 (Get F 3) (Get F 3) 0))
-;;     (LitVec (Get I 6) (Get I 7) (Get I 8) (Get I 8))
-;;     (LitVec (Get F 2) (Get F 2) (Get F 2) (Get F 3))))))
+     (VecMAC
+      (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 6) (Get I 7) 0))
+      (Vec (Get I 6) (Get F 3) (Get I 4) (Get I 8))
+      (Vec (Get F 0) (Get I 3) (Get F 3) (Get F 1))))
+    (VecMul (Vec 0 (Get I 7) (Get I 8) 0) (VecNeg (Vec 0 (Get F 0) (Get F 0) 0))))
+   (VecMAC
+    (VecMul (Vec 0 (Get I 6) (Get F 3) 0) (Vec 1 (Get F 3) (Get I 7) 0))
+    (Vec (Get F 2) (Get F 2) (Get I 8) (Get I 8))
+    (Vec (Get I 6) (Get I 7) (Get F 2) (Get F 3))))))
 #+end_src
 
-#+begin_src async-shell :dir (concat (magit-toplevel) "/../diospyros") :results silent :name dios
-EXP=~/Research/comp-gen/server/completed/mat-mul_16x16_16x16/0/results
+#+header: :var exp=(sgt/dir "server" "completed" "mat-mul_8x8_8x8" "14" "results")
+#+header: :dir "~/Research/diospyros"
+#+begin_src async-shell :results silent :name dios
+echo $exp
 make dios
 ./dios -w 4 --egg --suppress-git \
-    -o $EXP/kernel.c \
-    $EXP
+    -o $exp/kernel.c \
+    $exp
+head -n 10 $exp/kernel.c
 #+end_src
 
 #+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t
