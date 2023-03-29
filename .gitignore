@@ -14,3 +14,4 @@ Cargo.lock
 /server/completed/
 *.pyc
 /server/diospyros-results/
+/server/in-progress/

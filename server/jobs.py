@@ -367,7 +367,7 @@ def overall_performance():
         4
     ]
     ruleset = rulesets["expanding_vecmac"]
-    config = configs["loop_alt_cost"]
+    config = configs["loop_alt_cost_t180"]
 
     # create all the jobs
     for size in mat_mul_sizes:
