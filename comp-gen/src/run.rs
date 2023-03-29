@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use log::{debug, info, warn};
 use ruler::egg;
 
@@ -18,6 +20,7 @@ pub struct EqSatResult<
     cost: C::Cost,
     prog: egg::RecExpr<L>,
     egraph: egg::EGraph<L, N>,
+    time_left: Duration,
     // stats: stats::Stats<L, C>,
 }
 
@@ -98,10 +101,12 @@ where
             cost::depth(&eqsat.prog, eqsat.prog.as_ref().len() - 1)
         );
 
+        // unpack the previous eqsat result
         let EqSatResult {
             cost: old_cost,
             prog,
             mut egraph,
+            time_left,
         } = eqsat;
 
         // update egraph
@@ -131,7 +136,9 @@ where
                     info!("Best program: {prog}");
                     Ok(())
                 })
-                .with_time_limit(std::time::Duration::from_secs(self.timeout));
+                .with_time_limit(time_left);
+        // .with_time_limit(Duration::from_secs(self.timeout));
+        debug!("Using timeout: {:?}", time_left);
 
         // set the scheduler according to the options
         runner = match self.scheduler {
@@ -179,6 +186,8 @@ where
             cost,
             prog,
             egraph: runner.egraph,
+            time_left: time_left
+                .saturating_sub(Duration::from_secs_f64(stats.total_time)),
         }
     }
 
@@ -223,6 +232,7 @@ where
             cost: self.cost_fn.cost_rec(&prog),
             prog,
             egraph: self.new_egraph(),
+            time_left: Duration::from_secs(self.timeout),
         };
 
         let eqsat = self.run_phase(&self.phases, eqsat);

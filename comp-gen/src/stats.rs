@@ -49,6 +49,7 @@ pub struct Stats<L: egg::Language, C: egg::CostFunction<L>> {
     egraph_total_size: usize,
     old_cost: C::Cost,
     cost: C::Cost,
+    pub total_time: f64,
 }
 
 impl<L, C> Stats<L, C>
@@ -73,6 +74,11 @@ where
             egraph_total_size: runner.egraph.total_size(),
             old_cost,
             cost,
+            total_time: runner
+                .iterations
+                .iter()
+                .map(|iter| iter.total_time)
+                .sum(),
         }
     }
 
@@ -96,6 +102,7 @@ where
         info!("    Stop reason: {:?}", self.stop_reason.as_ref().unwrap());
         info!("    Iterations: {}", self.iterations);
         info!("    Cost: {:?} (old: {:?})", self.cost, self.old_cost);
+        info!("    Time: {}", self.total_time);
         info!(
             "    Egraph size: {} nodes, {} classes, {} memo",
             self.egraph_total_nodes,
