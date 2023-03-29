@@ -248,6 +248,7 @@ configs = {
     "phased_no_opt": "../experiments/configs/phased_no_opt.json",
     "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
     "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
+    "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
     "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
@@ -326,6 +327,7 @@ qr_decomp_sizes = [
 # for (s, r, c, b) in qr_exps:
 #     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
 
+
 def overall_performance():
     """
     This measures the overall performance of the compiler in terms of
@@ -390,15 +392,15 @@ def overall_performance():
 
     q_prod(Path("jobs"), ruleset, config, True, key="performance")
 
-    for size in qr_decomp_sizes:
-        qr_decomp(
-            Path("jobs"),
-            size,
-            ruleset,
-            config,
-            True,
-            key="performance"
-        )
+    # for size in qr_decomp_sizes:
+    #     qr_decomp(
+    #         Path("jobs"),
+    #         size,
+    #         ruleset,
+    #         config,
+    #         True,
+    #         key="performance"
+    #     )
 
 
 def pruning_experiment():

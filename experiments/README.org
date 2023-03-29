@@ -306,7 +306,7 @@ cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
     --dios-params ../diospyros/$bench-params \
     --vector-width 4 \
     --rules experiments/rulesets/ruleset_timeout432000.json \
-    --config experiments/configs/loop_alt_cost.json --alt-cost
+    --config experiments/configs/loop_alt_cost_t180.json --alt-cost
     # --config experiments/compile.json
 #+end_src
 

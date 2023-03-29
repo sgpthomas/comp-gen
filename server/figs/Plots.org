@@ -114,7 +114,11 @@ library(extrafont)
 
 ** Performance graphs
 
-*** WAITING Cycle count
+*** DONE Cycle count
+CLOSED: [2023-03-29 Wed 10:03]
+:LOGBOOK:
+- State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
+:END:
 
 TODO: generate the stock_cycles csv file.
 
@@ -199,10 +203,10 @@ data <- data %>%
     names_from=kernel,
     values_from=compile_time
   ) %>%
-  ## mutate(
-  ##   compgen = compgen / dios,
-  ##   dios = 1.0,
-  ## ) %>%
+  mutate(
+    compgen = compgen / dios,
+    dios = 1.0,
+  ) %>%
   pivot_longer(
     cols = c("dios", "compgen"),
     names_to = "kernel",
@@ -222,14 +226,15 @@ data %>%
   )) +
   facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
   geom_bar(position="dodge", stat="identity", color="black") +
+  scale_y_log10() +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  ## labs(y="Normalized Cycles", fill="Compiler") +
+  labs(y="Log Normalized Compile Time", fill="Compiler") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.15, 0.9),
+    legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=12, face="bold")
   )
@@ -461,3 +466,13 @@ data %>%
 
 #+RESULTS:
 [[file:iter_cost.svg]]
+
+* Copy Images to paper
+
+#+begin_src async-shell :results none
+DEST=$(realpath ~/Research/comp-gen-paper/figures)
+for f in $(echo *.svg); do
+    echo "Exporting $f to $DEST/${f%.*}.pdf"
+    inkscape $f --export-filename="$DEST/${f%.*}.pdf"
+done
+#+end_src

@@ -171,9 +171,11 @@ def compile_est_cycles():
         if all(
             [
                 "Mar28" in config["date"],
+                "key" in config and config["key"] == "performance",
                 cycles_csv.exists(),
             ]
         ):
+            print(exp_path)
             ruleset = Path(config["metadata"]["rules.json"]).stem
             memory = pd.read_csv(
                 exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
@@ -208,6 +210,10 @@ def compile_est_cycles():
             res.append(df)
             # print(df[df["kernel"] == "compgen"]["cycles"])
 
+    if len(res) == 0:
+        print("No matches!")
+        return
+
     df = (
         pd.concat(res)
         >> sort_values(by=["benchmark", "params"], key=cmp_params)
@@ -221,7 +227,10 @@ def stock_dios():
     for egg_kernel_csv in Path("diospyros-results").glob("**/egg-kernel.csv"):
         exp_dir = Path(egg_kernel_csv.parents[0])
         benchmark = egg_kernel_csv.parents[1].stem
-        params = egg_kernel_csv.parents[0].stem.rsplit("_", 1)[0]
+        if benchmark != "q-prod":
+            params = egg_kernel_csv.parents[0].stem.rsplit("_", 1)[0]
+        else:
+            params = "0"
 
         stats = json.load((exp_dir / "stats.json").open("r"))
 
@@ -249,6 +258,7 @@ def stock_dios():
         res.append(df)
 
     df = (pd.concat(res)
+          >> sort_values(by=["benchmark", "params"], key=cmp_params)
           >> reset_index(drop=True, names=["index"])
           >> display()
           >> to_csv(Path("figs") / "data" / "stock_cycles.csv", index=False))
