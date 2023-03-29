@@ -46,21 +46,52 @@ python3 query.py
 
 * Getting Diospyros Numbers
 
-#+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none
+Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
+
+#+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none :name dios
 git checkout master
 git pull -r
 
-
-# rm -rf test-results
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
 python3 evaluation/eval_benchmarks.py --skiplargemem --skiprun -o results
 #+end_src
 
-#+begin_src async-shell
+Copy the results back here, so that we can analyze them.
 
+#+begin_src async-shell :dir (sgt/dir "server") :var IP=(ec2/get-ip "exp") :results none :name dios
+rsync -avh ubuntu@$IP:~/diospyros/results/ diospyros-results
 #+end_src
 
+
+Some changes to diospyros are needed before we can run estimation. We need to go into =evaluation/shared.mk= and edit the paths so that they point to the right places.
+
+I don't have the expert matrix kernel, so I comment out that from the =mat-mul/harness.c=
+
+The nature files seem to be in a different location than what Dios expects. So I symlinked the =.c= files into where they are supposed to be. Here's the command (from the fusion_g3 library):
+
+#+begin_src async-shell :name dios :dir ~/Research/xtensa/fusiong3_library
+# mat-mul nature objects
+ln -s matrix/matmmltf_pdx4.c matmmltf_pdx4.c
+
+# 2d-conv nature objects
+ln -s filter/2d/conv2df_pdx4.c conv2df_pdx4.c
+
+# qr-decomp nature objects
+ln -s matinv/qrf/matinvqrf_pdx4.c matinvqrf_pdx4.c
+ln -s matinv/qrf/matinvqrrotf_pdx4.c matinvqrrotf_pdx4.c
+ln -s matrix/transpmf_pdx4.c transpmf_pdx4.c
+ln -s matrix/transpm32cache_pdx4.c transpm32cache_pdx4.c
+#+end_src
+
+Finally, the command to actually perform cycle estimates on all the benchmarks.
+
+#+header: :name dios
+#+begin_src async-shell :dir (s-join "/" `(,(magit-toplevel) ".." "cucapra-diospyros")) :results none
+python3 evaluation/eval_benchmarks.py \
+        --skipsynth \
+        -o ~/Research/comp-gen/server/diospyros-results
+#+end_src
 
 * R code for making the figures for evaluation
 :PROPERTIES:
