@@ -47,7 +47,7 @@ def do_retreive():
 
     print("Syncing in-progress jobs", end="...")
     subprocess.run([
-        "rsync", "-a", "--delete",
+        "rsync", "-avh", "--delete",
         f"ubuntu@{ip}:~/comp-gen/server/jobs/",
         "in-progress",
     ])
@@ -55,7 +55,7 @@ def do_retreive():
 
     print("Syncing completed", end="...")
     subprocess.run([
-        "rsync", "-a",
+        "rsync", "-avh",
         f"ubuntu@{ip}:~/comp-gen/server/completed/",
         "completed",
     ])

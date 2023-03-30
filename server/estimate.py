@@ -7,6 +7,9 @@ import shutil
 import subprocess
 import pandas as pd
 from datetime import datetime
+import process as p
+from dfply import mutate
+from query import reset_index
 
 
 def param_strings(benchmark, params):
@@ -36,7 +39,7 @@ def param_strings(benchmark, params):
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
 
-def estimate_kernel(exp_dir, force=False):
+def estimate_kernel(exp_dir, force=False, results="results"):
     exp_path = Path(exp_dir)
     config = json.load((exp_path / "config.json").open("r"))
 
@@ -55,13 +58,13 @@ def estimate_kernel(exp_dir, force=False):
         print(f"Harness file for {benchmark_name} doesn't exist.")
         return
 
-    if not (exp_path / "results" / "kernel.c").exists():
+    if not (exp_path / results / "kernel.c").exists():
         print("Kernel file not found.")
         return
 
     # copy file into results directory
-    shutil.copy(harness_file, exp_path / "results" / "harness.c")
-    shutil.copy(util_file, exp_path / "results" / "utils.h")
+    shutil.copy(harness_file, exp_path / results / "harness.c")
+    shutil.copy(util_file, exp_path / results / "utils.h")
 
     cmd = [
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
@@ -79,10 +82,10 @@ def estimate_kernel(exp_dir, force=False):
     ]
 
     # run xt compiler
-    if force or not (exp_path / "results" / "kernel.o").exists():
+    if force or not (exp_path / results / "kernel.o").exists():
         print("Compiling", end="...", flush=True)
-        subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / "results")
-        subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / "results")
+        subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
+        subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / results)
         print("Done")
 
     # simulate the resulting object file
@@ -90,11 +93,12 @@ def estimate_kernel(exp_dir, force=False):
     subprocess.run(" ".join([
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
         "kernel.o"
-    ]), shell=True, cwd=exp_path / "results", capture_output=True)
+    ]), shell=True, cwd=exp_path / results, capture_output=True)
     print("Done")
 
-    df = pd.read_csv(exp_path / "results" / "cycles.csv")
+    df = pd.read_csv(exp_path / results / "cycles.csv")
     print(df)
+    return df
 
 
 @click.group()
@@ -106,7 +110,7 @@ def cli():
 @click.argument("exp_dir")
 def single(exp_dir):
     print(f"Estimating cycles for {exp_dir}")
-    estimate_kernel(exp_dir)
+    estimate_kernel(exp_dir, results="results")
 
 
 @cli.command()
@@ -146,6 +150,62 @@ def many(date, force):
             estimate_kernel(exp_dir, force=force)
     else:
         raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
+
+
+@cli.command()
+@click.argument("exp_dir")
+def log(exp_dir):
+    """
+    Run estimation for every iteration for a single log file.
+    """
+
+    exp_dir = Path(exp_dir)
+    assert exp_dir.exists()
+    assert (exp_dir / "stderr.log").exists()
+
+    prog_filter = p.Chunker(
+        start=p.matches(r"Starting Phase (\w+)", lambda m: m.group(1)),
+        combine=p.unique_dict_append,
+        data=p.Combine(
+            p.Chunker(
+                start=p.matches(r"Iteration (\d+)", lambda m: int(m.group(1))),
+                combine=p.dict_combine,
+                data=p.LineFilter(
+                    r"Best program: (\(.*\))",
+                    lambda m: {"prog": m.group(1)}
+                )
+            )
+        )
+    )
+
+    # setup new results directory to do estimating in
+    iter_results = exp_dir / "iter_results"
+    iter_results.mkdir(exist_ok=True)
+
+    shutil.copy(exp_dir / "results" / "spec.rkt", iter_results)
+    shutil.copy(exp_dir / "results" / "outputs.rkt", iter_results)
+    shutil.copy(exp_dir / "results" / "prelude.rkt", iter_results)
+
+    stderr_log = (exp_dir / "stderr.log").open("r").readlines()
+    res = []
+    for phase_name, iters in prog_filter.run(stderr_log).items():
+        for iter_n, prog in iters[0].items():
+            print(f"Estimating {phase_name}: {iter_n}", end="...\n")
+            with (iter_results / "res.rkt").open("w") as f:
+                f.write(prog[0]["prog"])
+                f.write("\n")
+            subprocess.run([
+                "/home/samthomas/Research/diospyros/dios", "-w", "4",
+                "--egg", "--suppress-git", "-o", str(iter_results / "kernel.c"),
+                str(iter_results)
+            ])
+            res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
+                       >> mutate(
+                           phase=phase_name,
+                           iter=iter_n))
+            print("Done")
+    df = pd.concat(res) >> reset_index(drop=True)
+    print(df)
 
 
 if __name__ == "__main__":

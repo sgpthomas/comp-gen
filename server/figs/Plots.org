@@ -23,7 +23,7 @@ git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-python3 evaluation/eval_benchmarks.py --skiplargemem --skiprun -o results
+python3 evaluation/eval_benchmarks.py --timeout 720 --skiplargemem --skiprun -o results
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -82,7 +82,8 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+header: :dir (sgt/dir "server")
 #+begin_src async-shell :name estimation 
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
-./estimate.py many latest
+# ./estimate.py many latest
+./estimate.py log completed/2d-conv_3x3_3x3/33
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -121,10 +122,11 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
+#+header: :width 13 :height 5
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(
-  read.csv("data/stock_cycles.csv"),
-  read.csv("data/est_cycles.csv")
+  read_csv("data/stock_cycles.csv"),
+  read_csv("data/est_cycles.csv")
   ## comment
 )
 
@@ -133,23 +135,25 @@ data$params <- factor(data$params, levels=unique(data$params))
 data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
-  ## filter(benchmark == "q-prod") %>%
+  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
   pivot_wider(
     names_from=kernel,
     values_from=cycles
   ) %>%
-  mutate(
-    compgen = compgen / dios,
-    dios = dios / dios,
-  ) %>%
+  print(n=10) %>%
+  ## mutate(
+  ##   compgen = compgen / naive,
+  ##   dios = dios / naive,
+  ##   naive = naive / naive
+  ## ) %>%
   pivot_longer(
-    cols = c("dios", "compgen"),
+    cols = c("dios", "compgen", "naive"),
     names_to = "kernel",
     values_to = "cycles"
   ) %>%
-  print(n=10)
+  print(n=60)
   ## pivot_longer(
   ##   cols = !benchmark,
   ##   names_to = "compiler",
@@ -166,16 +170,17 @@ data %>%
   geom_bar(position="dodge", stat="identity", color="black") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Normalized Cycles", fill="Compiler") +
-  ## scale_y_log10() +
+  labs(y="Log Cycles", fill="Compiler") +
+  scale_y_log10() +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.15, 0.9),
+    legend.position = c(0.07, 0.85),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=12, face="bold")
-  )
+  ) +
+  scale_fill_brewer(palette = "Paired")
 #+end_src
 
 #+RESULTS:
@@ -183,6 +188,7 @@ data %>%
 
 *** NEXT Compilation time
 
+#+header: :width 13 :height 5
 #+begin_src R :results graphics file :file compile-times.svg
 data <- full_join(
   read_csv("data/stock_cycles.csv"),
@@ -196,7 +202,7 @@ data$params <- factor(data$params, levels=unique(data$params))
 data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
-  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, compile_time) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -229,7 +235,7 @@ data %>%
   ## scale_y_log10() +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Log Normalized Compile Time", fill="Compiler") +
+  labs(y="Compile Time", fill="Compiler") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
@@ -237,11 +243,72 @@ data %>%
     legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=12, face="bold")
-  )
+  ) +
+  scale_fill_brewer(palette = "Set2")
 #+end_src
 
 #+RESULTS:
 [[file:compile-times.svg]]
+
+*** Memory Usage
+
+#+header: :width 13 :height 5
+#+begin_src R :results graphics file :file memory-performance.svg
+data <- full_join(
+  read_csv("data/stock_cycles.csv"),
+  read_csv("data/est_cycles.csv")
+  ## comment
+)
+
+data$params <- factor(data$params, levels=unique(data$params))
+
+data <- data %>%
+  ##  %>%
+  ## filter(greedy == "True") %>%
+  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  filter(kernel == "dios" | kernel == "compgen") %>%
+  select(benchmark, params, kernel, max_ram_used) %>%
+  group_by(benchmark) %>%
+  pivot_wider(
+    names_from=kernel,
+    values_from=max_ram_used
+  ) %>%
+  ## mutate(
+  ##   compgen = compgen / dios,
+  ##   dios = dios / dios,
+  ## ) %>%
+  pivot_longer(
+    cols = c("dios", "compgen"),
+    names_to = "kernel",
+    values_to = "memory"
+  ) %>%
+  print()
+
+data %>%
+  ggplot(aes(
+    x=params,
+    y=memory,
+    fill=kernel
+  )) +
+  facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
+  geom_bar(position="dodge", stat="identity", color="black") +
+  ## ylim(0, 1.5) +
+  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  labs(y="Max Memory Used (GiB)", fill="Compiler") +
+  ## scale_y_log10() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
+    axis.title.x = element_blank(),
+    legend.position = c(0.15, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=12, face="bold")
+  ) +
+  scale_fill_brewer(palette = "Set2")
+#+end_src
+
+#+RESULTS:
+[[file:memory-performance.svg]]
 
 ** TODO Greedy Cost Works
 
@@ -324,7 +391,8 @@ data %>%
     legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
-  )
+  ) +
+  scale_fill_brewer(palette = "Paired")
 #+end_src
 
 #+RESULTS:
@@ -355,10 +423,11 @@ data %>%
     linewidth=1.5,
     show.legend=F
   ) + geom_point(size=3) +
-  scale_color_discrete(
+  scale_color_brewer(
+    palette = "Paired",
     breaks=c(TRUE, FALSE),
     labels=c("Enabled", "Disabled")
-    ) +
+  ) +
   scale_x_log10() +
   annotation_logticks(sides = "b") +
   labs(

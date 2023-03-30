@@ -249,6 +249,7 @@ configs = {
     "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
     "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
     "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
+    "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
     "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json"
 }
@@ -341,33 +342,35 @@ def overall_performance():
     print("Creating overall performance jobs")
 
     mat_mul_sizes = [
-        [2, 2, 2, 2],
-        [2, 3, 3, 3],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [8, 8, 8, 8],
-        [10, 10, 10, 10],
-        [16, 16, 16, 16]
+        # [2, 2, 2, 2],
+        # [2, 3, 3, 3],
+        # [3, 3, 3, 3],
+        # [4, 4, 4, 4],
+        # [8, 8, 8, 8],
+        # [10, 10, 10, 10],
+        # [16, 16, 16, 16],
+        [20, 20, 20, 20]
     ]
     conv_2d_sizes = [
-        [3, 3, 2, 2],
-        [3, 3, 3, 3],
-        [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        [16, 16, 4, 4]
+        # [3, 3, 2, 2],
+        # [3, 3, 3, 3],
+        # [3, 5, 3, 3],
+        # [4, 4, 3, 3],
+        # [8, 8, 3, 3],
+        # [10, 10, 2, 2],
+        # [10, 10, 3, 3],
+        # [10, 10, 4, 4],
+        # [16, 16, 2, 2],
+        # [16, 16, 3, 3],
+        # [16, 16, 4, 4],
+        [20, 20, 3, 3],
     ]
-    qr_decomp_sizes = [
-        3,
-        4
-    ]
+    # qr_decomp_sizes = [
+    #     3,
+    #     4
+    # ]
     ruleset = rulesets["expanding_vecmac"]
-    config = configs["loop_alt_cost_t180"]
+    config = configs["loop_alt_cost_t1800"]
 
     # create all the jobs
     for size in mat_mul_sizes:
@@ -390,7 +393,7 @@ def overall_performance():
             key="performance"
         )
 
-    q_prod(Path("jobs"), ruleset, config, True, key="performance")
+    # q_prod(Path("jobs"), ruleset, config, True, key="performance")
 
     # for size in qr_decomp_sizes:
     #     qr_decomp(

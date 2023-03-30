@@ -170,7 +170,7 @@ def compile_est_cycles():
 
         if all(
             [
-                "Mar29" in config["date"],
+                "Mar29-1443" in config["date"],
                 "key" in config and config["key"] == "performance",
                 cycles_csv.exists(),
             ]
@@ -239,7 +239,8 @@ def stock_dios():
                   benchmark=benchmark,
                   params=params,
                   compile_time=stats["time"],
-                  max_ram_used=stats["memory"] / float(10 ** 9))
+                  max_ram_used=stats["memory"] / float(10 ** 9),
+                  saturated=stats["saturated"])
               >> replace({
                   "Diospyros": "dios",
                   "Naive": "naive",
@@ -253,7 +254,8 @@ def stock_dios():
                   "params",
                   "cycles",
                   "compile_time",
-                  "max_ram_used"
+                  "max_ram_used",
+                  "saturated"
               ]))
         res.append(df)
 
@@ -362,12 +364,12 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
-    compile_est_cycles()
-    # stock_dios()
+    # compile_est_cycles()
+    stock_dios()
     # compile_times()
     # scheduler()
     # play()
 
 
-# if __name__ == "__main__":
-main()
+if __name__ == "__main__":
+    main()
