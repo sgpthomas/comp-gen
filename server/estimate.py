@@ -9,7 +9,7 @@ import pandas as pd
 from datetime import datetime
 import process as p
 from dfply import mutate
-from query import reset_index
+from query import reset_index, to_csv, select
 
 
 def param_strings(benchmark, params):
@@ -201,12 +201,16 @@ def log(exp_dir):
                 "--egg", "--suppress-git", "-o", str(iter_results / "kernel.c"),
                 str(iter_results)
             ])
-            # res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
-            #            >> mutate(
-            #                phase=phase_name,
-            #                iter=iter_n))
+            res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
+                       >> mutate(
+                           phase=phase_name,
+                           iter=iter_n)
+                       >> select(["kernel", "cycles", "correct", "phase", "iter"])
+                       )
             print("Done")
-    df = pd.concat(res) >> reset_index(drop=True)
+    df = (pd.concat(res)
+          >> reset_index(drop=True)
+          >> to_csv(Path("figs") / "data" / "every_iteration.csv"))
     print(df)
 
 
