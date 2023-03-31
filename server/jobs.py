@@ -251,7 +251,9 @@ configs = {
     "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
     "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
     "all-simple": "../experiments/configs/all-simple.json",
-    "all-backoff": "../experiments/configs/all-backoff.json"
+    "all-backoff": "../experiments/configs/all-backoff.json",
+    "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
+    "loop-dios-cost": "../experiments/configs/loop_dios_cost.json"
 }
 
 # resolve the ruleset paths
@@ -439,9 +441,39 @@ def pruning_experiment():
         )
 
 
+def understand_cost_function():
+    """
+    1) Try looping config with more expansion iterations.
+    2) Try looping+pruning with original cost function.
+    """
+
+    params = [
+        [3, 3, 3, 3],
+    ]
+
+    for p in params:
+        make_2d_conv(
+            Path("jobs"),
+            *p,
+            rulesets["ruler"],
+            configs["loop-dios-cost"],
+            False,
+            key="fix"
+        )
+        make_2d_conv(
+            Path("jobs"),
+            *p,
+            rulesets["ruler"],
+            configs["loop-more-expansion"],
+            True,
+            key="fix"
+        )
+
+
 def main():
-    overall_performance()
+    # overall_performance()
     # pruning_experiment()
+    understand_cost_function()
 
 
 if __name__ == "__main__":
