@@ -452,14 +452,14 @@ def understand_cost_function():
     ]
 
     for p in params:
-        make_2d_conv(
-            Path("jobs"),
-            *p,
-            rulesets["ruler"],
-            configs["loop-dios-cost"],
-            False,
-            key="fix"
-        )
+        # make_2d_conv(
+        #     Path("jobs"),
+        #     *p,
+        #     rulesets["ruler"],
+        #     configs["loop-dios-cost"],
+        #     False,
+        #     key="fix"
+        # )
         make_2d_conv(
             Path("jobs"),
             *p,

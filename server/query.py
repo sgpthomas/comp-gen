@@ -192,8 +192,7 @@ def compile_est_cycles():
                     ruleset=ruleset,
                     greedy=config["metadata"]["alt_cost"],
                     compile_time=compile_time,
-                    max_ram_used=ram_used,
-                )
+                    max_ram_used=ram_used)
                 >> select(
                     [
                         "kernel",
@@ -347,6 +346,15 @@ def scheduler():
     print(f"Wrote {out}")
 
 
+def fix():
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if "key" in config and config["key"] == "fix":
+            print(exp_path, config["metadata"]["alt_cost"])
+
+
 def play():
     _ = latest_date()
 
@@ -365,10 +373,11 @@ def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
     # compile_est_cycles()
-    stock_dios()
+    # stock_dios()
     # compile_times()
     # scheduler()
     # play()
+    fix()
 
 
 if __name__ == "__main__":

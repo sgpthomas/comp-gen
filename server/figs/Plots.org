@@ -1,4 +1,4 @@
-* Sync jobs and data
+* Start jobs and sync data
 
 Create jobs.
 
@@ -83,7 +83,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation 
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
 # ./estimate.py many latest
-./estimate.py log completed/2d-conv_8x8_3x3/20
+./estimate.py log completed/2d-conv_3x3_3x3/35
 #+end_src
 
 #+begin_src async-shell :name estimation

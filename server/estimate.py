@@ -192,10 +192,14 @@ def log(exp_dir):
     for phase_name, iters in prog_filter.run(stderr_log).items():
         for iter_n, prog in iters[0].items():
             print(f"Estimating {phase_name}: {iter_n}", end="...\n")
-            with (iter_results / f"res-{n}.rkt").open("w") as f:
+            if len(prog) == 0:
+                print(f"no program? {phase_name}, {iter_n}")
+                continue
+            with (iter_results / "res.rkt").open("w") as f:
                 f.write(prog[0]["prog"])
                 f.write("\n")
                 n += 1
+            shutil.copy(iter_results / "res.rkt", iter_results / f"res-{n}.rkt")
             subprocess.run([
                 "../../diospyros/dios", "-w", "4",
                 "--egg", "--suppress-git", "-o", str(iter_results / "kernel.c"),
