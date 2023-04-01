@@ -253,7 +253,9 @@ configs = {
     "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json",
     "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
-    "loop-dios-cost": "../experiments/configs/loop_dios_cost.json"
+    "loop-dios-cost": "../experiments/configs/loop_dios_cost.json",
+    "loop_more_compilation": "../experiments/configs/loop_more_compilation.json",
+    "none": "../experiments/configs/none.json",
 }
 
 # resolve the ruleset paths
@@ -460,20 +462,85 @@ def understand_cost_function():
         #     False,
         #     key="fix"
         # )
+        # make_2d_conv(
+        #     Path("jobs"),
+        #     *p,
+        #     rulesets["ruler"],
+        #     configs["loop-more-expansion"],
+        #     True,
+        #     key="fix"
+        # )
         make_2d_conv(
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["loop-more-expansion"],
+            configs["loop_more_compilation"],
             True,
             key="fix"
         )
 
 
+def no_eqsat():
+    """
+    Get estimation numbers for all benchmarks with no equality saturation.
+    In other words, what is the effect of doing just the Diospyros symbolic execution.
+    """
+
+    mat_mul_sizes = [
+        [2, 2, 2, 2],
+        [2, 3, 3, 3],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [8, 8, 8, 8],
+        [10, 10, 10, 10],
+        [16, 16, 16, 16],
+    ]
+    conv_2d_sizes = [
+        [3, 3, 2, 2],
+        [3, 3, 3, 3],
+        [3, 5, 3, 3],
+        [4, 4, 3, 3],
+        [8, 8, 3, 3],
+        [10, 10, 2, 2],
+        [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
+        [16, 16, 3, 3],
+        [16, 16, 4, 4],
+    ]
+
+    ruleset = rulesets["expanding_vecmac"]
+    config = configs["none"]
+
+    # create all the jobs
+    for size in mat_mul_sizes:
+        mat_mul(
+            Path("jobs"),
+            *size,
+            ruleset,
+            config,
+            True,
+            key="noeqsat"
+        )
+
+    for size in conv_2d_sizes:
+        make_2d_conv(
+            Path("jobs"),
+            *size,
+            ruleset,
+            config,
+            True,
+            key="noeqsat"
+        )
+
+    q_prod(Path("jobs"), ruleset, config, True, key="noeqsat")
+
+
 def main():
     # overall_performance()
     # pruning_experiment()
-    understand_cost_function()
+    # understand_cost_function()
+    no_eqsat()
 
 
 if __name__ == "__main__":

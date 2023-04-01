@@ -82,8 +82,8 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+header: :dir (sgt/dir "server")
 #+begin_src async-shell :name estimation 
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
-# ./estimate.py many latest
-./estimate.py log completed/2d-conv_3x3_3x3/35
+./estimate.py many latest --key noeqsat --override-name noeqsat --force
+# ./estimate.py log completed/2d-conv_3x3_3x3/36
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -126,7 +126,8 @@ CLOSED: [2023-03-29 Wed 10:03]
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(
   read_csv("data/stock_cycles.csv"),
-  read_csv("data/est_cycles.csv")
+  read_csv("data/est_cycles.csv"),
+  read_csv("data/noeqsat.csv")
   ## comment
 )
 
@@ -149,7 +150,7 @@ data <- data %>%
   ##   naive = naive / naive
   ## ) %>%
   pivot_longer(
-    cols = c("dios", "compgen", "naive"),
+    cols = c("dios", "compgen", "naive", "noeqsat"),
     names_to = "kernel",
     values_to = "cycles"
   ) %>%

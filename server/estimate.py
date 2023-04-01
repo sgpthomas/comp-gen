@@ -39,7 +39,7 @@ def param_strings(benchmark, params):
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
 
-def estimate_kernel(exp_dir, force=False, results="results"):
+def estimate_kernel(exp_dir, force=False, results="results", override=""):
     exp_path = Path(exp_dir)
     config = json.load((exp_path / "config.json").open("r"))
 
@@ -97,6 +97,11 @@ def estimate_kernel(exp_dir, force=False, results="results"):
     print("Done")
 
     df = pd.read_csv(exp_path / results / "cycles.csv")
+
+    if override != "":
+        df = (df.replace(to_replace="compgen", value=override)
+              >> to_csv(exp_path / results / "cycles.csv"))
+
     print(df)
     return df
 
@@ -116,7 +121,9 @@ def single(exp_dir):
 @cli.command()
 @click.argument("date")
 @click.option("--force", is_flag=True)
-def many(date, force):
+@click.option("--key", default="performance")
+@click.option("--override-name", default="")
+def many(date, force, key, override_name):
 
     experiments = {}
 
@@ -126,7 +133,7 @@ def many(date, force):
         config = json.load(config_path.open("r"))
 
         if all([
-                "key" in config and config["key"] == "performance",
+                "key" in config and config["key"] == key,
                 # force => cycles.csv doesn't exist
                 force or (not (exp_dir / "results" / "cycles.csv").exists())
         ]):
@@ -147,7 +154,7 @@ def many(date, force):
     if date in experiments:
         for exp_dir in experiments[date]:
             print(f"Running {exp_dir}")
-            estimate_kernel(exp_dir, force=force)
+            estimate_kernel(exp_dir, force=force, override=override_name)
     else:
         raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
 
@@ -211,6 +218,7 @@ def log(exp_dir):
                            iter=iter_n)
                        >> select(["kernel", "cycles", "correct", "phase", "iter"])
                        )
+            shutil.copy(iter_results / "kernel.c", iter_results / f"kernel-{n}.c")
             print("Done")
     df = (pd.concat(res)
           >> reset_index(drop=True)

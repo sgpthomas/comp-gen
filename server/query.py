@@ -265,6 +265,33 @@ def stock_dios():
           >> to_csv(Path("figs") / "data" / "stock_cycles.csv", index=False))
 
 
+def noeqsat():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if all([
+                "key" in config and config["key"] == "noeqsat"
+        ]):
+            if "_" in config["name"]:
+                name, params = config["name"].split("_", 1)
+            else:
+                name = config["name"]
+                params = "0"
+            res.append(pd.read_csv(exp_path / "results" / "cycles.csv")
+                       >> mutate(
+                           benchmark=name,
+                           params=params)
+                       >> select(["benchmark", "params", "kernel", "cycles", "correct"]))
+
+    (pd.concat(res)
+     >> sort_values(by=["benchmark", "params"], key=cmp_params)
+     >> reset_index(drop=True, names=["index"])
+     >> display
+     >> to_csv(Path("figs") / "data" / "noeqsat.csv", index=False))
+
+
 def compile_times():
     res = []
     for config_path in Path("completed").glob("**/config.json"):
@@ -377,7 +404,8 @@ def main():
     # compile_times()
     # scheduler()
     # play()
-    fix()
+    # fix()
+    noeqsat()
 
 
 if __name__ == "__main__":
