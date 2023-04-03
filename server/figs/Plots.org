@@ -18,12 +18,12 @@ Sync jobs.
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
 
 #+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none :name dios
-git checkout master
-git pull -r
+# git checkout master
+# git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-python3 evaluation/eval_benchmarks.py --timeout 720 --skiplargemem --skiprun -o results
+python3 evaluation/eval_benchmarks.py --timeout 180 --skiplargemem --skiprun -o results
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -82,8 +82,9 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+header: :dir (sgt/dir "server")
 #+begin_src async-shell :name estimation 
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
-./estimate.py many latest --key noeqsat --override-name noeqsat --force
-# ./estimate.py log completed/2d-conv_3x3_3x3/36
+# ./estimate.py many latest --key noeqsat --override-name noeqsat --force
+# ./estimate.py log completed/2d-conv_3x5_3x3/20
+./estimate.py log completed/2d-conv_10x10_2x2/16
 #+end_src
 
 #+begin_src async-shell :name estimation

@@ -68,7 +68,10 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
 
     cmd = [
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
-        "-std=c++11", "-O3", "-mlongcalls", "-LNO:SIMD", "-w", "-mtext-section-literals",
+        # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
+        "-std=c++11", "-O3", "-mlongcalls",
+        "-LNO:simd", "-fvectorize",
+        "-w", "-mtext-section-literals",
         "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
         "-DOUTFILE='\"cycles.csv\"'"
     ]
@@ -177,9 +180,16 @@ def log(exp_dir):
             p.Chunker(
                 start=p.matches(r"Iteration (\d+)", lambda m: int(m.group(1))),
                 combine=p.dict_combine,
-                data=p.LineFilter(
-                    r"Best program: (\(.*\))",
-                    lambda m: {"prog": m.group(1)}
+                data=p.Combine(
+                    p.First(
+                        r"Best program: (\(.*\))",
+                        lambda m: {"prog": m.group(1)}
+                    ),
+                    p.First(
+                        r"Best cost so far: (\d+.\d+)",
+                        lambda m: {"cost": m.group(1)}
+                    ),
+                    combine=p.dict_combine
                 )
             )
         )
@@ -197,13 +207,14 @@ def log(exp_dir):
     res = []
     n = 0
     for phase_name, iters in prog_filter.run(stderr_log).items():
-        for iter_n, prog in iters[0].items():
-            print(f"Estimating {phase_name}: {iter_n}", end="...\n")
-            if len(prog) == 0:
-                print(f"no program? {phase_name}, {iter_n}")
+        for iter_n, data in iters[0].items():
+
+            if "prog" not in data:
                 continue
+
+            print(f"Estimating {phase_name}: {iter_n}", end="...\n")
             with (iter_results / "res.rkt").open("w") as f:
-                f.write(prog[0]["prog"])
+                f.write(data["prog"])
                 f.write("\n")
                 n += 1
             shutil.copy(iter_results / "res.rkt", iter_results / f"res-{n}.rkt")
@@ -215,8 +226,9 @@ def log(exp_dir):
             res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
                        >> mutate(
                            phase=phase_name,
-                           iter=iter_n)
-                       >> select(["kernel", "cycles", "correct", "phase", "iter"])
+                           iter=iter_n,
+                           cost=data["cost"])
+                       >> select(["kernel", "cycles", "cost", "correct", "phase", "iter"])
                        )
             shutil.copy(iter_results / "kernel.c", iter_results / f"kernel-{n}.c")
             print("Done")
