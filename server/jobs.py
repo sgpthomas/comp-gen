@@ -250,6 +250,7 @@ configs = {
     "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
     "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
     "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
+    "loop_no_opt_alt_cost_t1800": "../experiments/configs/loop_no_opt_alt_cost_t1800.json",
     "all-simple": "../experiments/configs/all-simple.json",
     "all-backoff": "../experiments/configs/all-backoff.json",
     "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
@@ -419,7 +420,8 @@ def pruning_experiment():
     print("Creating pruning experiments")
 
     params = [
-        [3, 3, 3, 3],
+        [10, 10, 2, 2],
+        [10, 10, 3, 3],
     ]
 
     for p in params:
@@ -428,7 +430,7 @@ def pruning_experiment():
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["loop_alt_cost"],
+            configs["loop_no_opt_alt_cost_t1800"],
             True,
             key="pruning"
         )
@@ -450,7 +452,7 @@ def understand_cost_function():
     """
 
     params = [
-        [3, 3, 3, 3],
+        [10, 10, 2, 2],
     ]
 
     for p in params:
@@ -474,7 +476,7 @@ def understand_cost_function():
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["loop_more_compilation"],
+            configs["loop_alt_cost_t1800"],
             True,
             key="fix"
         )
@@ -538,9 +540,9 @@ def no_eqsat():
 
 def main():
     # overall_performance()
-    # pruning_experiment()
+    pruning_experiment()
     # understand_cost_function()
-    no_eqsat()
+    # no_eqsat()
 
 
 if __name__ == "__main__":
