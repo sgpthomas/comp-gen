@@ -4,10 +4,10 @@ use itertools::Itertools;
 use crate::lang::{Value, VecLang};
 
 pub fn build_litvec_rule(vec_width: usize) -> egg::Rewrite<VecLang, ()> {
-    let mem_vars = ids_with_prefix(&"a".to_string(), vec_width);
+    // let mem_vars = ids_with_prefix(&"a".to_string(), vec_width);
     let mut gets: Vec<String> = Vec::with_capacity(vec_width);
     for i in 0..vec_width {
-        gets.push(format!("(Get {} ?{}{})", mem_vars[i], "i", i))
+        gets.push(format!("(Get ?a ?{}{})", "i", i))
     }
     let all_gets = gets.join(" ");
 
@@ -16,8 +16,8 @@ pub fn build_litvec_rule(vec_width: usize) -> egg::Rewrite<VecLang, ()> {
     let applier: egg::Pattern<VecLang> =
         format!("(LitVec {})", all_gets).parse().unwrap();
 
-    egg::rewrite!("litvec"; { searcher } => { applier }
-        if is_all_same_memory_or_zero(&mem_vars))
+    egg::rewrite!("litvec"; { searcher } => { applier })
+    // if is_all_same_memory_or_zero(&mem_vars))
 }
 
 /// Returns a function that checks to see if the accesses in a vector
