@@ -14,20 +14,13 @@
         "name": "pre-compile",
         "cd": [null, 25.0],
         "ca": [5.0, 1000.0],
-        "node_limit": 500000,
-        "iter_limit": 2,
+        "node_limit": 5000000,
         "disabled": false
       },
       {
         "name": "compile",
         "cd": [-0.1, null],
         "ca": [2000.0, 3000.0],
-        "disabled": false
-      },
-      {
-        "name": "litvec",
-        "cd": [0.09, 0.11],
-        "ca": [0.05, 0.07],
         "disabled": false
       }
     ]

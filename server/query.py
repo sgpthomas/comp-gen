@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, X, dfpipe, select, mutate
+from dfply import filter_by, X, dfpipe, select, mutate, gather, inner_join, spread
 from functools import reduce
 from datetime import datetime
 
@@ -114,34 +114,49 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Mar28-1016" in config["date"],
+                "Apr" in config["date"],
                 "key" in config and config["key"] == "pruning",
             ]
         ):
             print(config["date"])
             print(exp_path)
-            df = (
+            print(json.dumps(config, indent=2))
+
+            if "_" in config["name"]:
+                name, params = config["name"].split("_", 1)
+            else:
+                name = config["name"]
+                params = "0"
+
+            data = (
                 pd.read_csv(exp_path / "data.csv")
                 >> filter_by(
-                    (X.name == "cost") | (X.name == "timestamp") | (X.name == "nodes")
+                    (X.name == "timestamp") | (X.name == "nodes")
                 )
                 >> filter_by(X.iteration != "report")
+                >> spread(X.name, X.value)
+            )
+            df = (
+                pd.read_csv(exp_path / "iter_estimation.csv")
+                >> inner_join(
+                    data.astype({"iteration": "int64"}),
+                    by=["phase", "iteration"])
                 >> mutate(
-                    date=config["date"],
-                    benchmark=config["name"],
                     pruning="loop" in config["metadata"]["compile.json"],
-                )
-                >> select(
-                    [
-                        "date",
-                        "benchmark",
-                        "pruning",
-                        "phase",
-                        "iteration",
-                        "name",
-                        "value",
-                    ]
-                )
+                    benchmark=name,
+                    params=params)
+                >> select([
+                    "kernel",
+                    "benchmark",
+                    "params",
+                    "pruning",
+                    "phase",
+                    "iteration",
+                    "cycles",
+                    "cost",
+                    "nodes",
+                    "timestamp"
+                ])
             )
             res.append(df)
 
@@ -398,14 +413,14 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    # pruning()
+    pruning()
     # compile_est_cycles()
     # stock_dios()
     # compile_times()
     # scheduler()
     # play()
     # fix()
-    noeqsat()
+    # noeqsat()
 
 
 if __name__ == "__main__":

@@ -41,13 +41,16 @@ def param_strings(benchmark, params):
 
 def estimate_kernel(exp_dir, force=False, results="results", override=""):
     exp_path = Path(exp_dir)
-    config = json.load((exp_path / "config.json").open("r"))
 
-    if "_" in config["name"]:
-        benchmark_name, params = config["name"].split("_", 1)
+    if (exp_path / "config.json").exists():
+        config = json.load((exp_path / "config.json").open("r"))
+        if "_" in config["name"]:
+            benchmark_name, params = config["name"].split("_", 1)
+        else:
+            benchmark_name = config["name"]
+            params = None
     else:
-        benchmark_name = config["name"]
-        params = None
+        benchmark_name, params = "2d-conv", "3x3_2x2"
 
     # find the harness file that is associated with this benchmark
     # looks in `harnesses/benchmark_name.c`
@@ -69,9 +72,9 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
     cmd = [
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
         # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
-        "-std=c++11", "-O3", "-mlongcalls",
-        "-LNO:simd", "-fvectorize",
-        "-w", "-mtext-section-literals",
+        "-std=c++11", "-mlongcalls",
+        # "-O3", "-LNO:simd", "-fvectorize",
+        "-O3", "-mtext-section-literals",
         "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
         "-DOUTFILE='\"cycles.csv\"'"
     ]
@@ -81,6 +84,7 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
         "-I", "~/Research/xtensa/fusiong3_library/include",
         "-I", "~/Research/xtensa/fusiong3_library/include_private",
         "kernel.c", "harness.c",
+        # "-S",
         "-o", "kernel.o"
     ]
 
@@ -95,6 +99,7 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
     print("Simulating", end="...", flush=True)
     subprocess.run(" ".join([
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
+        "--mem_model",
         "kernel.o"
     ]), shell=True, cwd=exp_path / results, capture_output=True)
     print("Done")
@@ -164,14 +169,14 @@ def many(date, force, key, override_name):
 
 @cli.command()
 @click.argument("exp_dir")
-def log(exp_dir):
+@click.option("--results", default="results")
+def log(exp_dir, results):
     """
     Run estimation for every iteration for a single log file.
     """
 
     exp_dir = Path(exp_dir)
     assert exp_dir.exists()
-    assert (exp_dir / "stderr.log").exists()
 
     prog_filter = p.Chunker(
         start=p.matches(r"Starting Phase (\w+)", lambda m: m.group(1)),
@@ -199,11 +204,17 @@ def log(exp_dir):
     iter_results = exp_dir / "iter_results"
     iter_results.mkdir(exist_ok=True)
 
-    shutil.copy(exp_dir / "results" / "spec.rkt", iter_results)
-    shutil.copy(exp_dir / "results" / "outputs.rkt", iter_results)
-    shutil.copy(exp_dir / "results" / "prelude.rkt", iter_results)
+    shutil.copy(exp_dir / results / "spec.rkt", iter_results)
+    shutil.copy(exp_dir / results / "outputs.rkt", iter_results)
+    shutil.copy(exp_dir / results / "prelude.rkt", iter_results)
 
-    stderr_log = (exp_dir / "stderr.log").open("r").readlines()
+    stderr_log = None
+    if (exp_dir / "stderr.log").exists():
+        # in compgen mode!
+        stderr_log = (exp_dir / "stderr.log").open("r").readlines()
+    else:
+        # in dios mode
+        stderr_log = (exp_dir / "compile-log.txt").open("r").readlines()
     res = []
     n = 0
     for phase_name, iters in prog_filter.run(stderr_log).items():
@@ -216,7 +227,6 @@ def log(exp_dir):
             with (iter_results / "res.rkt").open("w") as f:
                 f.write(data["prog"])
                 f.write("\n")
-                n += 1
             shutil.copy(iter_results / "res.rkt", iter_results / f"res-{n}.rkt")
             subprocess.run([
                 "../../diospyros/dios", "-w", "4",
@@ -226,15 +236,16 @@ def log(exp_dir):
             res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
                        >> mutate(
                            phase=phase_name,
-                           iter=iter_n,
+                           iteration=iter_n,
                            cost=data["cost"])
-                       >> select(["kernel", "cycles", "cost", "correct", "phase", "iter"])
+                       >> select(["kernel", "cycles", "cost", "correct", "phase", "iteration"])
                        )
             shutil.copy(iter_results / "kernel.c", iter_results / f"kernel-{n}.c")
+            n += 1
             print("Done")
     df = (pd.concat(res)
           >> reset_index(drop=True)
-          >> to_csv(Path("figs") / "data" / "every_iteration.csv"))
+          >> to_csv(exp_dir / "iter_estimation.csv"))
     print(df)
 
 

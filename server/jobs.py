@@ -420,8 +420,7 @@ def pruning_experiment():
     print("Creating pruning experiments")
 
     params = [
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
+        [3, 3, 2, 2],
     ]
 
     for p in params:
@@ -430,19 +429,19 @@ def pruning_experiment():
             Path("jobs"),
             *p,
             rulesets["ruler"],
-            configs["loop_no_opt_alt_cost_t1800"],
+            configs["loop_alt_cost_t1800"],
             True,
             key="pruning"
         )
         # no pruning config
-        make_2d_conv(
-            Path("jobs"),
-            *p,
-            rulesets["ruler"],
-            configs["phased_no_opt_alt_cost"],
-            True,
-            key="pruning"
-        )
+        # make_2d_conv(
+        #     Path("jobs"),
+        #     *p,
+        #     rulesets["ruler"],
+        #     configs["phased_no_opt_alt_cost"],
+        #     True,
+        #     key="pruning"
+        # )
 
 
 def understand_cost_function():

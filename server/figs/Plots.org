@@ -29,7 +29,7 @@ python3 evaluation/eval_benchmarks.py --timeout 180 --skiplargemem --skiprun -o 
 Copy the results back here, so that we can analyze them.
 
 #+begin_src async-shell :dir (sgt/dir "server") :var IP=(ec2/get-ip "exp") :results none :name dios
-rsync -avh ubuntu@$IP:~/diospyros/results/ diospyros-results
+rsync -avh ubuntu@$IP:~/diospyros/results/ diospyros-results-log
 #+end_src
 
 
@@ -84,7 +84,21 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py log completed/2d-conv_3x5_3x3/20
-./estimate.py log completed/2d-conv_10x10_2x2/16
+# ./estimate.py log completed/2d-conv_4x4_3x3/19
+# ./estimate.py log completed/2d-conv_4x4_3x3/20
+# ./estimate.py log completed/2d-conv_8x8_3x3/22
+# ./estimate.py log completed/2d-conv_8x8_3x3/23
+# ./estimate.py log completed/2d-conv_3x3_2x2/24
+DIR="completed/2d-conv_3x3_2x2/27"
+# cp $DIR/iter_results/kernel-6.c $DIR/results/kernel.c
+# ./estimate.py log $DIR
+# mv $DIR/results/kernel.s \
+#    $DIR/results/kernel-6.s
+# cp $DIR/iter_results/kernel-7.c $DIR/results/kernel.c
+# ./estimate.py single $DIR
+# mv $DIR/results/kernel.s \
+#    $DIR/results/kernel-7.s
+./estimate.py log diospyros-results-log/2d-conv/3x3_2x2_4r --results .
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -404,22 +418,23 @@ data %>%
 #+begin_src R :results graphics file :file pruning.svg
 data <- read_csv("data/pruning.csv")
 data %>%
-  select(-iter) %>%
-  filter(benchmark == "2d-conv_3x3_3x3") %>%
-  print(n=10) %>%
-  pivot_wider(
-    names_from=name,
-    values_from=value
-  ) %>%
-  print(n=10) %>%
+  select(-iteration) %>%
+  filter(benchmark == "2d-conv" & params == "8x8_3x3") %>%
+  ## pivot_wider(
+  ##   names_from=name,
+  ##   values_from=value
+  ## ) %>%
   group_by(pruning) %>%
+  print(n=10) %>%
   mutate(
     cost=cost / max(cost),
+    ## cycles=cycles / max(cycles),
+    ## cycles,
     timestamp=timestamp - min(timestamp)
   ) %>%
   ggplot(aes(
     x=timestamp,
-    y=cost,
+    y=cycles,
     color=pruning,
   )) +
   geom_line(
@@ -431,8 +446,7 @@ data %>%
     breaks=c(TRUE, FALSE),
     labels=c("Enabled", "Disabled")
   ) +
-  scale_x_log10() +
-  annotation_logticks(sides = "b") +
+  ## scale_x_log10() + annotation_logticks(sides = "b") +
   labs(
     x="Log Timestamp (secs)",
     y="Normalized Cost",
