@@ -413,9 +413,9 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    pruning()
-    # compile_est_cycles()
-    # stock_dios()
+    # pruning()
+    compile_est_cycles()
+    stock_dios()
     # compile_times()
     # scheduler()
     # play()

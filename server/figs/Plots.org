@@ -54,8 +54,6 @@ ln -s matrix/transpm32cache_pdx4.c transpm32cache_pdx4.c
 
 Finally, the command to actually perform cycle estimates on all the benchmarks.
 
-#+header: :dir (s-join "/" `(,(magit-toplevel) ".." "cucapra-diospyros"))
-
 #+header: :dir (sgt/dir ".." "cucapra-diospyros")
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
@@ -66,7 +64,7 @@ python3 evaluation/eval_benchmarks.py \
 ** Syncing diospyros-results between machines
 
 #+begin_src async-shell :name dios :dir (sgt/dir "server") :results none
-rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-results/ \
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-results-log/ \
       diospyros-results-log
 #+end_src
 
@@ -156,7 +154,7 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 9 :height 5
+#+header: :width 9 :height 4
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(full_join(
   read_csv("data/stock_cycles.csv"),
@@ -168,7 +166,7 @@ data$params <- factor(data$params, levels=unique(data$params))
 data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
-  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -177,14 +175,16 @@ data <- data %>%
   ) %>%
   print(n=10) %>%
   mutate(
-    compgen = compgen / noeqsat,
-    dios = dios / noeqsat,
-    naive = naive / noeqsat,
-    noeqsat = noeqsat / noeqsat
+    norm = naive,
+    compgen = compgen / norm,
+    dios = dios / norm,
+    nature = nature / norm,
+    noeqsat = noeqsat / norm,
+    naive = naive / norm,
   ) %>%
   pivot_longer(
     ## cols = c("dios", "compgen", "naive", "noeqsat"),
-    cols = c("dios", "compgen"),
+    cols = c("dios", "compgen", "nature"),
     names_to = "kernel",
     values_to = "cycles"
   ) %>%
@@ -202,19 +202,20 @@ data %>%
     y=cycles,
     fill=kernel
   )) +
-  facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
+  facet_grid(~benchmark, scales = "free_x", space="free", switch="x") +
   geom_bar(position="dodge", stat="identity", color="black") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Log Cycles", fill="Compiler") +
+  labs(y="Log Cycles (Normalized to Naive)", fill="Compiler") +
   scale_y_log10() +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.07, 0.085),
+    legend.position = c(0.07, 0.80),
     legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold")
+    text = element_text(size=12, face="bold"),
+    panel.spacing.x = unit(0, "lines")
   ) +
   scale_fill_brewer(palette = "Paired")
 #+end_src
