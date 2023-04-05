@@ -32,7 +32,6 @@ Copy the results back here, so that we can analyze them.
 rsync -avh ubuntu@$IP:~/diospyros/results/ diospyros-results-log
 #+end_src
 
-
 Some changes to diospyros are needed before we can run estimation. We need to go into =evaluation/shared.mk= and edit the paths so that they point to the right places.
 
 I don't have the expert matrix kernel, so I comment out that from the =mat-mul/harness.c=
@@ -55,18 +54,20 @@ ln -s matrix/transpm32cache_pdx4.c transpm32cache_pdx4.c
 
 Finally, the command to actually perform cycle estimates on all the benchmarks.
 
-#+header: :name dios
-#+begin_src async-shell :dir (s-join "/" `(,(magit-toplevel) ".." "cucapra-diospyros")) :results none
+#+header: :dir (s-join "/" `(,(magit-toplevel) ".." "cucapra-diospyros"))
+
+#+header: :dir (sgt/dir ".." "cucapra-diospyros")
+#+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        -o ~/Research/comp-gen/server/diospyros-results
+        -o ~/Research/comp-gen/server/diospyros-results-log
 #+end_src
 
 ** Syncing diospyros-results between machines
 
 #+begin_src async-shell :name dios :dir (sgt/dir "server") :results none
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-results/ \
-      diospyros-results
+      diospyros-results-log
 #+end_src
 
 * Data processing
@@ -98,12 +99,30 @@ DIR="completed/2d-conv_3x3_2x2/27"
 # ./estimate.py single $DIR
 # mv $DIR/results/kernel.s \
 #    $DIR/results/kernel-7.s
-./estimate.py log diospyros-results-log/2d-conv/3x3_2x2_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/3x3_3x3_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/3x5_3x3_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/4x4_3x3_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/8x8_3x3_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/10x10_2x2_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/10x10_3x3_4r --results .
+./estimate.py log diospyros-results-log/2d-conv/16x16_4x4_4r --results .
 #+end_src
 
 #+begin_src async-shell :name estimation
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
+
+test
+#+header: :dir (sgt/dir "server")
+#+begin_src async-shell :name test
+EXP="diospyros-results-log/2d-conv/3x3_3x3_4r"
+make -C ~/Research/diospyros dios
+~/Research/diospyros/dios -w 4 --egg --suppress-git -o $EXP/kernel.c $EXP
+cp harnesses/utils.h $EXP
+cp harnesses/2d-conv.c $EXP/harness.c
+./estimate.py single --force --results "." --name 2d-conv --params 3x3_3x3 $EXP
+#+end_src
+
 
 Process all the log files and generate data csvs.
 

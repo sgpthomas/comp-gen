@@ -39,7 +39,9 @@ def param_strings(benchmark, params):
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
 
-def estimate_kernel(exp_dir, force=False, results="results", override=""):
+def estimate_kernel(
+        exp_dir, force=False, results="results", override="", benchmark_name=None, params=None
+):
     exp_path = Path(exp_dir)
 
     if (exp_path / "config.json").exists():
@@ -49,8 +51,6 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
         else:
             benchmark_name = config["name"]
             params = None
-    else:
-        benchmark_name, params = "2d-conv", "3x3_2x2"
 
     # find the harness file that is associated with this benchmark
     # looks in `harnesses/benchmark_name.c`
@@ -99,7 +99,7 @@ def estimate_kernel(exp_dir, force=False, results="results", override=""):
     print("Simulating", end="...", flush=True)
     subprocess.run(" ".join([
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
-        "--mem_model",
+        # "--mem_model",
         "kernel.o"
     ]), shell=True, cwd=exp_path / results, capture_output=True)
     print("Done")
@@ -121,9 +121,19 @@ def cli():
 
 @cli.command()
 @click.argument("exp_dir")
-def single(exp_dir):
+@click.option("--force", is_flag=True)
+@click.option("--results", default="results")
+@click.option("--name", default=None)
+@click.option("--params", default=None)
+def single(exp_dir, force, results, name, params):
     print(f"Estimating cycles for {exp_dir}")
-    estimate_kernel(exp_dir, results="results")
+    estimate_kernel(
+        exp_dir,
+        results=results,
+        force=force,
+        benchmark_name=name,
+        params=params
+    )
 
 
 @cli.command()
@@ -209,12 +219,16 @@ def log(exp_dir, results):
     shutil.copy(exp_dir / results / "prelude.rkt", iter_results)
 
     stderr_log = None
+    benchmark_name = None
+    params = None
     if (exp_dir / "stderr.log").exists():
         # in compgen mode!
         stderr_log = (exp_dir / "stderr.log").open("r").readlines()
     else:
         # in dios mode
         stderr_log = (exp_dir / "compile-log.txt").open("r").readlines()
+        benchmark_name = exp_dir.parts[1]
+        params = exp_dir.parts[2].rsplit("_", 1)[0]
     res = []
     n = 0
     for phase_name, iters in prog_filter.run(stderr_log).items():
@@ -233,13 +247,20 @@ def log(exp_dir, results):
                 "--egg", "--suppress-git", "-o", str(iter_results / "kernel.c"),
                 str(iter_results)
             ])
-            res.append(estimate_kernel(exp_dir, force=True, results="iter_results")
-                       >> mutate(
-                           phase=phase_name,
-                           iteration=iter_n,
-                           cost=data["cost"])
-                       >> select(["kernel", "cycles", "cost", "correct", "phase", "iteration"])
-                       )
+            res.append(
+                estimate_kernel(
+                    exp_dir,
+                    force=True,
+                    results="iter_results",
+                    benchmark_name=benchmark_name,
+                    params=params
+                )
+                >> mutate(
+                    phase=phase_name,
+                    iteration=iter_n,
+                    cost=data["cost"])
+                >> select(["kernel", "cycles", "cost", "correct", "phase", "iteration"])
+            )
             shutil.copy(iter_results / "kernel.c", iter_results / f"kernel-{n}.c")
             n += 1
             print("Done")
