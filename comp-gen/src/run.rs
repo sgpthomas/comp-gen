@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use log::{debug, info, warn};
 use ruler::egg;
@@ -127,13 +127,16 @@ where
                     phase.iter_limit.unwrap_or(self.total_iter_limit),
                 )
                 .with_hook(move |runner| {
+                    let start = Instant::now();
                     let extractor = egg::Extractor::new(
                         &runner.egraph,
                         iter_cost_fn.clone(),
                     );
                     let (cost, prog) = extractor.find_best(runner.roots[0]);
+                    let duration = start.elapsed();
                     info!("Best cost so far: {cost:?}");
                     info!("Best program: {prog}");
+                    info!("Extraction took: {duration:?}");
                     Ok(())
                 })
                 .with_time_limit(time_left);
