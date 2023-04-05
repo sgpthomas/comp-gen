@@ -73,8 +73,8 @@ def estimate_kernel(
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
         # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
         "-std=c++11", "-mlongcalls",
-        # "-O3", "-LNO:simd", "-fvectorize",
-        "-O3", "-mtext-section-literals",
+        "-O3", "-LNO:simd", "-fvectorize",
+        "-mtext-section-literals",
         "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
         "-DOUTFILE='\"cycles.csv\"'"
     ]
@@ -168,6 +168,17 @@ def many(date, force, key, override_name):
             key=lambda x: datetime.strptime(x, "%b%d-%H%M")
         )
         date = options[-1]
+    elif date == "list":
+        options = sorted(
+            experiments.keys(),
+            key=lambda x: datetime.strptime(x, "%b%d-%H%M")
+        )
+        for k in options:
+            print(f"{k}")
+            for exp in experiments[k]:
+                print(f" - {exp}")
+            print("")
+        return
 
     if date in experiments:
         for exp_dir in experiments[date]:

@@ -76,19 +76,18 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
 
 (header args for doing cycle estimation from non-thelio computers)
-#+header: :dir /ssh:samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server
-
 #+header: :dir (sgt/dir "server")
-#+begin_src async-shell :name estimation 
+#+begin_src async-shell :name estimation
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
+./estimate.py many Mar29-1443 --key performance --force
 # ./estimate.py log completed/2d-conv_3x5_3x3/20
 # ./estimate.py log completed/2d-conv_4x4_3x3/19
 # ./estimate.py log completed/2d-conv_4x4_3x3/20
 # ./estimate.py log completed/2d-conv_8x8_3x3/22
 # ./estimate.py log completed/2d-conv_8x8_3x3/23
 # ./estimate.py log completed/2d-conv_3x3_2x2/24
-DIR="completed/2d-conv_3x3_2x2/27"
+# DIR="completed/2d-conv_3x3_2x2/27"
 # cp $DIR/iter_results/kernel-6.c $DIR/results/kernel.c
 # ./estimate.py log $DIR
 # mv $DIR/results/kernel.s \
@@ -103,7 +102,7 @@ DIR="completed/2d-conv_3x3_2x2/27"
 # ./estimate.py log diospyros-results-log/2d-conv/8x8_3x3_4r --results .
 # ./estimate.py log diospyros-results-log/2d-conv/10x10_2x2_4r --results .
 # ./estimate.py log diospyros-results-log/2d-conv/10x10_3x3_4r --results .
-./estimate.py log diospyros-results-log/2d-conv/16x16_4x4_4r --results .
+# ./estimate.py log diospyros-results-log/2d-conv/16x16_4x4_4r --results .
 #+end_src
 
 #+begin_src async-shell :name estimation

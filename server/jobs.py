@@ -231,107 +231,50 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-rulesets = {
-    "expanding": "../experiments/rulesets/expanding.json",
-    "expanding_vecmac": "../experiments/rulesets/expanding_vecmac.json",
-    "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
-    "t2": "~/Research/diospyros/t2.json"
-}
+def dict_from_dir(path, ext="json"):
+    path = path.expanduser().resolve()
+    assert path.exists()
 
+    res = {}
+
+    for p in path.glob(f"*.{ext}"):
+        res[p.stem] = p.expanduser().resolve()
+
+    return res
+
+
+rulesets = dict_from_dir(Path("../experiments/rulesets"))
+configs = dict_from_dir(Path("../experiments/configs"))
+# rulesets = {
+#     "expanding": "../experiments/rulesets/expanding.json",
+#     "expanding_vecmac": "../experiments/rulesets/expanding_vecmac.json",
+#     "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
+#     "t2": "~/Research/diospyros/t2.json"
+# }
+
+# # resolve the ruleset paths
+# for key, val in rulesets.items():
+#     rulesets[key] = Path(val).expanduser().resolve()
+
+# configs = {
+#     "wack": "../experiments/configs/wack.json",
+#     "phased": "../experiments/configs/phased.json",
+#     "phased_no_opt": "../experiments/configs/phased_no_opt.json",
+#     "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
+#     "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
+#     "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
+#     "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
+#     "loop_no_opt_alt_cost_t1800": "../experiments/configs/loop_no_opt_alt_cost_t1800.json",
+#     "all-simple": "../experiments/configs/all-simple.json",
+#     "all-backoff": "../experiments/configs/all-backoff.json",
+#     "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
+#     "loop-dios-cost": "../experiments/configs/loop_dios_cost.json",
+#     "loop_more_compilation": "../experiments/configs/loop_more_compilation.json",
+#     "none": "../experiments/configs/none.json",
+# }
 # resolve the ruleset paths
-for key, val in rulesets.items():
-    rulesets[key] = Path(val).expanduser().resolve()
-
-configs = {
-    "wack": "../experiments/configs/wack.json",
-    "phased": "../experiments/configs/phased.json",
-    "phased_no_opt": "../experiments/configs/phased_no_opt.json",
-    "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
-    "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
-    "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
-    "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
-    "loop_no_opt_alt_cost_t1800": "../experiments/configs/loop_no_opt_alt_cost_t1800.json",
-    "all-simple": "../experiments/configs/all-simple.json",
-    "all-backoff": "../experiments/configs/all-backoff.json",
-    "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
-    "loop-dios-cost": "../experiments/configs/loop_dios_cost.json",
-    "loop_more_compilation": "../experiments/configs/loop_more_compilation.json",
-    "none": "../experiments/configs/none.json",
-}
-
-# resolve the ruleset paths
-for key, val in configs.items():
-    configs[key] = Path(val).expanduser().resolve()
-
-alt_cost = [
-    True,
-    # False
-]
-
-###########
-# Mat Mul #
-###########
-
-mat_mul_sizes = [
-    [2, 2, 2, 2],
-    # [2, 3, 3, 3],
-    # [3, 3, 3, 3],
-    # [4, 4, 4, 4],
-    # [8, 8, 8, 8],
-    # [10, 10, 10, 10],
-    # [16, 16, 16, 16]
-]
-
-exps = itertools.product(mat_mul_sizes, rulesets, configs, alt_cost)
-# for (size, r, c, b) in exps:
-#     mat_mul(Path("jobs"), *size, rulesets[r], configs[c], b)
-
-###########
-# 2d conv #
-###########
-
-conv_2d_sizes = [
-    [3, 3, 2, 2],
-    [3, 3, 3, 3],
-    # [3, 5, 3, 3],
-    # [4, 4, 3, 3],
-    # [8, 8, 3, 3],
-    # [10, 10, 2, 2],
-    # [10, 10, 3, 3],
-    # [10, 10, 4, 4],
-    # [16, 16, 2, 2],
-    # [16, 16, 3, 3],
-    # [16, 16, 4, 4]
-]
-
-conv_2d_exps = itertools.product(
-    conv_2d_sizes,
-    rulesets,
-    configs,
-    alt_cost
-)
-# for (s, r, c, b) in conv_2d_exps:
-#     make_2d_conv(Path("jobs"), *s, rulesets[r], configs[c], b)
-
-##########
-# q prod #
-##########
-
-# q_prod_exps = itertools.product(rulesets, configs, alt_cost)
-# for (r, c, b) in q_prod_exps:
-#     q_prod(Path("jobs"), rulesets[r], configs[c], b)
-
-#############
-# QR Decomp #
-#############
-qr_decomp_sizes = [
-    3
-    # , 4
-]
-
-# qr_exps = itertools.product(qr_decomp_sizes, rulesets, configs, alt_cost)
-# for (s, r, c, b) in qr_exps:
-#     qr_decomp(Path("jobs"), s, rulesets[r], configs[c], b)
+# for key, val in configs.items():
+#     configs[key] = Path(val).expanduser().resolve()
 
 
 def overall_performance():
@@ -428,7 +371,7 @@ def pruning_experiment():
         make_2d_conv(
             Path("jobs"),
             *p,
-            rulesets["ruler"],
+            rulesets["ruleset_timeout432000"],
             configs["loop_alt_cost_t1800"],
             True,
             key="pruning"
@@ -437,7 +380,7 @@ def pruning_experiment():
         # make_2d_conv(
         #     Path("jobs"),
         #     *p,
-        #     rulesets["ruler"],
+        #     rulesets["ruleset_timeout432000"],
         #     configs["phased_no_opt_alt_cost"],
         #     True,
         #     key="pruning"
@@ -458,23 +401,23 @@ def understand_cost_function():
         # make_2d_conv(
         #     Path("jobs"),
         #     *p,
-        #     rulesets["ruler"],
-        #     configs["loop-dios-cost"],
+        #     rulesets["ruleset_timeout432000"],
+        #     configs["loop_dios_cost"],
         #     False,
         #     key="fix"
         # )
         # make_2d_conv(
         #     Path("jobs"),
         #     *p,
-        #     rulesets["ruler"],
-        #     configs["loop-more-expansion"],
+        #     rulesets["ruleset_timeout432000"],
+        #     configs["loop_more_expansion"],
         #     True,
         #     key="fix"
         # )
         make_2d_conv(
             Path("jobs"),
             *p,
-            rulesets["ruler"],
+            rulesets["ruleset_timeout432000"],
             configs["loop_alt_cost_t1800"],
             True,
             key="fix"
@@ -537,11 +480,54 @@ def no_eqsat():
     q_prod(Path("jobs"), ruleset, config, True, key="noeqsat")
 
 
+def ruleset_ablation():
+    """
+    Measure the performance difference between using different rulesets.
+    """
+
+    conv_2d_sizes = [
+        # [3, 3, 2, 2],
+        # [3, 3, 3, 3],
+        # [3, 5, 3, 3],
+        [4, 4, 3, 3],
+        [8, 8, 3, 3],
+        [10, 10, 2, 2],
+        # [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        # [16, 16, 2, 2],
+        # [16, 16, 3, 3],
+        # [16, 16, 4, 4],
+    ]
+
+    config = configs["loop_alt_cost_t180"]
+    rs = [
+        "expanding",
+        "expanding_vecmac",
+        "ruleset_timeout4000",
+        "ruleset_timeout8000",
+        "ruleset_timeout86400",
+        "ruleset_timeout432000",
+        "original_dios_rules",
+    ]
+
+    exps = itertools.product(conv_2d_sizes, rs)
+    for (size, r) in exps:
+        make_2d_conv(
+            Path("jobs"),
+            *size,
+            rulesets[r],
+            config,
+            True,
+            key="ruleset_ablation"
+        )
+
+
 def main():
     # overall_performance()
-    pruning_experiment()
+    # pruning_experiment()
     # understand_cost_function()
     # no_eqsat()
+    ruleset_ablation()
 
 
 if __name__ == "__main__":

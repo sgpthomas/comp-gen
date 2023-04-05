@@ -40,7 +40,7 @@ int timing = 0;
 
 #endif
 
-inline __attribute__((gnu_inline)) int get_time() {
+inline int get_time() {
   return stop - start;
 }
 
