@@ -1,16 +1,27 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, X, dfpipe, select, mutate, gather, inner_join, spread
+from dfply import filter_by, X, dfpipe, select, mutate, inner_join, spread
 from functools import reduce
 from datetime import datetime
 
 
 def cmp_params(a):
     if a.name == "params":
-        return a.map(lambda x: x.replace("_", "x").split("x")).map(
-            lambda l: reduce(lambda x, y: x * y, map(int, l))
-        )
+        # return a.map(lambda x: x.replace("_", "x").split("x")).map(
+        #     lambda l: reduce(lambda x, y: x * y, map(int, l))
+        # )
+        def per_key(el):
+            if "_" in el:
+                left, right = el.split("_")
+                a, b = left.split("x")
+                c, d = right.split("x")
+                a, b, c, d = int(a), int(b), int(c), int(d)
+                return ((a * b) ** 2) + (c * d)
+            else:
+                el
+
+        return a.map(per_key)
     else:
         return a
 
@@ -65,6 +76,14 @@ def agg(df, list):
 @dfpipe
 def replace(df, *args, **kwargs):
     return df.replace(*args, **kwargs)
+
+
+@dfpipe
+def iloc(df, *args):
+    if df.empty:
+        return df
+    else:
+        return df.iloc[*args]
 
 
 def exp_iter(name, date=None):
@@ -397,6 +416,45 @@ def fix():
             print(exp_path, config["metadata"]["alt_cost"])
 
 
+def ruleset_ablation():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if all([
+                "key" in config and config["key"] == "ruleset_ablation",
+                "Apr05-1132" in config["date"]
+        ]):
+            if "_" in config["name"]:
+                name, params = config["name"].split("_", 1)
+            else:
+                name = config["name"]
+                params = "0"
+
+            df = (
+                pd.read_csv(exp_path / "data.csv")
+                >> filter_by(X.name == "cost", X.iteration == "report")
+                >> iloc([-1])
+                >> mutate(
+                    benchmark=name,
+                    params=params,
+                    exp=exp_path.name,
+                    ruleset=Path(config["metadata"]["rules.json"]).name
+                )
+                >> select(X.benchmark, X.params, X.exp, X.ruleset, X.name, X.value)
+                >> spread(X.name, X.value)
+                >> display()
+            )
+            res.append(df)
+    df = (
+        pd.concat(res)
+        >> sort_values(by=["benchmark", "params"], key=cmp_params)
+        >> reset_index(drop=True)
+        >> display()
+    )
+
+
 def play():
     _ = latest_date()
 
@@ -414,13 +472,14 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
-    compile_est_cycles()
-    stock_dios()
+    # compile_est_cycles()
+    # stock_dios()
     # compile_times()
     # scheduler()
     # play()
     # fix()
     # noeqsat()
+    ruleset_ablation()
 
 
 if __name__ == "__main__":

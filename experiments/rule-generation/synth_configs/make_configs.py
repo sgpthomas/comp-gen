@@ -5,6 +5,7 @@ import sys
 import glob
 import os
 
+
 def main():
     base = "base.json"
     with open(base, "r") as f:
@@ -17,6 +18,7 @@ def main():
         config["abs_timeout"] = option
         with open("abs_timeout_{}.json".format(option), "w") as f:
             json.dump(config, f, indent=2)
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == "make":

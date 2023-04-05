@@ -33,7 +33,7 @@ def configure_new_trial():
     }
     with open(data_dir / "status.json", "w") as f:
         json.dump(status, f, indent=2)
-    
+
 
 def launch_aws_machines(name_prefix, count=1):
     results = []
@@ -49,7 +49,6 @@ def launch_aws_machines(name_prefix, count=1):
             "--no-cli-pager",
             "--tag-specifications", "'ResourceType=instance,Tags=[{}]'".format(name),
         ])
-        
         try:
             x = json.load(os.popen(cmd))
             results.append(x)

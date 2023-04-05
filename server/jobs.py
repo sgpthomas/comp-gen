@@ -231,6 +231,42 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
+def make_synthesis(jobs_dir, timeout):
+    date_str = datetime.now().strftime("%b%d-%H%M")
+    job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{timeout}", 0)
+    job_dir.mkdir(exist_ok=False)
+    synth_config = json.load((Path("synthesis") / "base.json").open("r"))
+    synth_config["ruler_config"]["abs_timeout"] = timeout
+    job_config = {
+        "date": date_str,
+        "name": "synthesis",
+        "memory_limit": 220,
+        "command": "./run.sh",
+        "metadata": {
+            "timeout": timeout
+        }
+    }
+    json.dump(job_config, (job_dir / "config.json").open("w"), indent=2)
+    json.dump(synth_config, (job_dir / "synth.json").open("w"), indent=2)
+
+    command = [
+        "RUST_LOG=debug,egg=info,z3=none",
+        "$compgen_bin", "synth", "ruleset.json",
+        "--config", "synth.json"
+    ]
+
+    with (job_dir / "run.sh").open("w") as f:
+        f.writelines(
+            "\n".join([
+                "#!/usr/bin/env bash",
+                "",
+                " ".join(command)
+            ])
+        )
+    # make the run script executable
+    os.chmod(str(job_dir / "run.sh"), 0o777)
+
+
 def dict_from_dir(path, ext="json"):
     path = path.expanduser().resolve()
     assert path.exists()
@@ -522,12 +558,29 @@ def ruleset_ablation():
         )
 
 
+def ruleset_synthesis():
+    """
+    Synthesize rulesets with different settings.
+    """
+
+    timeouts = [
+        60,
+        600,
+        6000,
+        60000
+    ]
+
+    for t in timeouts:
+        make_synthesis(Path("jobs"), t)
+
+
 def main():
     # overall_performance()
     # pruning_experiment()
     # understand_cost_function()
     # no_eqsat()
-    ruleset_ablation()
+    # ruleset_ablation()
+    ruleset_synthesis()
 
 
 if __name__ == "__main__":

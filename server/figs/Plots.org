@@ -58,7 +58,7 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        -o ~/Research/comp-gen/server/diospyros-results-log
+        -o ~/Research/comp-gen/server/diospyros-results
 #+end_src
 
 ** Syncing diospyros-results between machines
@@ -120,7 +120,6 @@ cp harnesses/2d-conv.c $EXP/harness.c
 ./estimate.py single --force --results "." --name 2d-conv --params 3x3_3x3 $EXP
 #+end_src
 
-
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
@@ -153,7 +152,7 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 9 :height 4
+#+header: :width 13 :height 6
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(full_join(
   read_csv("data/stock_cycles.csv"),
@@ -174,12 +173,13 @@ data <- data %>%
   ) %>%
   print(n=10) %>%
   mutate(
-    norm = naive,
-    compgen = compgen / norm,
-    dios = dios / norm,
-    nature = nature / norm,
-    noeqsat = noeqsat / norm,
-    naive = naive / norm,
+    norm = `naive-hard`,
+    compgen = norm / compgen,
+    dios = norm / dios,
+    nature = norm / nature,
+    noeqsat = norm / noeqsat ,
+    eigen = norm / eigen,
+    naive = norm / naive,
   ) %>%
   pivot_longer(
     ## cols = c("dios", "compgen", "naive", "noeqsat"),
@@ -205,13 +205,13 @@ data %>%
   geom_bar(position="dodge", stat="identity", color="black") +
   ## ylim(0, 1.5) +
   ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Log Cycles (Normalized to Naive)", fill="Compiler") +
-  scale_y_log10() +
+  labs(y="Speed up over Naive (hard)", fill="Compiler") +
+  scale_y_continuous(trans="log2") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.07, 0.80),
+    legend.position = c(0.90, 0.85),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=12, face="bold"),
     panel.spacing.x = unit(0, "lines")
@@ -224,7 +224,7 @@ data %>%
 
 *** NEXT Compilation time
 
-#+header: :width 13 :height 5
+#+header: :width 13 :height 10
 #+begin_src R :results graphics file :file compile-times.svg
 data <- full_join(
   read_csv("data/stock_cycles.csv"),
@@ -238,7 +238,7 @@ data$params <- factor(data$params, levels=unique(data$params))
 data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
-  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, compile_time) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -266,7 +266,7 @@ data %>%
     y=compile_time,
     fill=kernel
   )) +
-  facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
+  facet_grid(~benchmark, switch = "x", scales = "free_x", space="free_x") +
   geom_bar(position="dodge", stat="identity", color="black") +
   ## scale_y_log10() +
   ## ylim(0, 1.5) +
@@ -278,7 +278,8 @@ data %>%
     axis.title.x = element_blank(),
     legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold")
+    text = element_text(size=25, face="bold"),
+    panel.spacing.x = unit(0, "lines")
   ) +
   scale_fill_brewer(palette = "Set2")
 #+end_src
