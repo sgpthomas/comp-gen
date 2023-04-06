@@ -61,6 +61,16 @@ void print_matrix(float *m, int rows, int cols) {
     }
 }
 
+void print_hex_matrix(float *m, int rows, int cols) {
+    printf("\n");
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("%x, ", m[(i * cols) + j]);
+        }
+        printf(";\n");
+    }
+}
+
 bool output_check(float *c, float *c_spec, int rows, int cols) {
   for (int y = 0; y < rows; y++) {
     for (int x = 0; x < cols; x++) {
@@ -126,6 +136,14 @@ void create_random_mat(float *a, int row, int col) {
   int k;
   for (k = 0; k < row * col; k++) {
     *a++ = (float) (rand_cmwc() % 100) / (float) 10.0;
+  }
+  return;
+}
+
+void create_count_mat(float *a, int row, int col) {
+  int k;
+  for (k = 0; k < row * col; k++) {
+    *a++ = (float) (k+1);
   }
   return;
 }

@@ -10,6 +10,7 @@ from datetime import datetime
 import process as p
 from dfply import mutate
 from query import reset_index, to_csv, select
+from correlate import correlate
 
 
 def param_strings(benchmark, params):
@@ -84,24 +85,25 @@ def estimate_kernel(
         "-I", "~/Research/xtensa/fusiong3_library/include",
         "-I", "~/Research/xtensa/fusiong3_library/include_private",
         "kernel.c", "harness.c",
-        # "-S",
-        "-o", "kernel.o"
     ]
 
     # run xt compiler
     if force or not (exp_path / results / "kernel.o").exists():
         print("Compiling", end="...", flush=True)
         subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
-        subprocess.run(" ".join(cmd), shell=True, cwd=exp_path / results)
+        # run once to generate .s files, and then again to generate object file
+        subprocess.run(" ".join(cmd + ["-S"]), shell=True, cwd=exp_path / results)
+        subprocess.run(" ".join(cmd + ["-o", "kernel.o"]), shell=True, cwd=exp_path / results)
         print("Done")
 
     # simulate the resulting object file
     print("Simulating", end="...", flush=True)
     subprocess.run(" ".join([
         "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
+        "--client_commands='trace --level=0 trace.out'",
         # "--mem_model",
         "kernel.o"
-    ]), shell=True, cwd=exp_path / results, capture_output=True)
+    ]), shell=True, cwd=exp_path / results, capture_output=False)
     print("Done")
 
     df = pd.read_csv(exp_path / results / "cycles.csv")
@@ -272,7 +274,10 @@ def log(exp_dir, results):
                     cost=data["cost"])
                 >> select(["kernel", "cycles", "cost", "correct", "phase", "iteration"])
             )
+            shutil.copy(iter_results / "kernel.s", iter_results / f"kernel-{n}.s")
             shutil.copy(iter_results / "kernel.c", iter_results / f"kernel-{n}.c")
+            shutil.copy(iter_results / "trace.out", iter_results / f"trace-{n}.out")
+            correlate(iter_results / f"kernel-{n}.s", iter_results / f"kernel-{n}.c")
             n += 1
             print("Done")
     df = (pd.concat(res)

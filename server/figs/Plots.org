@@ -80,7 +80,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py single completed/2d-conv_10x10_3x3/12
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
-./estimate.py many Mar29-1443 --key performance --force
+# ./estimate.py many Mar29-1443 --key performance --force
 # ./estimate.py log completed/2d-conv_3x5_3x3/20
 # ./estimate.py log completed/2d-conv_4x4_3x3/19
 # ./estimate.py log completed/2d-conv_4x4_3x3/20
@@ -96,7 +96,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 # ./estimate.py single $DIR
 # mv $DIR/results/kernel.s \
 #    $DIR/results/kernel-7.s
-# ./estimate.py log diospyros-results-log/2d-conv/3x3_3x3_4r --results .
+./estimate.py log diospyros-results-log/2d-conv/3x3_2x2_4r --results .
 # ./estimate.py log diospyros-results-log/2d-conv/3x5_3x3_4r --results .
 # ./estimate.py log diospyros-results-log/2d-conv/4x4_3x3_4r --results .
 # ./estimate.py log diospyros-results-log/2d-conv/8x8_3x3_4r --results .
@@ -177,7 +177,7 @@ data <- data %>%
     compgen = norm / compgen,
     dios = norm / dios,
     nature = norm / nature,
-    noeqsat = norm / noeqsat ,
+    noeqsat = norm / noeqsat,
     eigen = norm / eigen,
     naive = norm / naive,
   ) %>%
@@ -581,4 +581,21 @@ for f in $(echo *.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done
+#+end_src
+
+* Debugging
+
+#+header: :dir (sgt/dir "server" "test")
+#+begin_src async-shell :name test :results none
+ROOT="/home/samthomas/Research/xtensa/RI-2021.8-linux/XtensaTools/bin"
+
+$ROOT/xt-clang++ -std=c++11 -mlongcalls -O3 -LNO:simd -fvectorize -mtext-section-literals \
+                 -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+                 kernel.c harness.c -S
+
+$ROOT/xt-clang++ -std=c++11 -mlongcalls -O3 -LNO:simd -fvectorize -mtext-section-literals \
+                 -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+                 kernel.c harness.c -o run.o
+
+$ROOT/xt-run --client_commands='trace --level=0 trace.out' run.o
 #+end_src

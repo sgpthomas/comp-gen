@@ -131,9 +131,11 @@ int main(int argc, char **argv) {
   /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Nature",I_ROWS,I_COLS,F_ROWS,F_COLS,time); */
 
   // Comp-gen
+  xt_iss_trace_level(3);
   start_cycle_timing;
   kernel(i, f, o);
   stop_cycle_timing;
+  xt_iss_trace_level(0);
   time = get_time();
   printf("\n");
   printf("compgen : %d cycles\n", time);
