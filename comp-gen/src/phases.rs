@@ -27,6 +27,8 @@ pub struct SinglePhase<
     pub(crate) node_limit: Option<usize>,
     /// The iter limit for the egraph used in this phase.
     pub(crate) iter_limit: Option<usize>,
+    /// The timeout for this phase.
+    pub(crate) timeout: Option<usize>,
 }
 
 /// Describes the phase config tree. A phase can either be a single phase, or a loop
@@ -98,6 +100,7 @@ impl<
             fresh_egraph: false,
             node_limit: None,
             iter_limit: None,
+            timeout: None,
         };
         self.phases.push(Phase::Single(single_phase));
         self
@@ -110,6 +113,7 @@ impl<
         fresh_egraph: bool,
         node_limit: Option<usize>,
         iter_limit: Option<usize>,
+        timeout: Option<usize>,
     ) -> &mut Self
     where
         S: ToString,
@@ -121,6 +125,7 @@ impl<
             fresh_egraph,
             node_limit,
             iter_limit,
+            timeout,
         };
         self.phases.push(Phase::Single(single_phase));
         self

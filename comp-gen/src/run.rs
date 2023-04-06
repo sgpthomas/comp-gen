@@ -139,7 +139,11 @@ where
                     info!("Extraction took: {duration:?}");
                     Ok(())
                 })
-                .with_time_limit(time_left);
+                .with_time_limit(
+                    phase
+                        .timeout
+                        .map_or(time_left, |x| Duration::from_secs(x as u64)),
+                );
         // .with_time_limit(Duration::from_secs(self.timeout));
         debug!("Using timeout: {:?}", time_left);
 

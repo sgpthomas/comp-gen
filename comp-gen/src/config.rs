@@ -40,6 +40,7 @@ pub enum PhaseConfiguration {
         fresh_egraph: Option<bool>,
         node_limit: Option<usize>,
         iter_limit: Option<usize>,
+        timeout: Option<usize>,
         disabled: Option<bool>,
     },
     Phases {
@@ -66,6 +67,7 @@ where
                 fresh_egraph,
                 node_limit,
                 iter_limit,
+                timeout,
                 disabled,
             } => {
                 if !disabled.unwrap_or(false) {
@@ -84,6 +86,7 @@ where
                         fresh_egraph.unwrap_or(false),
                         node_limit,
                         iter_limit,
+                        timeout,
                     );
                 }
             }
