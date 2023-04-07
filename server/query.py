@@ -209,7 +209,6 @@ def compile_est_cycles():
                 cycles_csv.exists(),
             ]
         ):
-            print(exp_path)
             ruleset = Path(config["metadata"]["rules.json"]).stem
             memory = pd.read_csv(
                 exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
@@ -218,13 +217,20 @@ def compile_est_cycles():
             compile_time = (memory >> agg(lambda x: x["max"] - x["min"]))["timestamp"]
             ram_used = memory["ram_used"]["max"]
 
+            egraph_cost = (pd.read_csv(exp_path / "data.csv")
+                           >> filter_by(X.iteration == "report")
+                           >> filter_by(X.name == "cost")
+                           >> iloc([-1]))
+
             df = (
                 pd.read_csv(cycles_csv)
                 >> mutate(
                     benchmark=name,
                     params=params,
                     ruleset=ruleset,
+                    exp=exp_path.name,
                     greedy=config["metadata"]["alt_cost"],
+                    cost=egraph_cost["value"].values[0],
                     compile_time=compile_time,
                     max_ram_used=ram_used)
                 >> select(
@@ -233,8 +239,10 @@ def compile_est_cycles():
                         "benchmark",
                         "params",
                         "ruleset",
+                        "exp",
                         "greedy",
                         "cycles",
+                        "cost",
                         "compile_time",
                         "max_ram_used",
                     ]
@@ -277,7 +285,8 @@ def stock_dios():
               >> replace({
                   "Diospyros": "dios",
                   "Naive": "naive",
-                  "Naive hard size": "naive-hard",
+                  "Naive hard size vec": "naive.clang",
+                  "Naive hard size": "naive.fixed",
                   "Nature": "nature",
                   "Eigen": "eigen"
               })
@@ -324,44 +333,6 @@ def noeqsat():
      >> reset_index(drop=True, names=["index"])
      >> display
      >> to_csv(Path("figs") / "data" / "noeqsat.csv", index=False))
-
-
-def compile_times():
-    res = []
-    for config_path in Path("completed").glob("**/config.json"):
-        exp_path = Path(config_path.parents[0])
-        config = json.load(config_path.open("r"))
-
-        if "metadata" not in config:
-            continue
-
-        if all(
-            [
-                "Mar20" in config["date"],
-                "expanding" in config["metadata"]["rules.json"],
-            ]
-        ):
-            memory = pd.read_csv(
-                exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
-            )
-            df = memory.agg(["min", "max"])
-            max_ts = df.loc[["max"]]["timestamp"].values[0]
-            min_ts = df.loc[["min"]]["timestamp"].values[0]
-            killed = "killed" in list(memory["ram_used"].values)
-            res.append(
-                [
-                    config["name"],
-                    "pruning" if config["metadata"]["alt_cost"] else "stock",
-                    max_ts - min_ts,
-                    killed,
-                ]
-            )
-
-    out = Path("figs") / "data" / "compile_times.csv"
-    df = pd.DataFrame(res, columns=["benchmark", "type", "runtime", "killed"])
-    df.to_csv(out, index_label="index")
-    print(df)
-    print(f"Wrote {out}")
 
 
 def scheduler():
@@ -424,7 +395,7 @@ def ruleset_ablation():
 
         if all([
                 "key" in config and config["key"] == "ruleset_ablation",
-                "Apr05-1132" in config["date"]
+                "Apr07-1545" in config["date"]
         ]):
             if "_" in config["name"]:
                 name, params = config["name"].split("_", 1)
@@ -432,26 +403,48 @@ def ruleset_ablation():
                 name = config["name"]
                 params = "0"
 
-            df = (
-                pd.read_csv(exp_path / "data.csv")
-                >> filter_by(X.name == "cost", X.iteration == "report")
-                >> iloc([-1])
-                >> mutate(
-                    benchmark=name,
-                    params=params,
-                    exp=exp_path.name,
-                    ruleset=Path(config["metadata"]["rules.json"]).name
+            # get timeout used for ruleset
+            print(exp_path)
+            timeout = timeout = Path(config["metadata"]["rules.json"]).stem
+            try:
+                rules = json.load((exp_path / "rules.json").open("r"))
+                if "abs_timeout" in rules["params"]:
+                    timeout = rules["params"]["abs_timeout"]
+            except Exception as e:
+                print(f"{exp_path} broken! {e}")
+
+            cycles = None
+            if (exp_path / "results" / "cycles.csv").exists():
+                cycles = pd.read_csv(exp_path / "results" / "cycles.csv")
+                cycles = cycles["cycles"].values[0]
+
+            try:
+                df = (
+                    pd.read_csv(exp_path / "data.csv")
+                    >> filter_by(X.name == "cost", X.iteration == "report")
+                    >> iloc([-1])
+                    >> mutate(
+                        benchmark=name,
+                        params=params,
+                        exp=exp_path.name,
+                        ruleset=timeout,
+                        cycles=cycles,
+                    )
+                    >> replace({"expanding_vecmac": -1})
+                    >> spread(X.name, X.value)
+                    >> display()
+                    >> select(X.benchmark, X.params, X.exp, X.ruleset, X.cost, X.cycles)
                 )
-                >> select(X.benchmark, X.params, X.exp, X.ruleset, X.name, X.value)
-                >> spread(X.name, X.value)
-                >> display()
-            )
-            res.append(df)
+                res.append(df)
+            except Exception:
+                print(f"{exp_path} broken")
+
+    out = Path("figs") / "data" / "ruleset_ablation.csv"
     df = (
         pd.concat(res)
-        >> sort_values(by=["benchmark", "params"], key=cmp_params)
+        >> sort_values(by=["benchmark", "params", "ruleset"], key=cmp_params)
         >> reset_index(drop=True)
-        >> display()
+        >> to_csv(out, index_label="index")
     )
 
 
@@ -474,7 +467,6 @@ def main():
     # pruning()
     # compile_est_cycles()
     # stock_dios()
-    # compile_times()
     # scheduler()
     # play()
     # fix()

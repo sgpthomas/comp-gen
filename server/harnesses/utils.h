@@ -61,16 +61,6 @@ void print_matrix(float *m, int rows, int cols) {
     }
 }
 
-void print_hex_matrix(float *m, int rows, int cols) {
-    printf("\n");
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%x, ", m[(i * cols) + j]);
-        }
-        printf(";\n");
-    }
-}
-
 bool output_check(float *c, float *c_spec, int rows, int cols) {
   for (int y = 0; y < rows; y++) {
     for (int x = 0; x < cols; x++) {

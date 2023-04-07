@@ -321,14 +321,16 @@ def single(data_dir):
 
 @cli.command()
 @click.argument("parent_dir")
-def all(parent_dir):
+@click.option("--force", is_flag=True)
+def all(parent_dir, force):
     parent_dir = Path(parent_dir)
 
     # find all directories that have a stderr.log
     for log_path in parent_dir.glob("**/stderr.log"):
-        # call process single on the containing directory
-        # that's what `.parents[1]` gets use.
-        process_single(log_path.parents[0])
+        if force or not (log_path.parents[0] / "data.csv").exists():
+            # call process single on the containing directory
+            # that's what `.parents[0]` gets us.
+            process_single(log_path.parents[0])
 
 
 if __name__ == "__main__":

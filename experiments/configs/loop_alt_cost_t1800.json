@@ -17,6 +17,7 @@
             "cd": [null, 25.0],
             "ca": [5.0, 1000.0],
             "node_limit": 500000,
+            "timeout": 60,
             "iter_limit": 2,
             "fresh_egraph": true,
             "disabled": false
@@ -25,6 +26,7 @@
             "name": "compile",
             "cd": [-0.1, null],
             "ca": [2000.0, 3000.0],
+            "timeout": 60,
             "iter_limit": 2,
             "disabled": false
           }

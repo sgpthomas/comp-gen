@@ -7,6 +7,7 @@ from pathlib import Path
 import os
 import shutil
 import itertools
+from typing import Callable
 
 
 def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost, key=None):
@@ -267,14 +268,17 @@ def make_synthesis(jobs_dir, timeout):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def dict_from_dir(path, ext="json"):
+def dict_from_dir(path, pat="*.json", key=None):
     path = path.expanduser().resolve()
     assert path.exists()
 
     res = {}
 
-    for p in path.glob(f"*.{ext}"):
-        res[p.stem] = p.expanduser().resolve()
+    for p in path.glob(pat):
+        k = p.stem
+        if key is not None and isinstance(key, Callable):
+            k = key(p)
+        res[k] = p.expanduser().resolve()
 
     return res
 
@@ -430,30 +434,17 @@ def understand_cost_function():
     """
 
     params = [
-        [10, 10, 2, 2],
+        [2, 2, 2, 2],
+        [4, 4, 4, 4],
+        [8, 8, 8, 8],
+        [16, 16, 16, 16],
     ]
 
     for p in params:
-        # make_2d_conv(
-        #     Path("jobs"),
-        #     *p,
-        #     rulesets["ruleset_timeout432000"],
-        #     configs["loop_dios_cost"],
-        #     False,
-        #     key="fix"
-        # )
-        # make_2d_conv(
-        #     Path("jobs"),
-        #     *p,
-        #     rulesets["ruleset_timeout432000"],
-        #     configs["loop_more_expansion"],
-        #     True,
-        #     key="fix"
-        # )
-        make_2d_conv(
+        mat_mul(
             Path("jobs"),
             *p,
-            rulesets["ruleset_timeout432000"],
+            rulesets["expanding_vecmac"],
             configs["loop_alt_cost_t1800"],
             True,
             key="fix"
@@ -522,36 +513,49 @@ def ruleset_ablation():
     """
 
     conv_2d_sizes = [
-        # [3, 3, 2, 2],
-        # [3, 3, 3, 3],
-        # [3, 5, 3, 3],
+        [3, 3, 2, 2],
+        [3, 3, 3, 3],
+        [3, 5, 3, 3],
         [4, 4, 3, 3],
         [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        # [10, 10, 3, 3],
-        [10, 10, 4, 4],
+        # [10, 10, 2, 2],
+        [10, 10, 3, 3],
+        # [10, 10, 4, 4],
         # [16, 16, 2, 2],
-        # [16, 16, 3, 3],
+        [16, 16, 3, 3],
         # [16, 16, 4, 4],
     ]
 
     config = configs["loop_alt_cost_t180"]
-    rs = [
-        "expanding",
-        "expanding_vecmac",
-        "ruleset_timeout4000",
-        "ruleset_timeout8000",
-        "ruleset_timeout86400",
-        "ruleset_timeout432000",
-        "original_dios_rules",
-    ]
+    # rs = [
+    #     "expanding_vecmac",
+    #     "ruleset_timeout4000",
+    #     "ruleset_timeout8000",
+    #     "ruleset_timeout86400",
+    #     "ruleset_timeout432000",
+    #     "original_dios_rules",
+    # ]
 
+    def read_time(p):
+        config = json.load((p.parents[0] / "config.json").open("r"))
+        return config["metadata"]["timeout"]
+
+    rules = dict_from_dir(
+        Path("completed") / "synthesis",
+        pat="**/ruleset.json",
+        key=read_time
+    )
+    rs = (list(map(lambda x: rules[r], [60, 600, 6000, 60000]))
+          + [rulesets["ruleset_timeout86400"]]
+          + [rulesets["ruleset_timeout432000"]]
+          + [rulesets["expanding_vecmac"]]
+          + [rulesets["original_dios_rules"]])
     exps = itertools.product(conv_2d_sizes, rs)
     for (size, r) in exps:
         make_2d_conv(
             Path("jobs"),
             *size,
-            rulesets[r],
+            r,
             config,
             True,
             key="ruleset_ablation"
@@ -567,7 +571,8 @@ def ruleset_synthesis():
         60,
         600,
         6000,
-        60000
+        60000,
+        600000
     ]
 
     for t in timeouts:
@@ -579,8 +584,8 @@ def main():
     # pruning_experiment()
     # understand_cost_function()
     # no_eqsat()
-    # ruleset_ablation()
-    ruleset_synthesis()
+    ruleset_ablation()
+    # ruleset_synthesis()
 
 
 if __name__ == "__main__":

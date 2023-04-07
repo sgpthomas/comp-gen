@@ -35,7 +35,10 @@ void kernel(float* input_A, float* input_B, float* input_C);
 
 
 // Naive
-void naive_matrix_multiply(float *a, float *b, float *c, int row1, int col1, int col2) {
+void __attribute__((noinline)) naive_matrix_multiply(float * __restrict a,
+                                                     float * __restrict b,
+                                                     float * __restrict c,
+                                                     int row1, int col1, int col2) {
   for (int y = 0; y < row1; y++) {
     for (int x = 0; x < col2; x++) {
       c[col2 * y + x] = 0;
@@ -47,7 +50,9 @@ void naive_matrix_multiply(float *a, float *b, float *c, int row1, int col1, int
 }
 
  // Naive hard-coded size
- void naive_matrix_multiply_hard_size(float *a, float *b, float *c) {
+ void __attribute__((noinline)) naive_matrix_multiply_hard_size(float * __restrict a,
+                                                                float * __restrict b,
+                                                                float * __restrict c) {
    for (int y = 0; y < A_ROWS; y++) {
      for (int x = 0; x < B_COLS; x++) {
        c[B_COLS * y + x] = 0;
@@ -82,24 +87,24 @@ int main(int argc, char **argv) {
 
   // Naive
   start_cycle_timing;
-  naive_matrix_multiply(a, b, c,  A_ROWS, A_COLS, B_COLS);
-  stop_cycle_timing;
-  time = get_time();
-  print_matrix(c, A_ROWS, B_COLS);
-  output_check(c, c_spec, A_ROWS, B_COLS);
-  zero_matrix(c, A_ROWS, B_COLS);
-  printf("Naive : %d cycles\n", time);
+  /* naive_matrix_multiply(a, b, c,  A_ROWS, A_COLS, B_COLS); */
+  /* stop_cycle_timing; */
+  /* time = get_time(); */
+  /* print_matrix(c, A_ROWS, B_COLS); */
+  /* output_check(c, c_spec, A_ROWS, B_COLS); */
+  /* zero_matrix(c, A_ROWS, B_COLS); */
+  /* printf("Naive : %d cycles\n", time); */
   /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Naive",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
 
   // Naive, hard-coded size
-  start_cycle_timing;
-  naive_matrix_multiply_hard_size(a, b, c);
-  stop_cycle_timing;
-  time = get_time();
-  print_matrix(c, A_ROWS, B_COLS);
-  output_check(c, c_spec, A_ROWS, B_COLS);
-  zero_matrix(c, A_ROWS, B_COLS);
-  printf("Naive hard size: %d cycles\n", time);
+  /* start_cycle_timing; */
+  /* naive_matrix_multiply_hard_size(a, b, c); */
+  /* stop_cycle_timing; */
+  /* time = get_time(); */
+  /* print_matrix(c, A_ROWS, B_COLS); */
+  /* output_check(c, c_spec, A_ROWS, B_COLS); */
+  /* zero_matrix(c, A_ROWS, B_COLS); */
+  /* printf("Naive hard size: %d cycles\n", time); */
   /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Naive hard size",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
 
   // Nature

@@ -76,48 +76,16 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
 
 (header args for doing cycle estimation from non-thelio computers)
+
 #+header: :dir (sgt/dir "server")
 #+begin_src async-shell :name estimation
-# ./estimate.py single completed/2d-conv_10x10_3x3/12
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-# ./estimate.py log completed/2d-conv_3x5_3x3/20
-# ./estimate.py log completed/2d-conv_4x4_3x3/19
-# ./estimate.py log completed/2d-conv_4x4_3x3/20
-# ./estimate.py log completed/2d-conv_8x8_3x3/22
-# ./estimate.py log completed/2d-conv_8x8_3x3/23
-# ./estimate.py log completed/2d-conv_3x3_2x2/24
-# DIR="completed/2d-conv_3x3_2x2/27"
-# cp $DIR/iter_results/kernel-6.c $DIR/results/kernel.c
-# ./estimate.py log $DIR
-# mv $DIR/results/kernel.s \
-#    $DIR/results/kernel-6.s
-# cp $DIR/iter_results/kernel-7.c $DIR/results/kernel.c
-# ./estimate.py single $DIR
-# mv $DIR/results/kernel.s \
-#    $DIR/results/kernel-7.s
-./estimate.py log diospyros-results-log/2d-conv/3x3_2x2_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/3x5_3x3_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/4x4_3x3_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/8x8_3x3_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/10x10_2x2_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/10x10_3x3_4r --results .
-# ./estimate.py log diospyros-results-log/2d-conv/16x16_4x4_4r --results .
+./estimate.py many Apr07-1545 --key ruleset_ablation
 #+end_src
 
 #+begin_src async-shell :name estimation
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
-#+end_src
-
-test
-#+header: :dir (sgt/dir "server")
-#+begin_src async-shell :name test
-EXP="diospyros-results-log/2d-conv/3x3_3x3_4r"
-make -C ~/Research/diospyros dios
-~/Research/diospyros/dios -w 4 --egg --suppress-git -o $EXP/kernel.c $EXP
-cp harnesses/utils.h $EXP
-cp harnesses/2d-conv.c $EXP/harness.c
-./estimate.py single --force --results "." --name 2d-conv --params 3x3_3x3 $EXP
 #+end_src
 
 Process all the log files and generate data csvs.
@@ -152,18 +120,14 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 13 :height 6
+#+header: :width 13 :height 4
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(full_join(
   read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
 ), read_csv("data/noeqsat.csv"))
 
-data$params <- factor(data$params, levels=unique(data$params))
-
 data <- data %>%
-  ##  %>%
-  ## filter(greedy == "True") %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
@@ -171,52 +135,65 @@ data <- data %>%
     names_from=kernel,
     values_from=cycles
   ) %>%
-  print(n=10) %>%
   mutate(
-    norm = `naive-hard`,
+    name = str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
+    norm = naive.fixed,
     compgen = norm / compgen,
     dios = norm / dios,
     nature = norm / nature,
     noeqsat = norm / noeqsat,
-    eigen = norm / eigen,
     naive = norm / naive,
+    naive.fixed = norm / naive.fixed,
+    naive.clang = norm / naive.clang
   ) %>%
   pivot_longer(
-    ## cols = c("dios", "compgen", "naive", "noeqsat"),
-    cols = c("dios", "compgen", "nature"),
+    cols = c("naive.fixed", "naive.clang", "nature", "dios", "compgen"),
     names_to = "kernel",
     values_to = "cycles"
   ) %>%
-  select(benchmark, params, kernel, cycles) %>%
+  select(name, kernel, cycles) %>%
   print(n=60)
-  ## pivot_longer(
-  ##   cols = !benchmark,
-  ##   names_to = "compiler",
-  ##   values_to = "cycles"
-  ## ) %>% 
-  ## filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
+
 data %>%
   ggplot(aes(
-    x=params,
-    y=cycles,
-    fill=kernel
+    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
+    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ymin=0,
+    ymax=cycles,
+    fill=factor(kernel, levels=unique(kernel))
   )) +
-  facet_grid(~benchmark, scales = "free_x", space="free", switch="x") +
-  geom_bar(position="dodge", stat="identity", color="black") +
-  ## ylim(0, 1.5) +
-  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Speed up over Naive (hard)", fill="Compiler") +
-  scale_y_continuous(trans="log2") +
+  geom_rect(
+    position="dodge",
+    color="black",
+  ) +
+  geom_hline(yintercept=1, linetype="solid", color="black") +
+  labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
+  scale_x_continuous(
+    label=unique(data$name),
+    breaks=1:length(unique(data$name))
+  ) +
+  scale_y_continuous(
+    trans="log2",
+  ) +
+  scale_fill_brewer(
+    palette = "Paired",
+    labels=c(
+      "Naive (fixed size + no vec)",
+      "Naive (fixed size + clang vec)",
+      "Nature",
+      "Diospyros",
+      "Compgen"
+    )
+  ) +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.90, 0.85),
+    ## legend.position = c(0.80, 0.77),
+    legend.position = "top",
     legend.background = element_rect(fill = "white"),
     text = element_text(size=12, face="bold"),
     panel.spacing.x = unit(0, "lines")
-  ) +
-  scale_fill_brewer(palette = "Paired")
+  )
 #+end_src
 
 #+RESULTS:
@@ -224,7 +201,7 @@ data %>%
 
 *** NEXT Compilation time
 
-#+header: :width 13 :height 10
+#+header: :width 9 :height 4
 #+begin_src R :results graphics file :file compile-times.svg
 data <- full_join(
   read_csv("data/stock_cycles.csv"),
@@ -233,7 +210,7 @@ data <- full_join(
 )
 
 # fix the order of params cat var
-data$params <- factor(data$params, levels=unique(data$params))
+## data$params <- factor(data$params, levels=unique(data$params))
 
 data <- data %>%
   ##  %>%
@@ -245,10 +222,12 @@ data <- data %>%
     names_from=kernel,
     values_from=compile_time
   ) %>%
-  ## mutate(
-  ##   compgen = compgen / dios,
-  ##   dios = 1.0,
-  ## ) %>%
+  mutate(
+    benchmark=recode(benchmark, "qr-decomp"="qr"),
+    name = str_replace_all(params, "_", "\n")
+    ## compgen = compgen / dios,
+    ## dios = 1.0,
+  ) %>%
   pivot_longer(
     cols = c("dios", "compgen"),
     names_to = "kernel",
@@ -262,26 +241,38 @@ data <- data %>%
   ## filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
 data %>%
   ggplot(aes(
-    x=params,
+    x=factor(name, levels=unique(name)),
     y=compile_time,
-    fill=kernel
+    fill=factor(kernel, levels=unique(kernel))
   )) +
-  facet_grid(~benchmark, switch = "x", scales = "free_x", space="free_x") +
-  geom_bar(position="dodge", stat="identity", color="black") +
+  facet_grid(
+    ~benchmark,
+    switch="x",
+    scales = "free_x", space="free_x"
+  ) +
+  geom_col(
+    position="dodge",
+    color="black",
+    width=0.5
+  ) +
   ## scale_y_log10() +
   ## ylim(0, 1.5) +
-  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
+  scale_fill_manual(
+    values = c("#33a02c", "#fb9a99"),
+    labels=c("Diospyros", "Compgen")
+  ) +
   labs(y="Compile Time", fill="Compiler") +
   theme_minimal() +
   theme(
-    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
     axis.title.x = element_blank(),
-    legend.position = c(0.9, 0.9),
+    ## legend.position = c(0.9, 0.9),
+    legend.position = "top",
     legend.background = element_rect(fill = "white"),
-    text = element_text(size=25, face="bold"),
-    panel.spacing.x = unit(0, "lines")
-  ) +
-  scale_fill_brewer(palette = "Set2")
+    text = element_text(size=12, face="bold"),
+    panel.spacing.x = unit(0, "lines"),
+    strip.placement = "outside",
+    strip.text.x = element_text(angle=0)
+  )
 #+end_src
 
 #+RESULTS:
@@ -551,6 +542,61 @@ data %>%
 #+RESULTS:
 [[file:scheduler-backoff-cost.svg]]
 
+** Ruleset ablation
+
+#+header: :width 9 :height 4
+#+begin_src R :results graphics file :file ruleset-ablation.svg
+data <- read_csv("data/ruleset_ablation.csv")
+
+data <- data %>%
+  select(benchmark, ruleset, params, cycles, cost) %>%
+  mutate(
+    name=str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
+  ) %>%
+  group_by(params) %>%
+  mutate(
+    across(cycles:cost, ~ .[2] / .)
+  ) %>%
+  print(n=31)
+data %>%
+  ggplot(aes(
+    ## x=names,
+    ## y=cycles,
+    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
+    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ymin=0, ymax=cycles,
+    fill=factor(ruleset)
+  )) +
+  geom_rect(
+    position="dodge",
+    color="black"
+  ) +
+  geom_hline(yintercept=1, linetype="solid", color="black") +
+  scale_x_continuous(
+    label=unique(data$name),
+    breaks=1:length(unique(data$name))
+  ) +
+  scale_y_continuous(
+    trans="log2"
+  ) + annotation_logticks(sides = "l") + 
+  scale_fill_brewer(
+    palette = "YlOrBr",
+  ) +
+  labs(fill="Timeout") +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    ## legend.position = c(0.80, 0.77),
+    ## legend.position = "top",
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=20, face="bold"),
+    panel.spacing.x = unit(0, "lines")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:ruleset-ablation.svg]]
+
 ** Misc
 
 #+begin_src R :results graphics file :file iter_cost.svg
@@ -589,13 +635,33 @@ done
 #+begin_src async-shell :name test :results none
 ROOT="/home/samthomas/Research/xtensa/RI-2021.8-linux/XtensaTools/bin"
 
-$ROOT/xt-clang++ -std=c++11 -mlongcalls -O3 -LNO:simd -fvectorize -mtext-section-literals \
+$ROOT/xt-clang++ -std=c++11 -mlongcalls \
+                 -O3 -LNO:simd -LNO:simd_v -fvectorize -mtext-section-literals \
                  -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
-                 kernel.c harness.c -S
+                 kernel.c -S
 
-$ROOT/xt-clang++ -std=c++11 -mlongcalls -O3 -LNO:simd -fvectorize -mtext-section-literals \
+$ROOT/xt-clang++ -std=c++11 -mlongcalls \
+                 -O3 -LNO:simd -fvectorize -mtext-section-literals \
                  -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
                  kernel.c harness.c -o run.o
 
 $ROOT/xt-run --client_commands='trace --level=0 trace.out' run.o
+#+end_src
+
+#+header: :dir (sgt/dir "server")
+#+begin_src async-shell :name test
+EXP="diospyros-results-log/2d-conv/3x3_3x3_4r"
+make -C ~/Research/diospyros dios
+~/Research/diospyros/dios -w 4 --egg --suppress-git -o $EXP/kernel.c $EXP
+cp harnesses/utils.h $EXP
+cp harnesses/2d-conv.c $EXP/harness.c
+./estimate.py single --force --results "." --name 2d-conv --params 3x3_3x3 $EXP
+#+end_src
+
+#+begin_src async-shell :name test :dir (sgt/dir "server") :results none
+DIR=completed/mat-mul_8x8_8x8/18
+# ~/Research/diospyros/dios -w 4 --egg --suppress-git \
+#                           -o $DIR/results/kernel.c \
+#                           $DIR/results
+./estimate.py log $DIR
 #+end_src

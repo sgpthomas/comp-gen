@@ -84,7 +84,7 @@ def estimate_kernel(
         "-I", "/usr/include/eigen3",
         "-I", "~/Research/xtensa/fusiong3_library/include",
         "-I", "~/Research/xtensa/fusiong3_library/include_private",
-        "kernel.c", "harness.c",
+        "kernel.c",
     ]
 
     # run xt compiler
@@ -93,7 +93,11 @@ def estimate_kernel(
         subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
         # run once to generate .s files, and then again to generate object file
         subprocess.run(" ".join(cmd + ["-S"]), shell=True, cwd=exp_path / results)
-        subprocess.run(" ".join(cmd + ["-o", "kernel.o"]), shell=True, cwd=exp_path / results)
+        subprocess.run(
+            " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
+            shell=True,
+            cwd=exp_path / results
+        )
         print("Done")
 
     # simulate the resulting object file
