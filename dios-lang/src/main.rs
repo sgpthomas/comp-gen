@@ -4,8 +4,6 @@ mod error;
 mod fuzz;
 mod handwritten;
 mod lang;
-#[allow(unused)]
-mod recexpr_helpers;
 mod rewriteconcats;
 mod smt;
 mod stringconversion;
@@ -191,33 +189,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
 
     compiler
         .add_rules(
-            vec![
-                handwritten::build_litvec_rule(opts.vector_width),
-                // egg::rewrite!("sqrt-1-inv"; "1" => "(sqrt 1)"),
-                // egg::rewrite!("sqrt-1-inv-rev"; "(sqrt 1)" => "1"),
-                // egg::rewrite!("div-1"; "(/ ?a 1)" => "?a"),
-                // egg::rewrite!("div-1-inv"; "?a" => "(/ ?a 1)"),
-                // egg::rewrite!("neg-sgn"; "(neg (sgn ?a))" => "(sgn (neg ?a))"),
-                // egg::rewrite!("neg-sgn-rev"; "(sgn (neg ?a))" => "(neg (sgn ?a))"),
-                // egg::rewrite!("sqrt-vec"; "(Vec (sqrt ?a))" => "(VecSqrt ?a)"),
-                // egg::rewrite!("sqrt-vec-rev"; "(VecSqrt ?a)" => "(Vec (sqrt ?a))"),
-                // egg::rewrite!("sgn-vec"; "(Vec (sgn ?a))" => "(VecSgn ?a)"),
-                // egg::rewrite!("sgn-vec-rev"; "(VecSgn ?a)" => "(Vec (sgn ?a))"),
-                // egg::rewrite!("div"; "(Vec (/ ?a ?b) (/ ?c ?d))" => "(VecDiv (Vec ?a ?c) (Vec ?b ?d))"),
-                // egg::rewrite!("div-rev"; "(VecDiv (Vec ?a ?c) (Vec ?b ?d))" => "(Vec (/ ?a ?b) (/ ?c ?d))"),
-
-                // egg::rewrite!("blah2l"; "(neg (* ?b ?a))" => "(* (neg ?b) ?a)"),
-                // egg::rewrite!("blah2"; "(* (neg ?b) ?a)" => "(neg (* ?b ?a))"),
-                // egg::rewrite!("blah"; "0" => "(+ 0 0)"),
-                // egg::rewrite!("vec-neg"; "(Vec (neg ?a) (neg ?b))" => "(VecNeg (Vec ?a ?b))"),
-                // egg::rewrite!("-+neg"; "(- ?a ?b)" => "(+ ?a (neg ?b))"),
-                // egg::rewrite!("-+neg-rev"; "(+ ?a (neg ?b))" => "(- ?a ?b)"),
-                // egg::rewrite!("vec-neg0-l"; "(Vec 0 (neg ?b))" => "(VecNeg (Vec 0 ?b))"),
-                // egg::rewrite!("vec-neg0-r"; "(Vec (neg ?a) 0)" => "(VecNeg (Vec ?a 0))"),
-                // egg::rewrite!("veclit"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) (Get ?a ?n3))"),
-                // egg::rewrite!("veclit0"; "(Vec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)" => "(LitVec (Get ?a ?n0) (Get ?a ?n1) (Get ?a ?n2) 0)")
-            ]
-            .into_iter(),
+            vec![handwritten::build_litvec_rule(opts.vector_width)].into_iter(),
         )
         // .with_filter(|cm| cm.cd > 0.0)
         // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
@@ -227,60 +199,6 @@ fn compile(opts: CompileOpts) -> Res<()> {
     if let Some(config) = &opts.config {
         compiler.with_config(config);
     }
-
-    //    let test0: egg::RecExpr<lang::VecLang> = "(Vec
-    //        (+
-    //          (+
-    //            (* (Get aq 3) (Get bq 0))
-    //            (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
-    //          (* (Get aq 2) (Get bq 1)))
-    //        (+
-    //          (+
-    //            (* (Get aq 3) (Get bq 1))
-    //            (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
-    //          (* (Get aq 0) (Get bq 2)))
-    //        (+
-    //          (+
-    //            (* (Get aq 3) (Get bq 2))
-    //            (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
-    //          (* (Get bq 0) (Get aq 1)))
-    //        (+
-    //          (* (Get aq 3) (Get bq 3))
-    //          (+
-    //            (* (Get bq 0) (Get aq 0))
-    //            (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
-    //        .parse()
-    //        .unwrap();
-    //    let test1: egg::RecExpr<lang::VecLang> = "(VecAdd
-    // (Vec
-    //  (+
-    //   (* (Get aq 3) (Get bq 0))
-    //   (+ (* (Get aq 0) (Get bq 3)) (* (Get aq 1) (Get bq 2))))
-    //  (+
-    //   (* (Get aq 3) (Get bq 1))
-    //   (+ (* (Get bq 3) (Get aq 1)) (* (Get bq 0) (Get aq 2))))
-    //  (+
-    //   (* (Get aq 3) (Get bq 2))
-    //   (+ (* (Get bq 3) (Get aq 2)) (* (Get aq 0) (Get bq 1))))
-    //  (* (Get aq 3) (Get bq 3)))
-    // (Vec
-    //  (* (Get aq 2) (Get bq 1))
-    //  (* (Get aq 0) (Get bq 2))
-    //  (* (Get bq 0) (Get aq 1))
-    //  (+
-    //   (* (Get bq 0) (Get aq 0))
-    //   (+ (* (Get aq 1) (Get bq 1)) (* (Get bq 2) (Get aq 2))))))"
-    //        .parse()
-    //        .unwrap();
-
-    //    log::debug!(
-    //        "cost: {}",
-    //        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test0)
-    //    );
-    //    log::debug!(
-    //        "cost: {}",
-    //        egg::CostFunction::cost_rec(&mut cost::VecCostFn, &test1)
-    //    );
 
     // compiler.with_explanations();
     let (cost, prog, mut _eg) = compiler.compile(prog);

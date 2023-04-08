@@ -395,7 +395,7 @@ def ruleset_ablation():
 
         if all([
                 "key" in config and config["key"] == "ruleset_ablation",
-                "Apr07-1545" in config["date"]
+                "Apr08-1237" in config["date"]
         ]):
             if "_" in config["name"]:
                 name, params = config["name"].split("_", 1)

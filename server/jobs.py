@@ -526,7 +526,7 @@ def ruleset_ablation():
         # [16, 16, 4, 4],
     ]
 
-    config = configs["loop_alt_cost_t180"]
+    config = configs["loop_alt_cost_t1800"]
     # rs = [
     #     "expanding_vecmac",
     #     "ruleset_timeout4000",
@@ -545,7 +545,7 @@ def ruleset_ablation():
         pat="**/ruleset.json",
         key=read_time
     )
-    rs = (list(map(lambda x: rules[r], [60, 600, 6000, 60000]))
+    rs = (list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
           + [rulesets["ruleset_timeout86400"]]
           + [rulesets["ruleset_timeout432000"]]
           + [rulesets["expanding_vecmac"]]

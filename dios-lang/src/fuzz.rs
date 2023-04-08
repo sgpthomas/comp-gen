@@ -88,29 +88,6 @@ impl FuzzEquals for lang::VecLang {
 
         let lvec = Self::eval_pattern(lhs, &env, length);
         let rvec = Self::eval_pattern(rhs, &env, length);
-        // let debug = false;
-        // if lvec != rvec || debug {
-        //     debug!(
-        //         "  env: {:?}",
-        //         env.into_iter()
-        //             .map(|(v, env)| (
-        //                 v,
-        //                 env.into_iter()
-        //                     .flat_map(|x| match x {
-        //                         Some(lang::Value::Vec(v)) =>
-        //                             Some(lang::Value::Vec(v)),
-        //                         _ => None,
-        //                     })
-        //                     .collect::<Vec<_>>()
-        //             ))
-        //             .collect::<Vec<_>>()
-        //     );
-        //     debug!("  lhs: {lhs}");
-        //     debug!("  rhs: {rhs}");
-        //     debug!("  lvec: {:?}", lvec.iter().flatten().collect_vec(),);
-        //     debug!("  rvec: {:?}", rvec.iter().flatten().collect_vec());
-        //     debug!("  eq: {}", vecs_eq(&lvec, &rvec));
-        // }
 
         vecs_eq(&lvec, &rvec)
     }

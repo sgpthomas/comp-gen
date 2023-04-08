@@ -11,10 +11,7 @@ use ruler::{
     letter, map, self_product, CVec, Equality, SynthAnalysis, SynthLanguage,
     Synthesizer,
 };
-use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use std::hash::BuildHasherDefault;
-use std::str::FromStr;
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{fuzz::FuzzEquals, lang, smt::SmtEquals, Res};
@@ -764,101 +761,101 @@ impl SynthLanguage for lang::VecLang {
     //     report
     // }
 
-    fn debug_pre_union(
-        egraph: &EGraph<Self, SynthAnalysis>,
-        id1: Id,
-        id2: Id,
-        justification: &Option<egg::Justification>,
-    ) {
-        for (val1, val2) in egraph[id1]
-            .data
-            .cvec
-            .iter()
-            .zip(egraph[id2].data.cvec.iter())
-        {
-            match (val1, val2) {
-                (Some(x), Some(y)) if x != y => {
-                    let extractor = egg::Extractor::new(egraph, egg::AstDepth);
-                    let (_, prog1) = extractor.find_best(id1);
-                    let (_, prog2) = extractor.find_best(id2);
+    // fn debug_pre_union(
+    //     egraph: &EGraph<Self, SynthAnalysis>,
+    //     id1: Id,
+    //     id2: Id,
+    //     justification: &Option<egg::Justification>,
+    // ) {
+    //     for (val1, val2) in egraph[id1]
+    //         .data
+    //         .cvec
+    //         .iter()
+    //         .zip(egraph[id2].data.cvec.iter())
+    //     {
+    //         match (val1, val2) {
+    //             (Some(x), Some(y)) if x != y => {
+    //                 let extractor = egg::Extractor::new(egraph, egg::AstDepth);
+    //                 let (_, prog1) = extractor.find_best(id1);
+    //                 let (_, prog2) = extractor.find_best(id2);
 
-                    log::error!("Trying to merge:");
-                    log::error!(
-                        "  {} <=> {}",
-                        prog1.pretty(80),
-                        prog2.pretty(80)
-                    );
-                    log::error!("cvec1: {:?}", egraph[id1].data.cvec);
-                    log::error!("cvec2: {:?}", egraph[id2].data.cvec);
-                    log::error!("just: {justification:?}");
+    //                 log::error!("Trying to merge:");
+    //                 log::error!(
+    //                     "  {} <=> {}",
+    //                     prog1.pretty(80),
+    //                     prog2.pretty(80)
+    //                 );
+    //                 log::error!("cvec1: {:?}", egraph[id1].data.cvec);
+    //                 log::error!("cvec2: {:?}", egraph[id2].data.cvec);
+    //                 log::error!("just: {justification:?}");
 
-                    if let Some(egg::Justification::Rule(s)) = &justification {
-                        if let Some((lhs, rhs)) =
-                            s.as_str().split(" => ").collect_tuple()
-                        {
-                            // strip off the ? prefix for variable names
-                            let lhs_expr: egg::RecExpr<_> = strip_prefix(
-                                &lhs.parse::<egg::RecExpr<_>>().unwrap(),
-                            );
+    //                 if let Some(egg::Justification::Rule(s)) = &justification {
+    //                     if let Some((lhs, rhs)) =
+    //                         s.as_str().split(" => ").collect_tuple()
+    //                     {
+    //                         // strip off the ? prefix for variable names
+    //                         let lhs_expr: egg::RecExpr<_> = strip_prefix(
+    //                             &lhs.parse::<egg::RecExpr<_>>().unwrap(),
+    //                         );
 
-                            let rhs_expr: egg::RecExpr<_> = strip_prefix(
-                                &rhs.parse::<egg::RecExpr<_>>().unwrap(),
-                            );
+    //                         let rhs_expr: egg::RecExpr<_> = strip_prefix(
+    //                             &rhs.parse::<egg::RecExpr<_>>().unwrap(),
+    //                         );
 
-                            log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
+    //                         log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
 
-                            // print out ids, plus cannoncial ids
-                            let lhs_id = egraph
-                                .lookup_expr(&lhs_expr)
-                                .map(|x| egraph.find(x));
-                            let rhs_id = egraph
-                                .lookup_expr(&rhs_expr)
-                                .map(|x| egraph.find(x));
-                            log::error!(
-                                "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
-				egraph.find(id1),
-				egraph.find(id2),
-                            );
+    //                         // print out ids, plus cannoncial ids
+    //                         let lhs_id = egraph
+    //                             .lookup_expr(&lhs_expr)
+    //                             .map(|x| egraph.find(x));
+    //                         let rhs_id = egraph
+    //                             .lookup_expr(&rhs_expr)
+    //                             .map(|x| egraph.find(x));
+    //                         log::error!(
+    //                             "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
+    //     			egraph.find(id1),
+    //     			egraph.find(id2),
+    //                         );
 
-                            // let's get the cvec for a
-                            let a_id = egraph
-                                .lookup_expr(&egg::RecExpr::from(vec![
-                                    lang::VecLang::Symbol("a".into()),
-                                ]))
-                                .unwrap();
-                            log::error!(
-                                "'a' cvec: {:?}",
-                                egraph[a_id].data.cvec
-                            );
-                        } else {
-                            log::error!("Split failed: '{s}'");
-                        }
-                    } else {
-                        log::error!("No rule justification");
-                    }
+    //                         // let's get the cvec for a
+    //                         let a_id = egraph
+    //                             .lookup_expr(&egg::RecExpr::from(vec![
+    //                                 lang::VecLang::Symbol("a".into()),
+    //                             ]))
+    //                             .unwrap();
+    //                         log::error!(
+    //                             "'a' cvec: {:?}",
+    //                             egraph[a_id].data.cvec
+    //                         );
+    //                     } else {
+    //                         log::error!("Split failed: '{s}'");
+    //                     }
+    //                 } else {
+    //                     log::error!("No rule justification");
+    //                 }
 
-                    panic!("This is going to cause problems. Let's just stop here.");
-                }
-                _ => (),
-            }
-        }
-    }
+    //                 panic!("This is going to cause problems. Let's just stop here.");
+    //             }
+    //             _ => (),
+    //         }
+    //     }
+    // }
 }
 
-fn strip_prefix(
-    expr: &egg::RecExpr<lang::VecLang>,
-) -> egg::RecExpr<lang::VecLang> {
-    expr.as_ref()
-        .iter()
-        .map(|n: &lang::VecLang| match n {
-            lang::VecLang::Symbol(s) => lang::VecLang::Symbol(
-                s.as_str().strip_prefix("?").unwrap().into(),
-            ),
-            x => x.clone(),
-        })
-        .collect_vec()
-        .into()
-}
+// fn strip_prefix(
+//     expr: &egg::RecExpr<lang::VecLang>,
+// ) -> egg::RecExpr<lang::VecLang> {
+//     expr.as_ref()
+//         .iter()
+//         .map(|n: &lang::VecLang| match n {
+//             lang::VecLang::Symbol(s) => lang::VecLang::Symbol(
+//                 s.as_str().strip_prefix("?").unwrap().into(),
+//             ),
+//             x => x.clone(),
+//         })
+//         .collect_vec()
+//         .into()
+// }
 
 fn get_vars(
     node: &lang::VecLang,
@@ -908,40 +905,6 @@ pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
     }
 }
 
-#[allow(unused)]
-fn debug_rule(
-    synth: &mut Synthesizer<lang::VecLang, ruler::Init>,
-    left: &str,
-    right: &str,
-    n: usize,
-    env_pairs: &[(&str, lang::Value)],
-) {
-    let mut env: HashMap<
-        egg::Var,
-        Vec<Option<lang::Value>>,
-        BuildHasherDefault<FxHasher>,
-    > = HashMap::default();
-
-    env_pairs.iter().for_each(|(var, value)| {
-        env.insert(egg::Var::from_str(var).unwrap(), vec![Some(value.clone())]);
-    });
-
-    let pleft: egg::Pattern<lang::VecLang> = left.parse().unwrap();
-    let pright: egg::Pattern<lang::VecLang> = right.parse().unwrap();
-    log::info!("left: {pleft}");
-    let lres = lang::VecLang::eval_pattern(&pleft, &env, n);
-    log::info!("right: {pright}");
-    let rres = lang::VecLang::eval_pattern(&pright, &env, n);
-    log::info!(
-        "TEST:\n  {lres:?}\n    ?= ({})\n  {rres:?}",
-        vecs_eq(&lres, &rres),
-    );
-    log::info!("{} => {}", left, right);
-
-    // try fuzzing
-    lang::VecLang::smt_equals(synth, &pleft, &pright);
-}
-
 pub fn run(
     dios_config: DiosConfig,
     chkpt_path: Option<PathBuf>,
@@ -958,22 +921,6 @@ pub fn run(
     if let Some(chkpt) = chkpt_path {
         syn.load_checkpoint(&chkpt);
     }
-
-    // // debug
-    // let res = lang::VecLang::smt_equals(
-    //     &mut syn,
-    //     &"(- (/ ?a ?a) (/ 0 ?a))".parse().unwrap(),
-    //     &"(sgn (* ?a ?a))".parse().unwrap(),
-    // );
-    // debug!("res: {res}");
-    // let res = lang::VecLang::smt_equals(
-    //     &mut syn,
-    //     &"(/ 0 ?a)".parse().unwrap(),
-    //     &"0".parse().unwrap(),
-    // );
-    // debug!("res: {res}");
-    // panic!();
-    // // debug
 
     // run the synthesizer
     let report = syn.run();
