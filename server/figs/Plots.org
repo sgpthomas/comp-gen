@@ -97,7 +97,7 @@ Process all the log files and generate data csvs.
 Run query to generate aggregated data files
 
 #+begin_src async-shell :name query
-python3 query.py
+python3.11 query.py
 #+end_src
 
 * Tables
@@ -367,6 +367,85 @@ data %>%
 #+RESULTS:
 [[file:memory-performance.svg]]
 
+*** Equality Saturation Ablation
+
+Actually use 11 as the width
+#+header: :width 9 :height 4
+#+begin_src R :results graphics file :file cycles-performance.svg
+data <- full_join(full_join(
+  read_csv("data/stock_cycles.csv"),
+  read_csv("data/est_cycles.csv")
+), read_csv("data/noeqsat.csv"))
+
+data <- data %>%
+  filter(benchmark == "2d-conv") %>%
+  select(benchmark, params, kernel, cycles) %>%
+  group_by(benchmark) %>%
+  pivot_wider(
+    names_from=kernel,
+    values_from=cycles
+  ) %>%
+  mutate(
+    name = str_c(str_replace_all(params, "_", "\n")),
+    norm = noeqsat,
+    compgen = norm / compgen,
+    dios = norm / dios,
+    nature = norm / nature,
+    noeqsat = norm / noeqsat,
+    naive = norm / naive,
+    naive.fixed = norm / naive.fixed,
+    naive.clang = norm / naive.clang
+  ) %>%
+  pivot_longer(
+    cols = c("dios", "compgen", "noeqsat"),
+    names_to = "kernel",
+    values_to = "cycles"
+  ) %>%
+  select(name, kernel, cycles) %>%
+  print(n=60)
+
+data %>%
+  ggplot(aes(
+    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
+    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ymin=0,
+    ymax=cycles,
+    fill=factor(kernel, levels=unique(kernel))
+  )) +
+  geom_rect(
+    position="dodge",
+    color="black",
+  ) +
+  geom_hline(yintercept=1, linetype="solid", color="black") +
+  labs(x="2d-conv", y="Speed up", fill="Compiler") +
+  scale_x_continuous(
+    label=unique(data$name),
+    breaks=1:length(unique(data$name))
+  ) +
+  scale_y_continuous(
+    trans="log2",
+  ) +
+  scale_fill_brewer(
+    palette = "Paired",
+    ## labels=c(
+    ##   "Diospyros",
+    ##   "Compgen"
+    ## )
+  ) +
+  theme_minimal() +
+  theme(
+    ## axis.title.x = element_blank(),
+    ## legend.position = c(0.80, 0.77),
+    legend.position = "top",
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=12, face="bold"),
+    panel.spacing.x = unit(0, "lines")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:cycles-performance.svg]]
+
 ** TODO Greedy Cost Works
 
 The data here is wrong I think. Fix the data
@@ -575,26 +654,40 @@ data %>%
 
 #+header: :width 9 :height 4
 #+begin_src R :results graphics file :file ruleset-ablation.svg
-data <- read_csv("data/ruleset_ablation.csv")
+data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
+noeqsat <- read_csv("data/noeqsat.csv") %>%
+  mutate(ruleset=0, noeqsat=cycles) %>%
+  select(-c(kernel, correct, cycles, ruleset)) %>%
+  filter(benchmark == "2d-conv")
+
+data <- left_join(
+  data,
+  noeqsat,
+  by=c("benchmark", "params"),
+)
 
 data <- data %>%
-  select(benchmark, exp, ruleset, params, cycles, cost) %>%
+  select(benchmark, params, exp, ruleset, cycles, cost, noeqsat) %>%
+  filter(ruleset != -1) %>%
   mutate(
     name=str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
   ) %>%
   group_by(params) %>%
+  print(n=10) %>%
   mutate(
     # calculate speedup against the second item in every group
-    across(cycles:cost, ~ .[2] / .)
+    ## across(cycles:cost, ~ .[2] / .)
+    ## cycles=noeqsat / cycles
+    across(cost, ~ .[2] / .)
   ) %>%
-  print(n=49)
+  print(n=100)
 data %>%
   ggplot(aes(
     ## x=names,
     ## y=cycles,
     xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
     xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0, ymax=cycles,
+    ymin=0, ymax=cost,
     fill=factor(ruleset)
   )) +
   geom_rect(

@@ -104,7 +104,7 @@ where
         // unpack the previous eqsat result
         let EqSatResult {
             cost: old_cost,
-            prog,
+            prog: old_prog,
             mut egraph,
             time_left,
         } = eqsat;
@@ -119,7 +119,7 @@ where
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
                 .with_egraph(egraph)
-                .with_expr(&prog)
+                .with_expr(&old_prog)
                 .with_node_limit(
                     phase.node_limit.unwrap_or(self.total_node_limit),
                 )
@@ -171,7 +171,13 @@ where
         debug!("Extracting best program");
         let extractor =
             egg::Extractor::new(&runner.egraph, self.cost_fn.clone());
-        let (cost, prog) = extractor.find_best(runner.roots[0]);
+        let (cost, mut prog) = extractor.find_best(runner.roots[0]);
+        // if the cost hasn't changed, just return the old program
+        // this ensures that "unimportant changes" (i.e changes not captured by the cost function)
+        // don't affect the cycle estimate results due to random reordering of expressions
+        if old_cost == cost {
+            prog = old_prog;
+        }
 
         debug!("Egraph size: {}", runner.egraph.total_size());
         debug!(
