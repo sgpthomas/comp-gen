@@ -81,7 +81,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many Apr08-1237 --key ruleset_ablation
+./estimate.py many Apr09-1154 --key ruleset_ablation
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -371,7 +371,7 @@ data %>%
 
 Actually use 11 as the width
 #+header: :width 9 :height 4
-#+begin_src R :results graphics file :file cycles-performance.svg
+#+begin_src R :results graphics file :file noeqsat.svg
 data <- full_join(full_join(
   read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
@@ -379,6 +379,7 @@ data <- full_join(full_join(
 
 data <- data %>%
   filter(benchmark == "2d-conv") %>%
+  print(n=100) %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -417,7 +418,7 @@ data %>%
     color="black",
   ) +
   geom_hline(yintercept=1, linetype="solid", color="black") +
-  labs(x="2d-conv", y="Speed up", fill="Compiler") +
+  labs(x="2d-conv", y="Speed up over No Equality Saturation", fill="Compiler") +
   scale_x_continuous(
     label=unique(data$name),
     breaks=1:length(unique(data$name))
@@ -444,7 +445,7 @@ data %>%
 #+end_src
 
 #+RESULTS:
-[[file:cycles-performance.svg]]
+[[file:noeqsat.svg]]
 
 ** TODO Greedy Cost Works
 
@@ -668,7 +669,6 @@ data <- left_join(
 
 data <- data %>%
   select(benchmark, params, exp, ruleset, cycles, cost, noeqsat) %>%
-  filter(ruleset != -1) %>%
   mutate(
     name=str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
   ) %>%
@@ -678,8 +678,9 @@ data <- data %>%
     # calculate speedup against the second item in every group
     ## across(cycles:cost, ~ .[2] / .)
     ## cycles=noeqsat / cycles
-    across(cost, ~ .[2] / .)
+    across(cycles:cost, ~ .[3] / .)
   ) %>%
+  ## filter(ruleset > 0) %>%
   print(n=100)
 data %>%
   ggplot(aes(
@@ -687,7 +688,7 @@ data %>%
     ## y=cycles,
     xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
     xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0, ymax=cost,
+    ymin=0, ymax=cycles,
     fill=factor(ruleset)
   )) +
   geom_rect(
@@ -706,7 +707,7 @@ data %>%
   scale_fill_brewer(
     palette = "YlOrBr",
   ) +
-  labs(fill="Timeout", y="Speedup") +
+  labs(fill="Timeout", y="Speedup Cycles") +
   theme_minimal() +
   theme(
     axis.title.x = element_blank(),

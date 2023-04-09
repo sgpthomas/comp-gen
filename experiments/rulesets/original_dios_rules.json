@@ -105,7 +105,7 @@
       "lhs": "(* ?a ?b)",
       "rhs": "(* ?b ?a)",
       "bidirectional": true
-    }
+    },
     {
       "lhs": "(+ ?a (+ ?b ?c))",
       "rhs": "(+ (+ ?a ?b) ?c)",

@@ -395,7 +395,7 @@ def ruleset_ablation():
 
         if all([
                 "key" in config and config["key"] == "ruleset_ablation",
-                "Apr08-1237" in config["date"]
+                "Apr09-1154" in config["date"]
         ]):
             if "_" in config["name"]:
                 name, params = config["name"].split("_", 1)
@@ -430,7 +430,7 @@ def ruleset_ablation():
                         ruleset=timeout,
                         cycles=cycles,
                     )
-                    >> replace({"expanding_vecmac": -1})
+                    >> replace({"expanding_vecmac": -2, "original_dios_rules": -1})
                     >> spread(X.name, X.value)
                     >> display()
                     >> select(X.benchmark, X.params, X.exp, X.ruleset, X.cost, X.cycles)
@@ -449,15 +449,16 @@ def ruleset_ablation():
 
 
 def play():
-    _ = latest_date()
+    # _ = latest_date()
 
     # res = []
-    # for config_path in Path("completed").glob("**/config.json"):
-    #     exp_path = Path(config_path.parents[0])
-    #     config = json.load(config_path.open("r"))
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
 
-    #     if all(["Mar23" in config["date"]]):
-    #         print(json.dumps(config, indent=2))
+        if all(["metadata" in config and "backoff" in config["metadata"]["compile.json"]]):
+            print(exp_path)
+            print(json.dumps(config, indent=2))
     # df = pd.concat(res)
     # print(df.to_string())
 

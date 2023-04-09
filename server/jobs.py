@@ -232,19 +232,23 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_synthesis(jobs_dir, timeout):
+def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60):
     date_str = datetime.now().strftime("%b%d-%H%M")
     job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{timeout}", 0)
     job_dir.mkdir(exist_ok=False)
     synth_config = json.load((Path("synthesis") / "base.json").open("r"))
     synth_config["ruler_config"]["abs_timeout"] = timeout
+    synth_config["ruler_config"]["eqsat_iter_limit"] = eqsat_iter
+    synth_config["ruler_config"]["eqsat_time_limit"] = eqsat_timeout
     job_config = {
         "date": date_str,
         "name": "synthesis",
         "memory_limit": 220,
         "command": "./run.sh",
         "metadata": {
-            "timeout": timeout
+            "timeout": timeout,
+            "eqsat_iter_limit": eqsat_iter,
+            "eqsat_timeout": eqsat_timeout,
         }
     }
     json.dump(job_config, (job_dir / "config.json").open("w"), indent=2)
@@ -337,13 +341,14 @@ def overall_performance():
         # [8, 8, 8, 8],
         # [10, 10, 10, 10],
         # [16, 16, 16, 16],
-        [20, 20, 20, 20]
+        # [18, 18, 18, 18],
+        # [20, 20, 20, 20]
     ]
     conv_2d_sizes = [
         # [3, 3, 2, 2],
         # [3, 3, 3, 3],
         # [3, 5, 3, 3],
-        # [4, 4, 3, 3],
+        [4, 4, 3, 3],
         # [8, 8, 3, 3],
         # [10, 10, 2, 2],
         # [10, 10, 3, 3],
@@ -351,14 +356,19 @@ def overall_performance():
         # [16, 16, 2, 2],
         # [16, 16, 3, 3],
         # [16, 16, 4, 4],
-        [20, 20, 3, 3],
+        # [18, 18, 2, 2],
+        # [18, 18, 3, 3],
+        # [18, 18, 4, 4],
     ]
-    # qr_decomp_sizes = [
-    #     3,
-    #     4
-    # ]
-    ruleset = rulesets["expanding_vecmac"]
-    config = configs["loop_alt_cost_t1800"]
+    q_prod = [
+        # 0
+    ]
+    qr_decomp_sizes = [
+        # 3,
+        # 4
+    ]
+    ruleset = rulesets["ruleset_timeout86400"]
+    config = configs["loop_alt_cost_t180"]
 
     # create all the jobs
     for size in mat_mul_sizes:
@@ -381,20 +391,21 @@ def overall_performance():
             key="performance"
         )
 
-    # q_prod(Path("jobs"), ruleset, config, True, key="performance")
+    for _ in q_prod:
+        q_prod(Path("jobs"), ruleset, config, True, key="performance")
 
-    # for size in qr_decomp_sizes:
-    #     qr_decomp(
-    #         Path("jobs"),
-    #         size,
-    #         ruleset,
-    #         config,
-    #         True,
-    #         key="performance"
-    #     )
+    for size in qr_decomp_sizes:
+        qr_decomp(
+            Path("jobs"),
+            size,
+            ruleset,
+            config,
+            True,
+            key="performance"
+        )
 
 
-def pruning_experiment():
+def pruning_experiments():
     """
     This experiment is meant to show that pruning dramatically decreases
     the how long it takes to find a low-cost program.
@@ -403,7 +414,8 @@ def pruning_experiment():
     print("Creating pruning experiments")
 
     params = [
-        [3, 3, 2, 2],
+        [8, 8, 3, 3],
+        [10, 10, 3, 3],
     ]
 
     for p in params:
@@ -417,14 +429,14 @@ def pruning_experiment():
             key="pruning"
         )
         # no pruning config
-        # make_2d_conv(
-        #     Path("jobs"),
-        #     *p,
-        #     rulesets["ruleset_timeout432000"],
-        #     configs["phased_no_opt_alt_cost"],
-        #     True,
-        #     key="pruning"
-        # )
+        make_2d_conv(
+            Path("jobs"),
+            *p,
+            rulesets["ruleset_timeout432000"],
+            configs["loop_alt_cost_noprune_t1800"],
+            True,
+            key="pruning"
+        )
 
 
 def understand_cost_function():
@@ -568,24 +580,60 @@ def ruleset_synthesis():
     """
 
     timeouts = [
-        60,
-        600,
-        6000,
-        60000,
-        600000
+        # 60,
+        # 600,
+        # 6000,
+        # 60000,
+        # 600000,
+        60 * 60 * 24 * 3
     ]
 
-    for t in timeouts:
-        make_synthesis(Path("jobs"), t)
+    eqsat_settings = [
+        # (2, 60),
+        (3, 60),
+        # (4, 120),
+    ]
+    exps = itertools.product(timeouts, eqsat_settings)
+    for (t, eqsat) in exps:
+        make_synthesis(Path("jobs"), t, eqsat_iter=eqsat[0], eqsat_timeout=eqsat[1])
+
+
+def scheduler():
+    """
+    Make a job that uses all the rules with the backoff scheduler.
+    """
+
+    size = [
+        [8, 8, 3, 3]
+    ]
+
+    for s in size:
+        make_2d_conv(
+            Path("jobs"),
+            *s,
+            rulesets["ruleset_timeout432000"],
+            configs["all-backoff"],
+            True,
+            key="scheduler"
+        )
+        make_2d_conv(
+            Path("jobs"),
+            *s,
+            rulesets["ruleset_timeout432000"],
+            configs["all-simple"],
+            True,
+            key="scheduler"
+        )
 
 
 def main():
-    # overall_performance()
-    # pruning_experiment()
+    overall_performance()
+    # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
-    ruleset_ablation()
+    # ruleset_ablation()
     # ruleset_synthesis()
+    # scheduler()
 
 
 if __name__ == "__main__":

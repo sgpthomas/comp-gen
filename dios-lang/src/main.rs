@@ -187,9 +187,10 @@ fn compile(opts: CompileOpts) -> Res<()> {
         });
     }
 
+    // add litvec rules
     compiler
         .add_rules(
-            vec![handwritten::build_litvec_rule(opts.vector_width)].into_iter(),
+            handwritten::build_litvec_rule(opts.vector_width).into_iter(),
         )
         // .with_filter(|cm| cm.cd > 0.0)
         // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)

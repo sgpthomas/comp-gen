@@ -19,8 +19,8 @@ def get_aws_ip_by_name(name):
     raise Exception(f"Machine {name} not found")
 
 
-def do_send():
-    ip = get_aws_ip_by_name("exp")
+def do_send(name):
+    ip = get_aws_ip_by_name(name)
     # send the complete jobs to the server so that the number's it generates
     # are the same as the ones we have
     print("Sending complete jobs", end="...")
@@ -42,8 +42,8 @@ def do_send():
     subprocess.run(["mkdir", "jobs"])
 
 
-def do_retreive():
-    ip = get_aws_ip_by_name("exp")
+def do_retreive(name):
+    ip = get_aws_ip_by_name(name)
 
     print("Syncing in-progress jobs", end="...")
     subprocess.run([
@@ -62,9 +62,9 @@ def do_retreive():
     print("Done")
 
 
-def do_both():
-    do_send()
-    do_retreive()
+def do_both(name):
+    do_send(name)
+    do_retreive(name)
 
 
 @click.group()
@@ -73,18 +73,21 @@ def cli():
 
 
 @cli.command()
-def send():
-    do_send()
+@click.option("--name", default="exp")
+def send(name):
+    do_send(name)
 
 
 @cli.command()
-def retreive():
-    do_retreive()
+@click.option("--name", default="exp")
+def retreive(name):
+    do_retreive(name)
 
 
 @cli.command()
-def both():
-    do_both()
+@click.option("--name", default="exp")
+def both(name):
+    do_both(name)
 
 
 if __name__ == "__main__":

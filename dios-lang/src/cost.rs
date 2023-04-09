@@ -1,5 +1,6 @@
 use comp_gen::ruler::egg::{self, CostFunction, Language};
 use comp_gen::FromPattern;
+use itertools::Itertools;
 
 use crate::lang::VecLang;
 
@@ -59,7 +60,7 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                         BIG * vals.iter().fold(0., |acc, e| costs(*e) + acc)
                     }
                 } else {
-                    STRUCTURE
+                    STRUCTURE * (vals.iter().unique().count() as f64)
                 }
             }
             VecLang::LitVec(..) => LITERAL,
