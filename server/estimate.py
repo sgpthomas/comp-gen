@@ -36,6 +36,10 @@ def param_strings(benchmark, params):
             f"-DB_ROWS='{b_rows}'",
             f"-DB_COLS='{b_cols}'",
         ]
+    elif benchmark == "qr-decomp":
+        return [
+            f"-DSIZE='{params}'"
+        ]
     else:
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
