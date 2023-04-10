@@ -2,7 +2,6 @@ from pathlib import Path
 import json
 import pandas as pd
 from dfply import filter_by, X, dfpipe, select, mutate, inner_join, spread
-from functools import reduce
 from datetime import datetime
 
 
@@ -130,56 +129,90 @@ def pruning():
         exp_path = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
 
+        if "_" in config["name"]:
+            name, params = config["name"].split("_", 1)
+        else:
+            name = config["name"]
+            params = "0"
+        cycles_csv = exp_path / "results" / "cycles.csv"
+
+
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr" in config["date"],
+                "Apr10" in config["date"],
                 "key" in config and config["key"] == "pruning",
+                cycles_csv.exists()
             ]
         ):
             print(config["date"])
             print(exp_path)
             print(json.dumps(config, indent=2))
 
-            if "_" in config["name"]:
-                name, params = config["name"].split("_", 1)
-            else:
-                name = config["name"]
-                params = "0"
+            egraph_cost = (pd.read_csv(exp_path / "data.csv")
+                           >> filter_by(X.iteration == "report")
+                           >> filter_by(X.name == "cost")
+                           >> iloc([-1]))
 
-            data = (
-                pd.read_csv(exp_path / "data.csv")
-                >> filter_by(
-                    (X.name == "timestamp") | (X.name == "nodes")
-                )
-                >> filter_by(X.iteration != "report")
-                >> spread(X.name, X.value)
-            )
+            # I want to get name, params, exp, pruning, cycles, cost, nodes
             df = (
-                pd.read_csv(exp_path / "iter_estimation.csv")
-                >> inner_join(
-                    data.astype({"iteration": "int64"}),
-                    by=["phase", "iteration"])
+                pd.read_csv(cycles_csv)
                 >> mutate(
-                    pruning="loop" in config["metadata"]["compile.json"],
                     benchmark=name,
-                    params=params)
-                >> select([
-                    "kernel",
-                    "benchmark",
-                    "params",
-                    "pruning",
-                    "phase",
-                    "iteration",
-                    "cycles",
-                    "cost",
-                    "nodes",
-                    "timestamp"
-                ])
+                    params=params,
+                    exp=exp_path.name,
+                    pruning=not ("noprune" in config["metadata"]["compile.json"]),
+                    cost=egraph_cost["value"].values[0]
+                )
+                >> select(
+                    [
+                        "benchmark",
+                        "params",
+                        "exp",
+                        "pruning",
+                        "cycles",
+                        "cost"
+                    ]
+                )
             )
+            
+            # data = (
+            #     pd.read_csv(exp_path / "data.csv")
+            #     >> filter_by(
+            #         (X.name == "timestamp") | (X.name == "nodes")
+            #     )
+            #     >> filter_by(X.iteration != "report")
+            #     >> spread(X.name, X.value)
+            # )
+            # df = (
+            #     pd.read_csv(exp_path / "iter_estimation.csv")
+            #     >> inner_join(
+            #         data.astype({"iteration": "int64"}),
+            #         by=["phase", "iteration"])
+            #     >> mutate(
+            #         pruning="loop" in config["metadata"]["compile.json"],
+            #         benchmark=name,
+            #         params=params)
+            #     >> select([
+            #         "kernel",
+            #         "benchmark",
+            #         "params",
+            #         "pruning",
+            #         "phase",
+            #         "iteration",
+            #         "cycles",
+            #         "cost",
+            #         "nodes",
+            #         "timestamp"
+            #     ])
+            # )
             res.append(df)
 
-    df = pd.concat(res) >> reset_index(drop=True)
+    df = (
+        pd.concat(res)
+        >> sort_values(by=["benchmark", "params", "pruning"], key=cmp_params)
+        >> reset_index(drop=True)
+    )
     print(df.to_string())
     out = Path("figs") / "data" / "pruning.csv"
     df.to_csv(out, index_label="iter")
@@ -467,14 +500,14 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    # pruning()
-    compile_est_cycles()
+    pruning()
+    # compile_est_cycles()
     # stock_dios()
     # scheduler()
     # play()
     # fix()
     # noeqsat()
-    ruleset_ablation()
+    # ruleset_ablation()
 
 
 if __name__ == "__main__":

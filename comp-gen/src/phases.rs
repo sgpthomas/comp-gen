@@ -1,7 +1,7 @@
 use derivative::Derivative;
 use ruler::egg;
 
-use crate::{CostMetric, FromPattern};
+use crate::{config::RuleSchedulerOpt, CostMetric, FromPattern};
 
 /// Describes a single phase of equality saturation. Besides a name, a phase
 /// consists of the `select` predicate; which is a predicate selecting which rules
@@ -29,6 +29,8 @@ pub struct SinglePhase<
     pub(crate) iter_limit: Option<usize>,
     /// The timeout for this phase.
     pub(crate) timeout: Option<usize>,
+    /// The scheduler to use for this phase.
+    pub(crate) scheduler: Option<RuleSchedulerOpt>,
 }
 
 /// Describes the phase config tree. A phase can either be a single phase, or a loop
@@ -101,6 +103,7 @@ impl<
             node_limit: None,
             iter_limit: None,
             timeout: None,
+            scheduler: None,
         };
         self.phases.push(Phase::Single(single_phase));
         self
@@ -114,6 +117,7 @@ impl<
         node_limit: Option<usize>,
         iter_limit: Option<usize>,
         timeout: Option<usize>,
+        scheduler: Option<RuleSchedulerOpt>,
     ) -> &mut Self
     where
         S: ToString,
@@ -126,6 +130,7 @@ impl<
             node_limit,
             iter_limit,
             timeout,
+            scheduler,
         };
         self.phases.push(Phase::Single(single_phase));
         self

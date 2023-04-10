@@ -148,7 +148,7 @@ where
         debug!("Using timeout: {:?}", time_left);
 
         // set the scheduler according to the options
-        runner = match self.scheduler {
+        runner = match phase.scheduler.as_ref().unwrap_or(&self.scheduler) {
             RuleSchedulerOpt::Backoff => {
                 runner.with_scheduler(egg::BackoffScheduler::default())
             }

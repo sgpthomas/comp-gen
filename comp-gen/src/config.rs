@@ -42,6 +42,7 @@ pub enum PhaseConfiguration {
         iter_limit: Option<usize>,
         timeout: Option<usize>,
         disabled: Option<bool>,
+        scheduler: Option<RuleSchedulerOpt>,
     },
     Phases {
         phases: Vec<PhaseConfiguration>,
@@ -69,6 +70,7 @@ where
                 iter_limit,
                 timeout,
                 disabled,
+                scheduler,
             } => {
                 if !disabled.unwrap_or(false) {
                     let [cd_low, cd_high] = cd;
@@ -87,6 +89,7 @@ where
                         node_limit,
                         iter_limit,
                         timeout,
+                        scheduler,
                     );
                 }
             }

@@ -4,7 +4,7 @@
   "timeout": 1800,
   "dry_run": false,
   "dump_rules": true,
-  "reuse_egraphs": false,
+  "reuse_egraphs": true,
   "cd_filter": null,
   "require_all_vars": false,
   "scheduler": "simple",
@@ -45,7 +45,7 @@
         "cd": [-5.0, 5.0],
         "ca": [null, 9.0],
         "iter_limit": 10,
-        "disabled": false
+        "disabled": false,
       }
     ]
   }
