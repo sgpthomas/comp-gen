@@ -41,7 +41,13 @@ def param_strings(benchmark, params):
 
 
 def estimate_kernel(
-        exp_dir, force=False, results="results", override="", benchmark_name=None, params=None
+        exp_dir,
+        force=False,
+        results="results",
+        override="",
+        benchmark_name=None,
+        params=None,
+        debug=False
 ):
     exp_path = Path(exp_dir)
 
@@ -92,7 +98,8 @@ def estimate_kernel(
         print("Compiling", end="...", flush=True)
         subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
         # run once to generate .s files, and then again to generate object file
-        subprocess.run(" ".join(cmd + ["-S"]), shell=True, cwd=exp_path / results)
+        if debug:
+            subprocess.run(" ".join(cmd + ["-S"]), shell=True, cwd=exp_path / results)
         subprocess.run(
             " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
             shell=True,
@@ -102,12 +109,11 @@ def estimate_kernel(
 
     # simulate the resulting object file
     print("Simulating", end="...", flush=True)
-    subprocess.run(" ".join([
-        "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run",
-        "--client_commands='trace --level=0 trace.out'",
-        # "--mem_model",
-        "kernel.o"
-    ]), shell=True, cwd=exp_path / results, capture_output=False)
+    xt_run_cmd = ["~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run"]
+    if debug:
+        xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
+    xt_run_cmd += ["kernel.o"]
+    subprocess.run(" ".join(xt_run_cmd), shell=True, cwd=exp_path / results, capture_output=False)
     print("Done")
 
     df = pd.read_csv(exp_path / results / "cycles.csv")
@@ -147,7 +153,8 @@ def single(exp_dir, force, results, name, params):
 @click.option("--force", is_flag=True)
 @click.option("--key", default="performance")
 @click.option("--override-name", default="")
-def many(date, force, key, override_name):
+@click.option("--debug", is_flag=True)
+def many(date, force, key, override_name, debug):
 
     experiments = {}
 
@@ -189,7 +196,7 @@ def many(date, force, key, override_name):
     if date in experiments:
         for exp_dir in experiments[date]:
             print(f"Running {exp_dir}")
-            estimate_kernel(exp_dir, force=force, override=override_name)
+            estimate_kernel(exp_dir, force=force, override=override_name, debug=debug)
     else:
         raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
 

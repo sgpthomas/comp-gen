@@ -81,7 +81,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many Apr09-1737 --key ruleset_ablation
+./estimate.py many Apr09-1813 --key performance
 #+end_src
 
 #+begin_src async-shell :name estimation

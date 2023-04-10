@@ -85,39 +85,6 @@ int main(int argc, char **argv) {
 
   int time = 0;
 
-  // Naive
-  start_cycle_timing;
-  /* naive_matrix_multiply(a, b, c,  A_ROWS, A_COLS, B_COLS); */
-  /* stop_cycle_timing; */
-  /* time = get_time(); */
-  /* print_matrix(c, A_ROWS, B_COLS); */
-  /* output_check(c, c_spec, A_ROWS, B_COLS); */
-  /* zero_matrix(c, A_ROWS, B_COLS); */
-  /* printf("Naive : %d cycles\n", time); */
-  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Naive",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
-
-  // Naive, hard-coded size
-  /* start_cycle_timing; */
-  /* naive_matrix_multiply_hard_size(a, b, c); */
-  /* stop_cycle_timing; */
-  /* time = get_time(); */
-  /* print_matrix(c, A_ROWS, B_COLS); */
-  /* output_check(c, c_spec, A_ROWS, B_COLS); */
-  /* zero_matrix(c, A_ROWS, B_COLS); */
-  /* printf("Naive hard size: %d cycles\n", time); */
-  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Naive hard size",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
-
-  // Nature
-  /* start_cycle_timing; */
-  /* matmmltf(a, A_ROWS, A_COLS, b, B_COLS, c); */
-  /* stop_cycle_timing; */
-  /* time = get_time(); */
-  /* print_matrix(c, A_ROWS, B_COLS); */
-  /* output_check(c, c_spec, A_ROWS, B_COLS); */
-  /* zero_matrix(c, A_ROWS, B_COLS); */
-  /* printf("Nature : %d cycles\n", time); */
-  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Nature",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
-
   // Comp Gen
   start_cycle_timing;
   kernel(a, b, c);
@@ -137,39 +104,6 @@ int main(int argc, char **argv) {
           time,
           correct
           );
-
-  // Eigen
-  // Don't count data transformation toward timing
-  /* Eigen::Map<Eigen::Matrix<float, A_ROWS, A_COLS, Eigen::RowMajor>> e_a(a, A_ROWS, A_COLS); */
-  /* Eigen::Map<Eigen::Matrix<float, B_ROWS, B_COLS, Eigen::RowMajor>> e_b(b, B_ROWS, B_COLS); */
-  /* Eigen::Matrix<float, A_ROWS, B_COLS, Eigen::RowMajor> e_c; */
-  /* start_cycle_timing; */
-  /* e_c = e_a*e_b; */
-  /* stop_cycle_timing; */
-  /* time = get_time(); */
-
-  /* memcpy(c, e_c.data(), sizeof(float) * A_ROWS * B_COLS); */
-  /* print_matrix(c, A_ROWS, B_COLS); */
-  /* output_check(c, c_spec, A_ROWS, B_COLS); */
-  /* zero_matrix(c, A_ROWS, B_COLS); */
-  /* printf("Eigen : %d cycles\n", time); */
-  /* fprintf(file, "%s,%d,%d,%d,%d,%d\n","Eigen",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
-
-  // Expert
-  /* if ((A_ROWS == 2) && */
-  /*     (A_COLS == 3) && */
-  /*     (B_ROWS == 3) && */
-  /*     (B_COLS == 3)) { */
-  /*   start_cycle_timing; */
-  /*   matrix_multiply_2x3_3x3_expert(c, a, b); */
-  /*   stop_cycle_timing; */
-  /*   time = get_time(); */
-  /*   print_matrix(c, A_ROWS, B_COLS); */
-  /*   output_check(c, c_spec, A_ROWS, B_COLS); */
-  /*   zero_matrix(c, A_ROWS, B_COLS); */
-  /*   printf("Expert : %d cycles\n", time); */
-  /*   fprintf(file, "%s,%d,%d,%d,%d,%d\n","Expert",A_ROWS,A_COLS,B_ROWS,B_COLS,time); */
-  /* } */
 
   return 0;
 }
