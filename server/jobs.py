@@ -10,7 +10,8 @@ import itertools
 from typing import Callable
 
 
-def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost, key=None):
+def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost,
+            key=None, timeout=60 * 30):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"mat-mul_{a_rows}x{a_cols}_{b_rows}x{b_cols}"
     job_dir = unique_name(
@@ -23,7 +24,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
         "name": name,
         "key": key,
         "memory_limit": 220,
-        "timeout": 60 * 30,  # 30 minutes
+        "timeout": timeout,
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -68,7 +69,8 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost, key=None):
+def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cost,
+                 key=None, timeout=60 * 30):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -78,7 +80,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
         "name": name,
         "key": key,
         "memory_limit": 220,
-        "timeout": 60 * 30,  # 30 minutes
+        "timeout": timeout,  # 30 minutes
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -126,7 +128,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None):
+def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None, timeout=60 * 30):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = "q-prod"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -136,7 +138,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None):
         "name": name,
         "key": key,
         "memory_limit": 220,
-        "timeout": 60 * 30,  # 30 minutes
+        "timeout": timeout,
         "command": "./run.sh",
         "benchmark": "q-prod",
         "metadata": {
@@ -181,7 +183,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
+def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None, timeout=60 * 30):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"qr-decomp_{N}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -191,7 +193,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
         "name": name,
         "key": key,
         "memory_limit": 220,
-        "timeout": 30 * 60,  # 30 minutes
+        "timeout": timeout,
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -372,40 +374,46 @@ def overall_performance():
         4
     ]
     ruleset = rulesets["ruleset_timeout86400"]
-    config = configs["loop_alt_cost_t180"]
+    cs = [
+        # configs["loop_alt_cost_t180"],
+        configs["loop_alt_cost_t1800"]
+    ]
 
     # create all the jobs
-    for size in mat_mul_sizes:
+    for size, c in itertools.product(mat_mul_sizes, cs):
         mat_mul(
             Path("jobs"),
             *size,
             ruleset,
-            config,
+            c,
             True,
-            key="performance"
+            key="performance",
+            timeout=60 * 40
         )
 
-    for size in conv_2d_sizes:
+    for size, c in itertools.product(conv_2d_sizes, cs):
         make_2d_conv(
             Path("jobs"),
             *size,
             ruleset,
-            config,
+            c,
             True,
-            key="performance"
+            key="performance",
+            timeout=60 * 40
         )
 
-    for _ in q_prod_params:
-        q_prod(Path("jobs"), ruleset, config, True, key="performance")
+    for _, c in itertools.product(q_prod_params, cs):
+        q_prod(Path("jobs"), ruleset, c, True, key="performance", timeout=60 * 40)
 
-    for size in qr_decomp_sizes:
+    for size, c in itertools.product(qr_decomp_sizes, cs):
         qr_decomp(
             Path("jobs"),
             size,
             ruleset,
-            config,
+            c,
             True,
-            key="performance"
+            key="performance",
+            timeout=60 * 40
         )
 
 
@@ -418,8 +426,11 @@ def pruning_experiments():
     print("Creating pruning experiments")
 
     params = [
+        [3, 3, 3, 3],
+        [4, 4, 3, 3],
         [8, 8, 3, 3],
         [10, 10, 3, 3],
+        [16, 16, 3, 3],
     ]
 
     for p in params:
@@ -427,7 +438,7 @@ def pruning_experiments():
         make_2d_conv(
             Path("jobs"),
             *p,
-            rulesets["ruleset_timeout432000"],
+            rulesets["ruleset_timeout86400"],
             configs["loop_alt_cost_t1800"],
             True,
             key="pruning"
@@ -436,7 +447,7 @@ def pruning_experiments():
         make_2d_conv(
             Path("jobs"),
             *p,
-            rulesets["ruleset_timeout432000"],
+            rulesets["ruleset_timeout86400"],
             configs["loop_alt_cost_noprune_t1800"],
             True,
             key="pruning"
@@ -449,17 +460,17 @@ def understand_cost_function():
     2) Try looping+pruning with original cost function.
     """
 
-    params = [
+    sizes = [
         [2, 2, 2, 2],
         [4, 4, 4, 4],
         [8, 8, 8, 8],
         [16, 16, 16, 16],
     ]
 
-    for p in params:
+    for s in sizes:
         mat_mul(
             Path("jobs"),
-            *p,
+            *s,
             rulesets["expanding_vecmac"],
             configs["loop_alt_cost_t1800"],
             True,
@@ -542,7 +553,7 @@ def ruleset_ablation():
         # [16, 16, 4, 4],
     ]
 
-    config = configs["loop_alt_cost_t180"]
+    config = configs["loop_alt_cost_t1800"]
 
     def read_time(p):
         config = json.load((p.parents[0] / "config.json").open("r"))
@@ -554,8 +565,8 @@ def ruleset_ablation():
         key=read_time
     )
     rs = (list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
-          + [rulesets["ruleset_timeout86400"]]
           + [rulesets["ruleset_timeout43200"]]
+          + [rulesets["ruleset_timeout86400"]]
           # + [rulesets["expanding_vecmac"]]
           # + [rulesets["original_dios_rules"]]
           )
