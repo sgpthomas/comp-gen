@@ -17,7 +17,7 @@ pub fn build_litvec_rule(vec_width: usize) -> Vec<egg::Rewrite<VecLang, ()>> {
     let mut res = vec![egg::rewrite!("litvec"; { searcher } => { applier })];
 
     // add rules of the form (Vec 0 (get ?a ?n0) ..) => (VecLit 0 (get ?a ?n0) ..)
-    for lit in 0..2 {
+    for lit in 0..1 {
         for w in 0..vec_width {
             let mut all_gets_search = gets.clone();
             let mut all_gets_apply = gets.clone();

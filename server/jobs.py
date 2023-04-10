@@ -23,6 +23,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, alt_cost
         "name": name,
         "key": key,
         "memory_limit": 220,
+        "timeout": 60 * 30,  # 30 minutes
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -77,6 +78,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, alt_cos
         "name": name,
         "key": key,
         "memory_limit": 220,
+        "timeout": 60 * 30,  # 30 minutes
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -134,6 +136,7 @@ def q_prod(jobs_dir, ruleset, compile, alt_cost, key=None):
         "name": name,
         "key": key,
         "memory_limit": 220,
+        "timeout": 60 * 30,  # 30 minutes
         "command": "./run.sh",
         "benchmark": "q-prod",
         "metadata": {
@@ -188,6 +191,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, alt_cost, key=None):
         "name": name,
         "key": key,
         "memory_limit": 220,
+        "timeout": 30 * 60,  # 30 minutes
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -334,38 +338,38 @@ def overall_performance():
     print("Creating overall performance jobs")
 
     mat_mul_sizes = [
-        # [2, 2, 2, 2],
-        # [2, 3, 3, 3],
-        # [3, 3, 3, 3],
-        # [4, 4, 4, 4],
-        # [8, 8, 8, 8],
-        # [10, 10, 10, 10],
-        # [16, 16, 16, 16],
-        # [18, 18, 18, 18],
-        # [20, 20, 20, 20]
+        [2, 2, 2, 2],
+        [2, 3, 3, 3],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [8, 8, 8, 8],
+        [10, 10, 10, 10],
+        [16, 16, 16, 16],
+        [18, 18, 18, 18],
+        [20, 20, 20, 20]
     ]
     conv_2d_sizes = [
-        # [3, 3, 2, 2],
-        # [3, 3, 3, 3],
-        # [3, 5, 3, 3],
+        [3, 3, 2, 2],
+        [3, 3, 3, 3],
+        [3, 5, 3, 3],
         [4, 4, 3, 3],
-        # [8, 8, 3, 3],
-        # [10, 10, 2, 2],
-        # [10, 10, 3, 3],
-        # [10, 10, 4, 4],
-        # [16, 16, 2, 2],
-        # [16, 16, 3, 3],
-        # [16, 16, 4, 4],
-        # [18, 18, 2, 2],
-        # [18, 18, 3, 3],
-        # [18, 18, 4, 4],
+        [8, 8, 3, 3],
+        [10, 10, 2, 2],
+        [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
+        [16, 16, 3, 3],
+        [16, 16, 4, 4],
+        [18, 18, 2, 2],
+        [18, 18, 3, 3],
+        [18, 18, 4, 4],
     ]
-    q_prod = [
-        # 0
+    q_prod_params = [
+        0
     ]
     qr_decomp_sizes = [
-        # 3,
-        # 4
+        3,
+        4
     ]
     ruleset = rulesets["ruleset_timeout86400"]
     config = configs["loop_alt_cost_t180"]
@@ -391,7 +395,7 @@ def overall_performance():
             key="performance"
         )
 
-    for _ in q_prod:
+    for _ in q_prod_params:
         q_prod(Path("jobs"), ruleset, config, True, key="performance")
 
     for size in qr_decomp_sizes:
@@ -538,15 +542,7 @@ def ruleset_ablation():
         # [16, 16, 4, 4],
     ]
 
-    config = configs["loop_alt_cost_t1800"]
-    # rs = [
-    #     "expanding_vecmac",
-    #     "ruleset_timeout4000",
-    #     "ruleset_timeout8000",
-    #     "ruleset_timeout86400",
-    #     "ruleset_timeout432000",
-    #     "original_dios_rules",
-    # ]
+    config = configs["loop_alt_cost_t180"]
 
     def read_time(p):
         config = json.load((p.parents[0] / "config.json").open("r"))
@@ -559,9 +555,10 @@ def ruleset_ablation():
     )
     rs = (list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
           + [rulesets["ruleset_timeout86400"]]
-          + [rulesets["ruleset_timeout432000"]]
-          + [rulesets["expanding_vecmac"]]
-          + [rulesets["original_dios_rules"]])
+          + [rulesets["ruleset_timeout43200"]]
+          # + [rulesets["expanding_vecmac"]]
+          # + [rulesets["original_dios_rules"]]
+          )
     exps = itertools.product(conv_2d_sizes, rs)
     for (size, r) in exps:
         make_2d_conv(
@@ -611,7 +608,7 @@ def scheduler():
         make_2d_conv(
             Path("jobs"),
             *s,
-            rulesets["ruleset_timeout432000"],
+            rulesets["ruleset_timeout86400"],
             configs["all-backoff"],
             True,
             key="scheduler"
@@ -619,7 +616,7 @@ def scheduler():
         make_2d_conv(
             Path("jobs"),
             *s,
-            rulesets["ruleset_timeout432000"],
+            rulesets["ruleset_timeout86400"],
             configs["all-simple"],
             True,
             key="scheduler"

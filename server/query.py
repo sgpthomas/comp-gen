@@ -204,7 +204,8 @@ def compile_est_cycles():
 
         if all(
             [
-                "Mar29-1443" in config["date"],
+                # "Mar29-1443" in config["date"],
+                "Apr09-1813" in config["date"],
                 "key" in config and config["key"] == "performance",
                 cycles_csv.exists(),
             ]
@@ -260,7 +261,8 @@ def compile_est_cycles():
         >> sort_values(by=["benchmark", "params"], key=cmp_params)
         >> reset_index(drop=True, names=["index"])
         >> display()
-        >> to_csv(Path("figs") / "data" / "est_cycles.csv", index=False))
+        >> to_csv(Path("figs") / "data" / "est_cycles.csv", index=False)
+    )
 
 
 def stock_dios():
@@ -395,7 +397,7 @@ def ruleset_ablation():
 
         if all([
                 "key" in config and config["key"] == "ruleset_ablation",
-                "Apr09-1154" in config["date"]
+                "Apr09-1806" in config["date"]
         ]):
             if "_" in config["name"]:
                 name, params = config["name"].split("_", 1)
@@ -404,7 +406,7 @@ def ruleset_ablation():
                 params = "0"
 
             # get timeout used for ruleset
-            print(exp_path)
+            print(exp_path, config["date"])
             timeout = timeout = Path(config["metadata"]["rules.json"]).stem
             try:
                 rules = json.load((exp_path / "rules.json").open("r"))
@@ -466,7 +468,7 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     # pruning()
-    # compile_est_cycles()
+    compile_est_cycles()
     # stock_dios()
     # scheduler()
     # play()

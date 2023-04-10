@@ -18,12 +18,12 @@ Sync jobs.
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
 
 #+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none :name dios
-# git checkout master
-# git pull -r
+git checkout master
+git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-python3 evaluation/eval_benchmarks.py --timeout 180 --skiplargemem --skiprun -o results
+python3 evaluation/eval_benchmarks.py --timeout 1000 --skiplargemem --skiprun -o results-t1000
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -81,7 +81,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many Apr09-1154 --key ruleset_ablation
+./estimate.py many Apr09-1737 --key ruleset_ablation
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -144,12 +144,30 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 13 :height 4
+#+header: :width 9 :height 4
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(full_join(
   read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
 ), read_csv("data/noeqsat.csv"))
+
+to_face <- function(sat) {
+  map_chr(sat, function(x) {
+    if (x == "yes") {
+      "black"
+    } else {
+      "red"
+    }  
+  })
+}
+
+faces <- data %>%
+  filter(kernel == "dios") %>%
+  select(saturated) %>%
+  mutate(
+    bold=to_face(saturated)
+  ) %>%
+  print(n=20)
 
 data <- data %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
@@ -189,7 +207,7 @@ data %>%
   geom_rect(
     position="dodge",
     color="black",
-  ) +
+    ) +
   geom_hline(yintercept=1, linetype="solid", color="black") +
   labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
   scale_x_continuous(
@@ -198,7 +216,7 @@ data %>%
   ) +
   scale_y_continuous(
     trans="log2",
-  ) +
+    ) +
   scale_fill_brewer(
     palette = "Paired",
     labels=c(
@@ -212,6 +230,7 @@ data %>%
   theme_minimal() +
   theme(
     axis.title.x = element_blank(),
+    axis.text.x = element_text(color=faces$bold),
     ## legend.position = c(0.80, 0.77),
     legend.position = "top",
     legend.background = element_rect(fill = "white"),
@@ -653,7 +672,7 @@ data %>%
 
 ** Ruleset ablation
 
-#+header: :width 9 :height 4
+#+header: :width 11 :height 4
 #+begin_src R :results graphics file :file ruleset-ablation.svg
 data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
 noeqsat <- read_csv("data/noeqsat.csv") %>%
@@ -676,9 +695,9 @@ data <- data %>%
   print(n=10) %>%
   mutate(
     # calculate speedup against the second item in every group
-    ## across(cycles:cost, ~ .[2] / .)
+    across(cycles:cost, ~ .[1] / .)
     ## cycles=noeqsat / cycles
-    across(cycles:cost, ~ .[3] / .)
+    ## across(cycles:cost, ~ .[3] / .)
   ) %>%
   ## filter(ruleset > 0) %>%
   print(n=100)
@@ -748,7 +767,7 @@ data %>%
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo *.svg); do
+for f in $(echo ruleset-ablation.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done

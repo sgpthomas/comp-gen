@@ -94,10 +94,11 @@ class Job:
         self.name = data["name"]
         self.memory_limit = data["memory_limit"]
         self.command = data["command"]
+        self.start_time = None
         if "timeout" in data:
             self.timeout = data["timeout"]
         else:
-            self.timeout = None
+            self.timeout = 60 * 30
 
     def valid(job_dir: Path):
         """Check if `job_dir` contains a valid job."""
@@ -119,6 +120,9 @@ class Job:
         stderr_log = self.dir / "stderr.log"
         stdout_log.touch()
         stderr_log.touch()
+
+        # save start time
+        self.start_time = time.time()
 
         # run the comp-gen binary, storing stdout and stderr in logs
         self.proc = subprocess.Popen(
@@ -219,6 +223,22 @@ def single_run(config, alive):
                 with memory_csv.open("a") as f:
                     print(
                         "{},{}".format(time.time(), "killed"),
+                        file=f,
+                        flush=True
+                    )
+
+            # if we have exceeded the time limit, kill this
+            # process and write a line out to memory.csv
+            time_diff = time.time() - job.start_time
+            if job.timeout is not None and time_diff > job.timeout:
+                print(f"Timing out after {time_diff} seconds!")
+                proc.terminate()
+                print("Waiting for process to die", end="...")
+                proc.wait()
+                print("Dead!!")
+                with memory_csv.open("a") as f:
+                    print(
+                        "{},{}".format(time.time(), "timeout"),
                         file=f,
                         flush=True
                     )
