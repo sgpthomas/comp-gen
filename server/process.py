@@ -38,6 +38,18 @@ def dict_to_csv(d):
             yield [name, value]
 
 
+def to_float(f, ending):
+    time = None
+    if ending == "µs":
+        return float(f) * 1e-6
+    elif ending == "ms":
+        return float(f) * 0.001
+    elif ending == "s":
+        return float(f)
+    else:
+        raise Exception(ending)
+
+
 class LogFilter:
     def __init__(self, combine=None):
         if isinstance(combine, Callable):
@@ -262,6 +274,10 @@ def filter_log(log):
                                 "%Y-%m-%dT%H:%M:%SZ"
                             ))
                         }
+                    ),
+                    LineFilter(
+                        r"Extraction took: (\d+\.\d+)(.*)",
+                        lambda m: {"extraction": to_float(m.group(1), m.group(2))}
                     ),
                     combine=lambda x: dict_combine(sum(x, []))
                 ),

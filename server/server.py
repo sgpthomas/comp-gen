@@ -203,11 +203,13 @@ def single_run(config, alive):
             # where to write the memory report
             memory_csv = job.dir / "memory.csv"
 
+            time_diff = time.time() - job.start_time
+
             # record memory usage
             memory_csv.touch()
             with memory_csv.open("a") as f:
                 print(
-                    "{},{}".format(time.time(), memory_used),
+                    "{},{}".format(time_diff, memory_used),
                     file=f,
                     flush=True
                 )
@@ -222,14 +224,13 @@ def single_run(config, alive):
                 print("Dead!")
                 with memory_csv.open("a") as f:
                     print(
-                        "{},{}".format(time.time(), "killed"),
+                        "{},{}".format(time_diff, "killed"),
                         file=f,
                         flush=True
                     )
 
             # if we have exceeded the time limit, kill this
             # process and write a line out to memory.csv
-            time_diff = time.time() - job.start_time
             if job.timeout is not None and time_diff > job.timeout:
                 print(f"Timing out after {time_diff} seconds!")
                 proc.terminate()

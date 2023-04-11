@@ -347,8 +347,8 @@ def overall_performance():
         [8, 8, 8, 8],
         [10, 10, 10, 10],
         [16, 16, 16, 16],
-        [18, 18, 18, 18],
-        [20, 20, 20, 20]
+        # [18, 18, 18, 18],
+        # [20, 20, 20, 20]
     ]
     conv_2d_sizes = [
         [3, 3, 2, 2],
@@ -362,20 +362,20 @@ def overall_performance():
         [16, 16, 2, 2],
         [16, 16, 3, 3],
         [16, 16, 4, 4],
-        [18, 18, 2, 2],
-        [18, 18, 3, 3],
-        [18, 18, 4, 4],
+        # [18, 18, 2, 2],
+        # [18, 18, 3, 3],
+        # [18, 18, 4, 4],
     ]
     q_prod_params = [
         0
     ]
     qr_decomp_sizes = [
         3,
-        4
+        # 4
     ]
     ruleset = rulesets["ruleset_timeout86400"]
     cs = [
-        # configs["loop_alt_cost_t180"],
+        configs["loop_alt_cost_t180"],
         configs["loop_alt_cost_t1800"]
     ]
 
@@ -388,7 +388,7 @@ def overall_performance():
             c,
             True,
             key="performance",
-            timeout=60 * 40
+            timeout=json.load(c.open("r"))["timeout"] * 2
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -399,7 +399,7 @@ def overall_performance():
             c,
             True,
             key="performance",
-            timeout=60 * 40
+            timeout=json.load(c.open("r"))["timeout"] * 2
         )
 
     for _, c in itertools.product(q_prod_params, cs):
@@ -413,7 +413,7 @@ def overall_performance():
             c,
             True,
             key="performance",
-            timeout=60 * 40
+            timeout=json.load(c.open("r"))["timeout"] * 2
         )
 
 
@@ -635,8 +635,8 @@ def scheduler():
 
 
 def main():
-    # overall_performance()
-    pruning_experiments()
+    overall_performance()
+    # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()

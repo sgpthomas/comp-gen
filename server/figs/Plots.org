@@ -81,7 +81,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key performance
+./estimate.py many latest --key ruleset_ablation
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -134,6 +134,7 @@ Import the R libraries that we will use.
 #+begin_src R :results none
 library(tidyverse)
 library(extrafont)
+library(ggpattern)
 #+end_src
 
 ** Performance graphs
@@ -144,11 +145,17 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 9 :height 4
+#+header: :width 13 :height 4
 #+begin_src R :results graphics file :file cycles-performance.svg
 data <- full_join(full_join(
-  read_csv("data/stock_cycles.csv"),
+  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
   read_csv("data/est_cycles.csv")
+  %>% filter(timeout == "180")
+  %>% filter(params != "18x18_2x2")
+  %>% filter(params != "18x18_3x3")
+  %>% filter(params != "18x18_4x4")
+  %>% filter(params != "18x18_18x18")
+  %>% filter(params != "20x20_20x20")
 ), read_csv("data/noeqsat.csv"))
 
 to_face <- function(sat) {
@@ -170,6 +177,7 @@ faces <- data %>%
   print(n=20)
 
 data <- data %>%
+  print(n=142) %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
@@ -220,8 +228,8 @@ data %>%
   scale_fill_brewer(
     palette = "Paired",
     labels=c(
-      "Naive (fixed size + no vec)",
-      "Naive (fixed size + clang vec)",
+      "Naive",
+      "Naive (vectorized)",
       "Nature",
       "Diospyros",
       "Compgen"
@@ -230,7 +238,7 @@ data %>%
   theme_minimal() +
   theme(
     axis.title.x = element_blank(),
-    axis.text.x = element_text(color=faces$bold),
+    ## axis.text.x = element_text(color=faces$bold),
     ## legend.position = c(0.80, 0.77),
     legend.position = "top",
     legend.background = element_rect(fill = "white"),
@@ -247,9 +255,14 @@ data %>%
 #+header: :width 9 :height 4
 #+begin_src R :results graphics file :file compile-times.svg
 data <- full_join(
-  read_csv("data/stock_cycles.csv"),
+  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
   read_csv("data/est_cycles.csv")
-  ## comment
+  %>% filter(timeout == "180")
+  %>% filter(params != "18x18_2x2")
+  %>% filter(params != "18x18_3x3")
+  %>% filter(params != "18x18_4x4")
+  %>% filter(params != "18x18_18x18")
+  %>% filter(params != "20x20_20x20")
 )
 
 # fix the order of params cat var
@@ -601,29 +614,49 @@ data %>%
 #+begin_src R :results graphics file :file pruning.svg
 data <- read_csv("data/pruning.csv")
 data %>%
+  mutate(
+    pattern=if_else(cycles < 0, T, F),
+    cycles=if_else(cycles < 0, 1500, cycles),
+    params=str_replace_all(params, "_", " ")
+  ) %>%
+  print(n=10) %>%
   ggplot(aes(
     x=factor(params, levels=unique(params)),
     y=cycles,
     fill=pruning,
+    pattern=pattern
   )) +
-  geom_col(
+  geom_col_pattern(
     position="dodge",
     width=0.5,
-    color="black"
+    color="black",
+    pattern_color="black",
+    pattern_fill="red",
+    pattern_spacing=0.05,
+    pattern_density=0.35,
   ) +
-  scale_fill_brewer(
-    palette="Paired",
+  geom_hline(
+    yintercept=1500,
+    color="red"
+  ) + annotate("text", x=3, y=1560, label="TIMEOUT", size=8, color="red") +
+  scale_fill_manual(
+    values=c("#eeeeee", "#fb9a99"),
+    labels=c("No Pruning", "Pruning")
+  ) +
+  scale_pattern_manual(
+    values=c("none", "stripe"),
   ) +
   ## scale_x_log10() + annotation_logticks(sides = "b") +
   labs(
-    ## x="Log Timestamp (secs)",
-    ## y="Normalized Cost",
-    ## color="Pruning"
+    x="2d-conv Params",
+    y="Cost",
+    fill="Pruning"
   ) +
-  ## guides(linetype="none") +
+  guides(pattern="none") +
   theme_minimal() +
   theme(
     ## legend.position = c(0.9, 0.9),
+    legend.title=element_blank(),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )
@@ -796,7 +829,7 @@ data %>%
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo pruning.svg); do
+for f in $(echo cycles-performance.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done

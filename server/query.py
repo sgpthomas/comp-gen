@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 import pandas as pd
-from dfply import filter_by, X, dfpipe, select, mutate, inner_join, spread
+from dfply import filter_by, X, dfpipe, select, mutate, spread
 from datetime import datetime
 
 
@@ -136,7 +136,6 @@ def pruning():
             params = "0"
         cycles_csv = exp_path / "results" / "cycles.csv"
 
-
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
@@ -147,7 +146,6 @@ def pruning():
             print(config["date"])
             print(exp_path)
             print(json.dumps(config, indent=2))
-
 
             if cycles_csv.exists():
                 df = pd.read_csv(cycles_csv) >> display()
@@ -244,6 +242,8 @@ def compile_est_cycles():
                 exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
             )
             memory = memory >> agg(["min", "max"])
+            extraction_time = (pd.read_csv(exp_path / "data.csv")
+                               >> filter_by(X.name == "extraction"))["value"].astype("float").sum()
             compile_time = (memory["timestamp"] >> agg(lambda x: x["max"] - x["min"]))
             ram_used = memory["ram_used"]["max"]
 
@@ -259,11 +259,19 @@ def compile_est_cycles():
             timeout = json.load((exp_path / "compile.json").open("r"))["timeout"]
 
             if cycles_csv.exists():
-                cycles = pd.read_csv(cycles_csv)["cycles"].values[0]
+                data = pd.read_csv(cycles_csv)
+                if len(data["cycles"].values) > 0:
+                    cycles = data["cycles"].values[0]
+                    kernel = data["kernel"].values[0]
+                else:
+                    cycles = -1
+                    kernel = "compgen"
             else:
                 cycles = -1
+                kernel = "compgen"
 
             df = pd.DataFrame(data={
+                "kernel": [kernel],
                 "benchmark": [name],
                 "params": [params],
                 "ruleset": [ruleset],
@@ -272,7 +280,7 @@ def compile_est_cycles():
                 "greedy": [config["metadata"]["alt_cost"]],
                 "cycles": [cycles],
                 "cost": [egraph_cost],
-                "compile_time": [compile_time],
+                "compile_time": [compile_time - extraction_time],
                 "max_ram_used": [ram_used]
             })
 
@@ -494,14 +502,14 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    # pruning()
+    pruning()
     compile_est_cycles()
     # stock_dios()
     # scheduler()
     # play()
     # fix()
     # noeqsat()
-    # ruleset_ablation()
+    ruleset_ablation()
 
 
 if __name__ == "__main__":
