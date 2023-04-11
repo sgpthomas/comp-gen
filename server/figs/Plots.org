@@ -10,7 +10,7 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py both
+./sync.py both --name synth
 #+end_src
 
 * Getting Diospyros Numbers
@@ -23,7 +23,8 @@ git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-python3 evaluation/eval_benchmarks.py --timeout 1000 --skiplargemem --skiprun -o results-t1000
+tmux new -d -s diospyros
+tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 1800 --skiplargemem --skiprun -o results-t1800" ENTER
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -81,7 +82,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key ruleset_ablation
+./estimate.py many latest --key performance
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -223,8 +224,8 @@ data %>%
     breaks=1:length(unique(data$name))
   ) +
   scale_y_continuous(
-    trans="log2",
-    ) +
+    trans="log2"
+  ) +
   scale_fill_brewer(
     palette = "Paired",
     labels=c(
@@ -311,6 +312,7 @@ data %>%
     color="black",
     width=0.5
   ) +
+  geom_hline(yintercept=180) +
   ## scale_y_log10() +
   ## ylim(0, 1.5) +
   scale_fill_manual(
@@ -479,6 +481,105 @@ data %>%
 #+RESULTS:
 [[file:noeqsat.svg]]
 
+*** Compilation timeout graph
+
+#+header: :width 13 :height 4
+#+begin_src R :results graphics file :file compilation_timeout_ablation.svg
+data <- full_join(full_join(
+  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
+  read_csv("data/est_cycles.csv") %>% mutate(kernel=str_c(kernel, ".", timeout))
+), read_csv("data/noeqsat.csv"))
+
+to_face <- function(sat) {
+  map_chr(sat, function(x) {
+    if (x == "yes") {
+      "black"
+    } else {
+      "red"
+    }  
+  })
+}
+
+faces <- data %>%
+  filter(kernel == "dios") %>%
+  select(saturated) %>%
+  mutate(
+    bold=to_face(saturated)
+  ) %>%
+  print(n=20)
+
+data <- data %>%
+  print(n=142) %>%
+  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  select(benchmark, params, kernel, cycles) %>%
+  group_by(benchmark) %>%
+  pivot_wider(
+    names_from=kernel,
+    values_from=cycles
+  ) %>%
+  mutate(
+    name = str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
+    norm = noeqsat,
+    compgen.180 = norm / compgen.180,
+    compgen.1800 = norm / compgen.1800,
+    dios = norm / dios,
+    nature = norm / nature,
+    noeqsat = norm / noeqsat,
+  ) %>%
+  pivot_longer(
+    cols = c("noeqsat", "dios", "compgen.180", "compgen.1800"),
+    names_to = "kernel",
+    values_to = "cycles"
+  ) %>%
+  select(name, kernel, cycles) %>%
+  print(n=60)
+
+data %>%
+  ggplot(aes(
+    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
+    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ymin=0,
+    ymax=cycles,
+    fill=factor(kernel, levels=unique(kernel))
+  )) +
+  geom_rect(
+    position="dodge",
+    color="black",
+    ) +
+  geom_hline(yintercept=1, linetype="solid", color="black") +
+  labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
+  scale_x_continuous(
+    label=unique(data$name),
+    breaks=1:length(unique(data$name))
+  ) +
+  scale_y_continuous(
+    trans="log2"
+  ) +
+  scale_fill_brewer(
+    palette = "Paired",
+    ## labels=c(
+    ##   "Naive",
+    ##   "Naive (vectorized)",
+    ##   "Nature",
+    ##   "Diospyros",
+    ##   "Compgen"
+    ## )
+  ) +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    ## axis.text.x = element_text(color=faces$bold),
+    ## legend.position = c(0.80, 0.77),
+    legend.position = "top",
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=12, face="bold"),
+    panel.spacing.x = unit(0, "lines")
+  )
+#+end_src
+
+#+RESULTS:
+[[file:compilation_timeout_ablation.svg]]
+
 ** TODO Greedy Cost Works
 
 The data here is wrong I think. Fix the data
@@ -517,98 +618,6 @@ Things to fix:
 - [X] Put true first in the legend
 - [ ] Get rid of the last data point (from the python generation script)
 - [ ] Make the =y-axis= use estimated cycles rather than cost (so that we know that we are doing the right thing)
-
-old R code
-#+begin_src R :results graphics file :file iter_size.svg
-data <- read_csv("data/pruning.csv")
-data %>%
-  select(-iter) %>%
-  filter(benchmark == "2d-conv_3x3_3x3") %>%
-  pivot_wider(
-    names_from=name,
-    values_from=value,
-  ) %>%
-  group_by(pruning) %>%
-  mutate(
-    cost=cost / max(cost),
-    phase=str_split_i(phase, "-", 1)
-  ) %>%
-  ggplot(aes(
-    x=nodes,
-    y=cost,
-    group=pruning,
-    ## linetype=pruning,
-    color=phase
-  )) +
-  geom_path(
-    linewidth=1.5,
-    arrow=arrow(),
-    show.legend=F
-    ) + geom_point(size=4) +
-  scale_x_log10() + scale_y_log10() +
-  scale_color_discrete(
-    breaks=c(TRUE, FALSE),
-    labels=c("Enabled", "Disabled")
-    ) +
-  labs(
-    x="Log10(Node Count)",
-    y="Normalized Cost",
-    color="Pruning"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = c(0.9, 0.9),
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold")
-  ) +
-  scale_fill_brewer(palette = "Paired")
-#+end_src
-
-#+begin_src R :results graphics file :file old_pruning.svg
-data <- read_csv("data/pruning.csv")
-data %>%
-  select(-iteration) %>%
-  filter(benchmark == "2d-conv" & params == "8x8_3x3") %>%
-  ## pivot_wider(
-  ##   names_from=name,
-  ##   values_from=value
-  ## ) %>%
-  group_by(pruning) %>%
-  print(n=10) %>%
-  mutate(
-    cost=cost / max(cost),
-    ## cycles=cycles / max(cycles),
-    ## cycles,
-    timestamp=timestamp - min(timestamp)
-  ) %>%
-  ggplot(aes(
-    x=timestamp,
-    y=cycles,
-    color=pruning,
-  )) +
-  geom_line(
-    linewidth=1.5,
-    show.legend=F
-  ) + geom_point(size=3) +
-  scale_color_brewer(
-    palette = "Paired",
-    breaks=c(TRUE, FALSE),
-    labels=c("Enabled", "Disabled")
-  ) +
-  ## scale_x_log10() + annotation_logticks(sides = "b") +
-  labs(
-    x="Log Timestamp (secs)",
-    y="Normalized Cost",
-    color="Pruning"
-  ) +
-  ## guides(linetype="none") +
-  theme_minimal() +
-  theme(
-    legend.position = c(0.9, 0.9),
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold")
-  )
-#+end_src
 
 #+header: :width 11 :height 5
 #+begin_src R :results graphics file :file pruning.svg
@@ -754,15 +763,17 @@ data <- data %>%
     name=str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
   ) %>%
   group_by(params) %>%
+  filter(ruleset > 0) %>%
+  filter(ruleset != 43200) %>%
+  filter(ruleset != 86400) %>%
   print(n=10) %>%
   mutate(
     # calculate speedup against the second item in every group
     across(cycles:cost, ~ .[1] / .)
     ## cycles=noeqsat / cycles
     ## across(cycles:cost, ~ .[3] / .)
-  ) %>%
-  ## filter(ruleset > 0) %>%
-  print(n=100)
+  ) %>% print(n=10)
+
 data %>%
   ggplot(aes(
     ## x=names,
@@ -781,10 +792,6 @@ data %>%
     label=unique(data$name),
     breaks=1:length(unique(data$name))
   ) +
-  ## coord_flip() +
-  scale_y_continuous(
-    trans="log2"
-  ) + annotation_logticks(sides = "l") + 
   scale_fill_brewer(
     palette = "YlOrBr",
   ) +
@@ -829,7 +836,7 @@ data %>%
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo cycles-performance.svg); do
+for f in $(echo *.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done

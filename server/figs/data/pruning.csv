@@ -1,11 +1,11 @@
 iter,benchmark,params,exp,pruning,cycles,cost
-0,2d-conv,3x3_3x3,90,False,-1,
+0,2d-conv,3x3_3x3,90,False,,
 1,2d-conv,3x3_3x3,89,True,143,50.642999999999994
-2,2d-conv,4x4_3x3,82,False,-1,
+2,2d-conv,4x4_3x3,82,False,,
 3,2d-conv,4x4_3x3,81,True,215,78.65799999999999
-4,2d-conv,8x8_3x3,84,False,-1,
+4,2d-conv,8x8_3x3,84,False,,
 5,2d-conv,8x8_3x3,83,True,781,318.993
-6,2d-conv,10x10_3x3,66,False,-1,
+6,2d-conv,10x10_3x3,66,False,,
 7,2d-conv,10x10_3x3,65,True,1278,608.7540000000001
-8,2d-conv,16x16_3x3,59,False,-1,
-9,2d-conv,16x16_3x3,58,True,-1,
+8,2d-conv,16x16_3x3,59,False,,
+9,2d-conv,16x16_3x3,58,True,,

@@ -147,6 +147,8 @@ def pruning():
             print(exp_path)
             print(json.dumps(config, indent=2))
 
+            cycles = None
+            egraph_cost = None
             if cycles_csv.exists():
                 df = pd.read_csv(cycles_csv) >> display()
                 egraph_cost = (pd.read_csv(exp_path / "data.csv")
@@ -154,10 +156,6 @@ def pruning():
                                >> filter_by(X.name == "cost")
                                >> iloc([-1]))["value"].values[0]
                 cycles = df["cycles"].values[0]
-            else:
-                # df = pd.DataFrame.from_dict({"cycles": -1}) >> display()
-                cycles = -1
-                egraph_cost = None
 
             # I want to get name, params, exp, pruning, cycles, cost, nodes
             df = (
@@ -232,7 +230,8 @@ def compile_est_cycles():
         if all(
             [
                 # "Mar29-1443" in config["date"],
-                "Apr10-1252" in config["date"] or "Apr09-1813" in config["date"],
+                # "Apr10-1252" in config["date"] or "Apr09-1813" in config["date"],
+                "Apr11" in config["date"],
                 "key" in config and config["key"] == "performance",
             ]
         ):
@@ -504,7 +503,7 @@ def main():
     # exp_iter("2d-conv_3x3_3x3")
     pruning()
     compile_est_cycles()
-    # stock_dios()
+    stock_dios()
     # scheduler()
     # play()
     # fix()

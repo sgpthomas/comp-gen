@@ -490,6 +490,11 @@
       "lhs": "(VecMAC ?c ?b ?a)",
       "rhs": "(VecAdd ?c (VecMul ?b ?a))",
       "bidirectional": true
+    },
+    {
+      "lhs": "1",
+      "rhs": "(sqrt 1)",
+      "bidirectional": true
     }
   ]
 }

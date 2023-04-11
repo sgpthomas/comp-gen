@@ -72,9 +72,26 @@ def estimate_kernel(
         print(f"Harness file for {benchmark_name} doesn't exist.")
         return
 
+    # if a kernel file doesn't exist, try pulling one out of the log file
     if not (exp_path / results / "kernel.c").exists():
-        print("Kernel file not found.")
-        return
+        stderr_log = exp_dir / "stderr.log"
+        progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
+        if len(progs) == 0:
+            print("No kernel found.")
+            return
+
+        prog = progs[-1].split(": ")[1]
+        with (exp_path / results / "res.rkt").open("w") as res:
+            res.write(prog)
+        subprocess.run([
+            "../../diospyros/dios", "-w", "4",
+            "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
+            str(exp_path / results)
+        ])
+
+        if not (exp_path / results / "kernel.c").exists():
+            print("Failed to produce kernel.c!")
+            return
 
     # copy file into results directory
     shutil.copy(harness_file, exp_path / results / "harness.c")

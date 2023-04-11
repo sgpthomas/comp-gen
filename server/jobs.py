@@ -634,14 +634,37 @@ def scheduler():
         )
 
 
+def instruction_removal():
+    """
+    We make these claims that it's trivial to change the spec to explore the
+    design space of different instructions. Test this by removing rules related
+    to particular instructions.
+    """
+
+    qr_decomp_sizes = [3]
+    c = configs["loop_alt_cost_t180"]
+
+    for s in qr_decomp_sizes:
+        qr_decomp(
+            Path("jobs"),
+            s,
+            rulesets["expanding_vecmac"],
+            c,
+            True,
+            key="instruction_removal",
+            timeout=json.load(c.open("r"))["timeout"] * 2
+        )
+
+
 def main():
-    overall_performance()
+    # overall_performance()
     # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
+    instruction_removal()
 
 
 if __name__ == "__main__":
