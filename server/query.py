@@ -234,50 +234,48 @@ def compile_est_cycles():
         if all(
             [
                 # "Mar29-1443" in config["date"],
-                "Apr09-1813" in config["date"],
+                "Apr10-1252" in config["date"] or "Apr09-1813" in config["date"],
                 "key" in config and config["key"] == "performance",
-                cycles_csv.exists(),
             ]
         ):
+            print(exp_path)
             ruleset = Path(config["metadata"]["rules.json"]).stem
             memory = pd.read_csv(
                 exp_path / "memory.csv", header=None, names=["timestamp", "ram_used"]
             )
             memory = memory >> agg(["min", "max"])
-            compile_time = (memory >> agg(lambda x: x["max"] - x["min"]))["timestamp"]
+            compile_time = (memory["timestamp"] >> agg(lambda x: x["max"] - x["min"]))
             ram_used = memory["ram_used"]["max"]
 
             egraph_cost = (pd.read_csv(exp_path / "data.csv")
                            >> filter_by(X.iteration == "report")
                            >> filter_by(X.name == "cost")
                            >> iloc([-1]))
+            if len(egraph_cost["value"].values) > 0:
+                egraph_cost = egraph_cost["value"].values[0]
+            else:
+                egraph_cost = -1
 
-            df = (
-                pd.read_csv(cycles_csv)
-                >> mutate(
-                    benchmark=name,
-                    params=params,
-                    ruleset=ruleset,
-                    exp=exp_path.name,
-                    greedy=config["metadata"]["alt_cost"],
-                    cost=egraph_cost["value"].values[0],
-                    compile_time=compile_time,
-                    max_ram_used=ram_used)
-                >> select(
-                    [
-                        "kernel",
-                        "benchmark",
-                        "params",
-                        "ruleset",
-                        "exp",
-                        "greedy",
-                        "cycles",
-                        "cost",
-                        "compile_time",
-                        "max_ram_used",
-                    ]
-                )
-            )
+            timeout = json.load((exp_path / "compile.json").open("r"))["timeout"]
+
+            if cycles_csv.exists():
+                cycles = pd.read_csv(cycles_csv)["cycles"].values[0]
+            else:
+                cycles = -1
+
+            df = pd.DataFrame(data={
+                "benchmark": [name],
+                "params": [params],
+                "ruleset": [ruleset],
+                "exp": [exp_path.name],
+                "timeout": [timeout],
+                "greedy": [config["metadata"]["alt_cost"]],
+                "cycles": [cycles],
+                "cost": [egraph_cost],
+                "compile_time": [compile_time],
+                "max_ram_used": [ram_used]
+            })
+
             res.append(df)
             # print(df[df["kernel"] == "compgen"]["cycles"])
 
@@ -287,7 +285,7 @@ def compile_est_cycles():
 
     df = (
         pd.concat(res)
-        >> sort_values(by=["benchmark", "params"], key=cmp_params)
+        >> sort_values(by=["benchmark", "params", "timeout"], key=cmp_params)
         >> reset_index(drop=True, names=["index"])
         >> display()
         >> to_csv(Path("figs") / "data" / "est_cycles.csv", index=False)
@@ -496,14 +494,14 @@ def play():
 
 def main():
     # exp_iter("2d-conv_3x3_3x3")
-    pruning()
-    # compile_est_cycles()
+    # pruning()
+    compile_est_cycles()
     # stock_dios()
     # scheduler()
     # play()
     # fix()
     # noeqsat()
-    ruleset_ablation()
+    # ruleset_ablation()
 
 
 if __name__ == "__main__":
