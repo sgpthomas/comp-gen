@@ -81,7 +81,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key pruning
+./estimate.py many latest --key performance
 #+end_src
 
 #+begin_src async-shell :name estimation
@@ -838,3 +838,11 @@ DIR=completed/mat-mul_8x8_8x8/18
 #                           $DIR/results
 ./estimate.py log $DIR
 #+end_src
+
+* Potential Names
+
+Chourmas
+
+Equality saturation, synthesis, closure, DSP, vector
+
+Ekastos (each, every, in greek) ἕκᾰστος
