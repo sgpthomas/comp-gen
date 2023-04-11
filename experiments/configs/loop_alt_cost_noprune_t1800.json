@@ -46,7 +46,7 @@
         "ca": [null, 9.0],
         "iter_limit": 50,
         "scheduler": "backoff",
-        "disabled": false,
+        "disabled": false
       }
     ]
   }

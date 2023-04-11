@@ -140,42 +140,39 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr10" in config["date"],
+                "Apr10-1511" in config["date"],
                 "key" in config and config["key"] == "pruning",
-                cycles_csv.exists()
             ]
         ):
             print(config["date"])
             print(exp_path)
             print(json.dumps(config, indent=2))
 
-            egraph_cost = (pd.read_csv(exp_path / "data.csv")
-                           >> filter_by(X.iteration == "report")
-                           >> filter_by(X.name == "cost")
-                           >> iloc([-1]))
+
+            if cycles_csv.exists():
+                df = pd.read_csv(cycles_csv) >> display()
+                egraph_cost = (pd.read_csv(exp_path / "data.csv")
+                               >> filter_by(X.iteration == "report")
+                               >> filter_by(X.name == "cost")
+                               >> iloc([-1]))["value"].values[0]
+                cycles = df["cycles"].values[0]
+            else:
+                # df = pd.DataFrame.from_dict({"cycles": -1}) >> display()
+                cycles = -1
+                egraph_cost = None
 
             # I want to get name, params, exp, pruning, cycles, cost, nodes
             df = (
-                pd.read_csv(cycles_csv)
-                >> mutate(
-                    benchmark=name,
-                    params=params,
-                    exp=exp_path.name,
-                    pruning=not ("noprune" in config["metadata"]["compile.json"]),
-                    cost=egraph_cost["value"].values[0]
-                )
-                >> select(
-                    [
-                        "benchmark",
-                        "params",
-                        "exp",
-                        "pruning",
-                        "cycles",
-                        "cost"
-                    ]
-                )
+                pd.DataFrame(data={
+                    "benchmark": [name],
+                    "params": [params],
+                    "exp": [exp_path.name],
+                    "pruning": [not ("noprune" in config["metadata"]["compile.json"])],
+                    "cycles": [cycles],
+                    "cost": [egraph_cost]
+                })
             )
-            
+
             # data = (
             #     pd.read_csv(exp_path / "data.csv")
             #     >> filter_by(
@@ -208,15 +205,14 @@ def pruning():
             # )
             res.append(df)
 
+    out = Path("figs") / "data" / "pruning.csv"
     df = (
         pd.concat(res)
         >> sort_values(by=["benchmark", "params", "pruning"], key=cmp_params)
         >> reset_index(drop=True)
+        >> display()
+        >> to_csv(out, index_label="iter")
     )
-    print(df.to_string())
-    out = Path("figs") / "data" / "pruning.csv"
-    df.to_csv(out, index_label="iter")
-    print(f"Wrote {out}")
 
 
 def compile_est_cycles():

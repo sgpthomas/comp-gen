@@ -635,8 +635,8 @@ def scheduler():
 
 
 def main():
-    overall_performance()
-    # pruning_experiments()
+    # overall_performance()
+    pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
