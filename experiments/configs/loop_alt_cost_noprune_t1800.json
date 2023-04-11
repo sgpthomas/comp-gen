@@ -44,7 +44,8 @@
         "name": "opt",
         "cd": [-5.0, 5.0],
         "ca": [null, 9.0],
-        "iter_limit": 10,
+        "iter_limit": 50,
+        "scheduler": "backoff",
         "disabled": false,
       }
     ]

@@ -430,7 +430,7 @@ def ruleset_ablation():
 
         if all([
                 "key" in config and config["key"] == "ruleset_ablation",
-                "Apr09-1806" in config["date"]
+                "Apr10-1245" in config["date"]
         ]):
             if "_" in config["name"]:
                 name, params = config["name"].split("_", 1)
@@ -507,7 +507,7 @@ def main():
     # play()
     # fix()
     # noeqsat()
-    # ruleset_ablation()
+    ruleset_ablation()
 
 
 if __name__ == "__main__":

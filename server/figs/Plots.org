@@ -551,10 +551,7 @@ data %>%
   scale_fill_brewer(palette = "Paired")
 #+end_src
 
-#+RESULTS:
-[[file:iter_size.svg]]
-
-#+begin_src R :results graphics file :file pruning.svg
+#+begin_src R :results graphics file :file old_pruning.svg
 data <- read_csv("data/pruning.csv")
 data %>%
   select(-iteration) %>%
@@ -595,6 +592,38 @@ data %>%
   theme_minimal() +
   theme(
     legend.position = c(0.9, 0.9),
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold")
+  )
+#+end_src
+
+#+header: :width 11 :height 5
+#+begin_src R :results graphics file :file pruning.svg
+data <- read_csv("data/pruning.csv")
+data %>%
+  ggplot(aes(
+    x=factor(params, levels=unique(params)),
+    y=cycles,
+    fill=pruning,
+  )) +
+  geom_col(
+    position="dodge",
+    width=0.5,
+    color="black"
+  ) +
+  scale_fill_brewer(
+    palette="Paired",
+  ) +
+  ## scale_x_log10() + annotation_logticks(sides = "b") +
+  labs(
+    ## x="Log Timestamp (secs)",
+    ## y="Normalized Cost",
+    ## color="Pruning"
+  ) +
+  ## guides(linetype="none") +
+  theme_minimal() +
+  theme(
+    ## legend.position = c(0.9, 0.9),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )
@@ -767,7 +796,7 @@ data %>%
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo ruleset-ablation.svg); do
+for f in $(echo pruning.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done
