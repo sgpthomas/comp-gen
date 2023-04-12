@@ -92,6 +92,16 @@ where
             egraph = self.new_egraph();
         }
 
+        // choose a timeout. If we have a phase timeout,
+        //   timeout = min(phase_timeout, time_left)
+        // else
+        //   timeout = time_left
+        let timeout = if let Some(phase_timeout) = phase.timeout {
+            time_left.min(Duration::from_secs(phase_timeout as u64))
+        } else {
+            time_left
+        };
+
         info!("Making runner");
         let iter_cost_fn = self.cost_fn.clone();
         let mut runner: egg::Runner<L, N, ()> =
@@ -104,12 +114,8 @@ where
                 .with_iter_limit(
                     phase.iter_limit.unwrap_or(self.total_iter_limit),
                 )
-                .with_time_limit(
-                    phase
-                        .timeout
-                        .map_or(time_left, |x| Duration::from_secs(x as u64)),
-                );
-        debug!("Using timeout: {:?}", time_left);
+                .with_time_limit(timeout);
+        debug!("Using timeout: {:?}", timeout);
 
         runner = if self.debug {
             runner.with_hook(move |runner| {

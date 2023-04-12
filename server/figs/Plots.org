@@ -92,7 +92,7 @@ Process all the log files and generate data csvs.
 #+end_src
 
 #+begin_src async-shell :name sync
-rsync -avh completed/ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
 
 Run query to generate aggregated data files

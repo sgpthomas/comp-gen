@@ -257,7 +257,7 @@ def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60, binops=Non
     json.dump(synth_config, (job_dir / "synth.json").open("w"), indent=2)
 
     command = [
-        "RUST_LOG=debug,egg=info,z3=none",
+        "RUST_LOG=debug,egg=info,z3=off",
         "$compgen_bin", "synth", "ruleset.json",
         "--config", "synth.json"
     ]

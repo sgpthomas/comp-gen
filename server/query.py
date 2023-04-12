@@ -139,7 +139,7 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr12-1309" in config["date"],
+                "Apr12-1457" in config["date"],
                 "key" in config and config["key"] == "pruning",
             ]
         ):
