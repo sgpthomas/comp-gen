@@ -85,14 +85,14 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 ./estimate.py many latest --key performance
 #+end_src
 
-#+begin_src async-shell :name estimation
-rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
-#+end_src
-
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
 ./process.py all completed/
+#+end_src
+
+#+begin_src async-shell :name sync
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
 
 Run query to generate aggregated data files
@@ -312,9 +312,11 @@ data %>%
     color="black",
     width=0.5
   ) +
-  geom_hline(yintercept=180) +
+  geom_hline(
+    yintercept=180,
+  ) +
   ## scale_y_log10() +
-  ## ylim(0, 1.5) +
+  coord_cartesian(ylim=c(0, 600)) +
   scale_fill_manual(
     values = c("#33a02c", "#fb9a99"),
     labels=c("Diospyros", "Compgen")
@@ -619,7 +621,7 @@ Things to fix:
 - [ ] Get rid of the last data point (from the python generation script)
 - [ ] Make the =y-axis= use estimated cycles rather than cost (so that we know that we are doing the right thing)
 
-#+header: :width 11 :height 5
+#+header: :width 9 :height 5
 #+begin_src R :results graphics file :file pruning.svg
 data <- read_csv("data/pruning.csv")
 data %>%
@@ -877,6 +879,15 @@ DIR=completed/mat-mul_8x8_8x8/18
 #                           -o $DIR/results/kernel.c \
 #                           $DIR/results
 ./estimate.py log $DIR
+#+end_src
+
+#+begin_src async-shell :dir (sgt/dir) :results none :name test :ansi t
+export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Cargo.toml)"
+export dios_bin=$(realpath ../diospyros/dios)
+export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
+
+cd server/jobs/Apr12-0933-qr-decomp_3-0
+./run.sh
 #+end_src
 
 * Potential Names

@@ -95,11 +95,10 @@ where
             return eqsat;
         }
 
-        info!("Making runner");
-        info!(
-            "Initial Program Depth: {}",
-            cost::depth(&eqsat.prog, eqsat.prog.as_ref().len() - 1)
-        );
+        // info!(
+        //     "Initial Program Depth: {}",
+        //     cost::depth(&eqsat.prog, eqsat.prog.as_ref().len() - 1)
+        // );
 
         // unpack the previous eqsat result
         let EqSatResult {
@@ -115,6 +114,7 @@ where
             egraph = self.new_egraph();
         }
 
+        info!("Making runner");
         let iter_cost_fn = self.cost_fn.clone();
         let mut runner: egg::Runner<L, N, ()> =
             egg::Runner::new(Default::default())
@@ -180,10 +180,10 @@ where
         }
 
         debug!("Egraph size: {}", runner.egraph.total_size());
-        debug!(
-            "Final Program Depth: {}",
-            cost::depth(&prog, prog.as_ref().len() - 1)
-        );
+        // debug!(
+        //     "Final Program Depth: {}",
+        //     cost::depth(&prog, prog.as_ref().len() - 1)
+        // );
 
         // Report some stats about this phase
         let stats = Stats::from_runner(

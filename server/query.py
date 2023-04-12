@@ -139,7 +139,7 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr10-1511" in config["date"],
+                "Apr11-1629" in config["date"],
                 "key" in config and config["key"] == "pruning",
             ]
         ):
@@ -503,7 +503,7 @@ def main():
     # exp_iter("2d-conv_3x3_3x3")
     pruning()
     compile_est_cycles()
-    stock_dios()
+    # stock_dios()
     # scheduler()
     # play()
     # fix()
