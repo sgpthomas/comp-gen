@@ -10,7 +10,7 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py both --name synth
+./sync.py both
 #+end_src
 
 * Getting Diospyros Numbers
@@ -886,7 +886,7 @@ export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Car
 export dios_bin=$(realpath ../diospyros/dios)
 export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
 
-cd server/jobs/Apr12-0933-qr-decomp_3-0
+cd server/jobs/Apr12-1304-qr-decomp_3-0
 ./run.sh
 #+end_src
 

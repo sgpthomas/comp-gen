@@ -4,6 +4,7 @@
   "timeout": 86400,
   "dry_run": false,
   "dump_rules": true,
+  "debug": false,
   "reuse_egraphs": true,
   "cd_filter": null,
   "require_all_vars": false,

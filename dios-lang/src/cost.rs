@@ -8,16 +8,51 @@ pub type DiosRwrite = egg::Rewrite<VecLang, ()>;
 
 #[derive(Clone, Debug)]
 pub struct VecCostFn {
-    original: bool,
+    literal: f64,
+    structure: f64,
+    vec: f64,
+    op: f64,
+    op_proportional: bool,
+    vec_op: f64,
+    vec_proportional: bool,
 }
 
 impl VecCostFn {
-    pub fn original() -> Self {
-        VecCostFn { original: true }
+    pub fn dios() -> Self {
+        VecCostFn {
+            literal: 0.001,
+            structure: 0.1,
+            vec: 100.0,
+            op: 2.,
+            op_proportional: true,
+            vec_op: 1.,
+            vec_proportional: false,
+        }
     }
 
     pub fn alternative() -> Self {
-        VecCostFn { original: false }
+        VecCostFn {
+            literal: 0.001,
+            structure: 0.1,
+            vec: 100.0,
+            op: 10.,
+            op_proportional: true,
+            vec_op: 1.,
+            vec_proportional: true,
+        }
+    }
+
+    pub fn accurate() -> Self {
+        // semi accurate
+        VecCostFn {
+            literal: 1.,
+            structure: 1.,
+            vec: 1.,
+            op: 2.,
+            op_proportional: false,
+            vec_op: 1.,
+            vec_proportional: false,
+        }
     }
 }
 
@@ -28,66 +63,95 @@ impl egg::CostFunction<VecLang> for VecCostFn {
     where
         C: FnMut(egg::Id) -> Self::Cost,
     {
-        const LITERAL: f64 = 0.001;
-        const STRUCTURE: f64 = 0.1;
-        const VEC_OP: f64 = 1.;
-        let op_cost: f64 = if self.original {
-            2. // original
-        } else {
-            10.
-        };
-        const BIG: f64 = 100.0;
+        // const LITERAL: f64 = 0.001;
+        // const STRUCTURE: f64 = 0.1;
+        // const VEC_OP: f64 = 1.;
+        // let op_cost: f64 = if self.original {
+        //     2. // original
+        // } else {
+        //     10.
+        // };
+        // const BIG: f64 = 100.0;
         let op_cost = match enode {
             // You get literals for extremely cheap
-            VecLang::Const(..) => LITERAL,
-            VecLang::Symbol(..) => LITERAL,
-            VecLang::Get(..) => LITERAL,
+            VecLang::Const(..) => self.literal,
+            VecLang::Symbol(..) => self.literal,
+            VecLang::Get(..) => self.literal,
 
             // And list structures for quite cheap
-            VecLang::List(..) => STRUCTURE,
-            VecLang::Concat(..) => STRUCTURE,
+            VecLang::List(..) => self.structure,
+            VecLang::Concat(..) => self.structure,
 
             // Vectors are cheap if they have literal values
             VecLang::Vec(vals) => {
                 // For now, workaround to determine if children are num, symbol,
                 // or get
                 let non_literals =
-                    vals.iter().any(|&x| costs(x) > 3. * LITERAL);
+                    vals.iter().any(|&x| costs(x) > 3. * self.literal);
                 if non_literals {
-                    if self.original {
-                        BIG
+                    if self.vec_proportional {
+                        self.vec
+                            * vals.iter().fold(0., |acc, e| costs(*e) + acc)
                     } else {
-                        BIG * vals.iter().fold(0., |acc, e| costs(*e) + acc)
+                        self.vec
                     }
                 } else {
-                    STRUCTURE * (vals.iter().unique().count() as f64)
+                    self.structure * (vals.iter().unique().count() as f64)
                 }
             }
-            VecLang::LitVec(..) => LITERAL,
+            VecLang::LitVec(..) => self.literal,
 
             // But scalar and vector ops cost something
-            VecLang::Add(vals) => op_cost * (vals.len() as f64 - 1.),
-            VecLang::Mul(vals) => op_cost * (vals.len() as f64 - 1.),
-            VecLang::Minus(vals) => op_cost * (vals.len() as f64 - 1.),
-            VecLang::Div(vals) => op_cost * (vals.len() as f64 - 1.),
+            VecLang::Add(vals) => {
+                self.op
+                    * (if self.op_proportional {
+                        vals.len() as f64 - 1.
+                    } else {
+                        1.
+                    })
+            }
+            VecLang::Mul(vals) => {
+                self.op
+                    * (if self.op_proportional {
+                        vals.len() as f64 - 1.
+                    } else {
+                        1.
+                    })
+            }
+            VecLang::Minus(vals) => {
+                self.op
+                    * (if self.op_proportional {
+                        vals.len() as f64 - 1.
+                    } else {
+                        1.
+                    })
+            }
+            VecLang::Div(vals) => {
+                self.op
+                    * (if self.op_proportional {
+                        vals.len() as f64 - 1.
+                    } else {
+                        1.
+                    })
+            }
 
-            VecLang::Sgn(..) => op_cost,
-            VecLang::Neg(..) => op_cost,
-            VecLang::Sqrt(..) => op_cost,
+            VecLang::Sgn(..) => self.op,
+            VecLang::Neg(..) => self.op,
+            VecLang::Sqrt(..) => self.op,
 
-            VecLang::VecAdd(..) => VEC_OP,
-            VecLang::VecMinus(..) => VEC_OP,
-            VecLang::VecMul(..) => VEC_OP,
-            VecLang::VecMAC(..) => VEC_OP,
-            VecLang::VecDiv(..) => VEC_OP,
-            VecLang::VecNeg(..) => VEC_OP,
-            VecLang::VecSqrt(..) => VEC_OP,
-            VecLang::VecSgn(..) => VEC_OP,
-            VecLang::Or(_) => VEC_OP,
-            VecLang::And(_) => VEC_OP,
-            VecLang::Ite(_) => VEC_OP,
-            VecLang::Lt(_) => VEC_OP,
-            VecLang::VecMulSgn(_) => VEC_OP,
+            VecLang::VecAdd(..) => self.vec_op,
+            VecLang::VecMinus(..) => self.vec_op,
+            VecLang::VecMul(..) => self.vec_op,
+            VecLang::VecMAC(..) => self.vec_op,
+            VecLang::VecDiv(..) => self.vec_op,
+            VecLang::VecNeg(..) => self.vec_op,
+            VecLang::VecSqrt(..) => self.vec_op,
+            VecLang::VecSgn(..) => self.vec_op,
+            VecLang::Or(_) => self.vec_op,
+            VecLang::And(_) => self.vec_op,
+            VecLang::Ite(_) => self.vec_op,
+            VecLang::Lt(_) => self.vec_op,
+            VecLang::VecMulSgn(_) => self.vec_op,
             // _ => VEC_OP,
         };
         enode.fold(op_cost, |sum, id| sum + costs(id))

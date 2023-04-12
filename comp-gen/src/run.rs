@@ -126,26 +126,28 @@ where
                 .with_iter_limit(
                     phase.iter_limit.unwrap_or(self.total_iter_limit),
                 )
-                .with_hook(move |runner| {
-                    let start = Instant::now();
-                    let extractor = egg::Extractor::new(
-                        &runner.egraph,
-                        iter_cost_fn.clone(),
-                    );
-                    let (cost, prog) = extractor.find_best(runner.roots[0]);
-                    let duration = start.elapsed();
-                    info!("Best cost so far: {cost:?}");
-                    info!("Best program: {prog}");
-                    info!("Extraction took: {duration:?}");
-                    Ok(())
-                })
                 .with_time_limit(
                     phase
                         .timeout
                         .map_or(time_left, |x| Duration::from_secs(x as u64)),
                 );
-        // .with_time_limit(Duration::from_secs(self.timeout));
         debug!("Using timeout: {:?}", time_left);
+
+        runner = if self.debug {
+            runner.with_hook(move |runner| {
+                let start = Instant::now();
+                let extractor =
+                    egg::Extractor::new(&runner.egraph, iter_cost_fn.clone());
+                let (cost, prog) = extractor.find_best(runner.roots[0]);
+                let duration = start.elapsed();
+                info!("Best cost so far: {cost:?}");
+                info!("Best program: {prog}");
+                info!("Extraction took: {duration:?}");
+                Ok(())
+            })
+        } else {
+            runner
+        };
 
         // set the scheduler according to the options
         runner = match phase.scheduler.as_ref().unwrap_or(&self.scheduler) {

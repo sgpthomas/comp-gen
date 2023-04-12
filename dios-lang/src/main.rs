@@ -102,8 +102,8 @@ struct CompileOpts {
     output_dir: Option<PathBuf>,
 
     /// cost fun
-    #[argh(switch)]
-    alt_cost: bool,
+    #[argh(option)]
+    costfn: String,
 }
 
 fn read_path(path: &str) -> Result<PathBuf, String> {
@@ -169,10 +169,11 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // log::debug!("input: {}", prog.pretty(80));
 
     let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
-        comp_gen::Compiler::with_cost_fn(if opts.alt_cost {
-            cost::VecCostFn::alternative()
-        } else {
-            cost::VecCostFn::original()
+        comp_gen::Compiler::with_cost_fn(match opts.costfn.as_str() {
+            "alternative" => cost::VecCostFn::alternative(),
+            "dios" => cost::VecCostFn::dios(),
+            "accurate" => cost::VecCostFn::accurate(),
+            _ => panic!("Not a valid cost function."),
         });
 
     // add rules to compiler
