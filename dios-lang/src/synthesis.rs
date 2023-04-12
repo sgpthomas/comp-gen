@@ -201,9 +201,9 @@ pub struct DiosConfig {
     pub seed_rules: Vec<DiosSeedRules>,
     pub unops: Vec<String>,
     pub binops: Vec<String>,
+    pub triops: Vec<String>,
     pub use_scalar: bool,
     pub use_vector: bool,
-    pub vector_mac: bool,
     pub variable_duplication: bool,
     pub vector_size: usize,
     pub always_smt: bool,
@@ -218,9 +218,9 @@ impl Default for DiosConfig {
             seed_rules: vec![],
             unops: vec![],
             binops: vec![],
+            triops: vec![],
             use_scalar: false,
             use_vector: false,
-            vector_mac: false,
             variable_duplication: false,
             vector_size: 1,
             always_smt: false,
@@ -401,7 +401,15 @@ impl SynthLanguage for lang::VecLang {
                     _ => None,
                 })
             }),
-            lang::VecLang::VecMulSgn(_) => todo!(),
+            #[rustfmt::skip]
+            lang::VecLang::VecMulSgn([l, r]) => map!(get, l, r => {
+                lang::Value::vec2_op(l, r, |l, r| match (l, r) {
+                    (lang::Value::Int(a), lang::Value::Int(b)) => {
+                        integer_division(sgn(*a), *b).map(lang::Value::Int)
+                    }
+                    _ => None,
+                })
+            }),
             #[rustfmt::skip]
             lang::VecLang::VecNeg([l]) => map!(get, l => {
                 lang::Value::vec1(l, |l| {
@@ -468,6 +476,21 @@ impl SynthLanguage for lang::VecLang {
                         .map(|tup| match tup {
                             ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
 				=> Some(lang::Value::Int((v1 * v2) + acc)),
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<lang::Value>>>()
+                        .map(lang::Value::Vec)
+                })
+            }),
+            #[rustfmt::skip]
+            lang::VecLang::VecMULS([acc, v1, v2]) => map!(get, v1, v2, acc => {
+                lang::Value::vec3(v1, v2, acc, |v1, v2, acc| {
+                    v1.iter()
+                        .zip(v2.iter())
+                        .zip(acc.iter())
+                        .map(|tup| match tup {
+                            ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
+				=> Some(lang::Value::Int(acc - (v1 * v2))),
                             _ => None,
                         })
                         .collect::<Option<Vec<lang::Value>>>()
@@ -618,14 +641,15 @@ impl SynthLanguage for lang::VecLang {
                         .lang_config
                         .binops
                         .iter()
-                        .map(|op| match op.as_str() {
-                            "+" => lang::VecLang::Add(x),
-                            "*" => lang::VecLang::Mul(x),
-                            "-" => lang::VecLang::Minus(x),
-                            "/" => lang::VecLang::Div(x),
-                            "or" => lang::VecLang::Or(x),
-                            "&&" => lang::VecLang::And(x),
-                            "<" => lang::VecLang::Lt(x),
+                        .filter_map(|op| match op.as_str() {
+                            "+" => Some(lang::VecLang::Add(x)),
+                            "*" => Some(lang::VecLang::Mul(x)),
+                            "-" => Some(lang::VecLang::Minus(x)),
+                            "/" => Some(lang::VecLang::Div(x)),
+                            "or" => Some(lang::VecLang::Or(x)),
+                            "&&" => Some(lang::VecLang::And(x)),
+                            "<" => Some(lang::VecLang::Lt(x)),
+                            "~*" => None,
                             _ => panic!("Unknown binop"),
                         })
                         .collect::<Vec<_>>()
@@ -676,6 +700,7 @@ impl SynthLanguage for lang::VecLang {
                             "-" => lang::VecLang::VecMinus(x),
                             "*" => lang::VecLang::VecMul(x),
                             "/" => lang::VecLang::VecDiv(x),
+                            "~*" => lang::VecLang::VecMulSgn(x),
                             _ => panic!("Unknown vec binop"),
                         })
                         .collect::<Vec<_>>()
@@ -687,34 +712,48 @@ impl SynthLanguage for lang::VecLang {
             None
         };
 
-        let vec_mac = if synth.lang_config.vector_mac {
-            let vec_mac = (0..3)
-                .map(|_| ids.clone())
-                .multi_cartesian_product()
-                .filter(move |ids| {
-                    !ids.iter().all(|x| synth.egraph[*x].data.exact)
-                })
-                .map(|ids| [ids[0], ids[1], ids[2]])
-                .map(lang::VecLang::VecMAC)
-                .filter(move |node| vd || unique_vars(node, &synth.egraph));
-            Some(vec_mac)
-        } else {
-            None
-        };
+        let vec_triops = (0..3)
+            .map(|_| ids.clone())
+            .multi_cartesian_product()
+            .filter(move |ids| !ids.iter().all(|x| synth.egraph[*x].data.exact))
+            .map(|ids| [ids[0], ids[1], ids[2]])
+            .flat_map(move |x| {
+                synth
+                    .lang_config
+                    .triops
+                    .iter()
+                    .map(|op| match op.as_str() {
+                        "mac" => lang::VecLang::VecMAC(x),
+                        "muls" => lang::VecLang::VecMULS(x),
+                        _ => panic!("Unknown vec triop"),
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .filter(move |node| vd || unique_vars(node, &synth.egraph));
 
-        match (binops, vec_stuff, vec_mac) {
+        // let vec_mac = if synth.lang_config.vector_mac {
+        //     let vec_mac = (0..3)
+        //         .map(|_| ids.clone())
+        //         .multi_cartesian_product()
+        //         .filter(move |ids| {
+        //             !ids.iter().all(|x| synth.egraph[*x].data.exact)
+        //         })
+        //         .map(|ids| [ids[0], ids[1], ids[2]])
+        //         .map(lang::VecLang::VecMAC)
+        //         .filter(move |node| vd || unique_vars(node, &synth.egraph));
+        //     Some(vec_mac)
+        // } else {
+        //     None
+        // };
+
+        match (binops, vec_stuff) {
             // all are defined
-            (Some(b), Some(v), Some(m)) => Box::new(b.chain(v).chain(m)),
+            (Some(b), Some(v)) => Box::new(b.chain(v).chain(vec_triops)),
             // two are defined
-            (Some(i), Some(j), _) => Box::new(i.chain(j)),
-            (Some(i), _, Some(j)) => Box::new(i.chain(j)),
-            (_, Some(i), Some(j)) => Box::new(i.chain(j)),
-            // one is defined
-            (Some(i), _, _) => Box::new(i),
-            (_, Some(i), _) => Box::new(i),
-            (_, _, Some(i)) => Box::new(i),
+            (Some(i), _) => Box::new(i.chain(vec_triops)),
+            (_, Some(i)) => Box::new(i.chain(vec_triops)),
             // none are defined
-            (_, _, _) => panic!("No binops or vector ops defined."),
+            (_, _) => panic!("No binops or vector ops defined."),
         }
     }
 

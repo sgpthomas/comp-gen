@@ -143,6 +143,27 @@ fn compile(opts: CompileOpts) -> Res<()> {
         PathBuf::from(format!("{}-out", opts.input.as_str()))
     };
 
+    // test
+    // let lhs_expr: egg::RecExpr<lang::VecLang> =
+    //     "(Vec (+ ?b0 ?a0) (+ ?b1 ?a1) (+ ?b2 ?a2) (+ ?b3 ?a3))"
+    //         .parse()
+    //         .unwrap();
+    // let rhs_expr: egg::RecExpr<lang::VecLang> =
+    //     "(VecAdd (Vec ?b0 ?b1 ?b2 ?b3) (Vec ?a0 ?a1 ?a2 ?a3))"
+    //         .parse()
+    //         .unwrap();
+    // let lhs = egg::CostFunction::cost_rec(
+    //     &mut cost::VecCostFn::accurate(),
+    //     &lhs_expr,
+    // );
+    // info!("==========================");
+    // let rhs = egg::CostFunction::cost_rec(
+    //     &mut cost::VecCostFn::accurate(),
+    //     &rhs_expr,
+    // );
+    // panic!("{lhs} => {rhs}");
+    // test
+
     // generate the example with dios_example_gen
     process::Command::new(opts.dios_example_bin)
         .arg("-w")
@@ -209,11 +230,12 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // log::debug!("you exist bc:\n{}", expl.get_flat_string());
     info!("cost: {cost}");
     // eg.dot().to_png("test.png").expect("failed to create image");
-    info!("{}", prog.pretty(80));
+    // info!("{}", prog.pretty(80));
 
     // write to spec.rkt
-    let mut spec_file = fs::File::create(output_dir.join("res.rkt"))?;
-    log::debug!("writing to {:?}", spec_file);
+    let path = output_dir.join("res.rkt");
+    let mut spec_file = fs::File::create(&path)?;
+    log::debug!("writing to {path:?}");
     writeln!(spec_file, "{}", prog.pretty(80))?;
 
     // call ./dios -w <vec_width> --egg --suppress-git -o <dir>/kernel.c <dir>

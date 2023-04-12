@@ -230,7 +230,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60):
+def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60, binops=None, triops=None):
     date_str = datetime.now().strftime("%b%d-%H%M")
     job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{timeout}", 0)
     job_dir.mkdir(exist_ok=False)
@@ -238,6 +238,10 @@ def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60):
     synth_config["ruler_config"]["abs_timeout"] = timeout
     synth_config["ruler_config"]["eqsat_iter_limit"] = eqsat_iter
     synth_config["ruler_config"]["eqsat_time_limit"] = eqsat_timeout
+    if binops is not None:
+        synth_config["binops"] = binops
+    if triops is not None:
+        synth_config["triops"] = triops
     job_config = {
         "date": date_str,
         "name": "synthesis",
@@ -434,7 +438,7 @@ def pruning_experiments():
             configs["loop_alt_cost_t180"],
             "alternative",
             key="pruning",
-            timeout=360,
+            timeout=180 * 4
         )
         # no pruning config
         make_2d_conv(
@@ -444,7 +448,7 @@ def pruning_experiments():
             configs["loop_alt_cost_noprune_t180"],
             "alternative",
             key="pruning",
-            timeout=360
+            timeout=180 * 4
         )
 
 
@@ -628,37 +632,28 @@ def scheduler():
         )
 
 
-def instruction_removal():
+def add_instruction_ruleset():
     """
     We make these claims that it's trivial to change the spec to explore the
-    design space of different instructions. Test this by removing rules related
-    to particular instructions.
+    design space of different instructions. Test this by generating rulesets
+    with no fused ops, with just MULS, and with both MAC, MULS.
     """
 
-    qr_decomp_sizes = [3]
-    c = configs["loop_alt_cost_t180"]
-
-    for s in qr_decomp_sizes:
-        qr_decomp(
-            Path("jobs"),
-            s,
-            rulesets["expanding_vecmac"],
-            c,
-            "alternative",
-            key="instruction_removal",
-            timeout=json.load(c.open("r"))["timeout"] * 2
-        )
+    binops = ["/", "+", "*", "-"]
+    make_synthesis(Path("jobs"), 10000, binops=binops, triops=[])
+    make_synthesis(Path("jobs"), 10000, binops=binops, triops=["muls"])
+    make_synthesis(Path("jobs"), 10000, binops=binops, triops=["mac", "muls"])
 
 
 def main():
     # overall_performance()
-    pruning_experiments()
+    # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    # instruction_removal()
+    add_instruction_ruleset()
 
 
 if __name__ == "__main__":

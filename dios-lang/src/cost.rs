@@ -15,6 +15,8 @@ pub struct VecCostFn {
     op_proportional: bool,
     vec_op: f64,
     vec_proportional: bool,
+    vec_return_early: bool,
+    vec_exact_literal_match: bool,
 }
 
 impl VecCostFn {
@@ -27,6 +29,8 @@ impl VecCostFn {
             op_proportional: true,
             vec_op: 1.,
             vec_proportional: false,
+            vec_return_early: false,
+            vec_exact_literal_match: false,
         }
     }
 
@@ -39,6 +43,8 @@ impl VecCostFn {
             op_proportional: true,
             vec_op: 1.,
             vec_proportional: true,
+            vec_return_early: false,
+            vec_exact_literal_match: false,
         }
     }
 
@@ -48,10 +54,12 @@ impl VecCostFn {
             literal: 1.,
             structure: 1.,
             vec: 1.,
-            op: 2.,
+            op: 1.,
             op_proportional: false,
             vec_op: 1.,
             vec_proportional: false,
+            vec_return_early: true,
+            vec_exact_literal_match: true,
         }
     }
 }
@@ -86,8 +94,11 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::Vec(vals) => {
                 // For now, workaround to determine if children are num, symbol,
                 // or get
-                let non_literals =
-                    vals.iter().any(|&x| costs(x) > 3. * self.literal);
+                let non_literals = if self.vec_exact_literal_match {
+                    vals.iter().any(|&x| costs(x) != self.literal)
+                } else {
+                    vals.iter().any(|&x| costs(x) > 3. * self.literal)
+                };
                 if non_literals {
                     if self.vec_proportional {
                         self.vec
@@ -96,10 +107,22 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                         self.vec
                     }
                 } else {
-                    self.structure * (vals.iter().unique().count() as f64)
+                    let cost =
+                        self.structure * (vals.iter().unique().count() as f64);
+                    // we don't want to count the cost of loading the literals separately
+                    // the cost of the vec is the cost of the whole thing
+                    if self.vec_return_early {
+                        return cost + 1.0;
+                    }
+                    cost
                 }
             }
-            VecLang::LitVec(..) => self.literal,
+            VecLang::LitVec(..) => {
+                if self.vec_return_early {
+                    return self.literal;
+                }
+                self.literal
+            }
 
             // But scalar and vector ops cost something
             VecLang::Add(vals) => {
@@ -143,6 +166,7 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::VecMinus(..) => self.vec_op,
             VecLang::VecMul(..) => self.vec_op,
             VecLang::VecMAC(..) => self.vec_op,
+            VecLang::VecMULS(..) => self.vec_op,
             VecLang::VecDiv(..) => self.vec_op,
             VecLang::VecNeg(..) => self.vec_op,
             VecLang::VecSqrt(..) => self.vec_op,

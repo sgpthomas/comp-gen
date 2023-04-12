@@ -139,7 +139,7 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr12-1030" in config["date"],
+                "Apr12-1309" in config["date"],
                 "key" in config and config["key"] == "pruning",
             ]
         ):
@@ -159,7 +159,9 @@ def pruning():
 
             memory_csv = exp_path / "memory.csv"
             df = pd.read_csv(memory_csv, header=None, names=["timestamp", "ram_used"])
-            memory_used = (df >> agg(["max"]))["ram_used"].values[0]
+            memory_used = (df >> replace({"timeout": "-1"}) >> agg(["max"]))["ram_used"].values[0]
+            compile_time = (df >> agg(["max"]))["timestamp"].values[0]
+            timeout = "timeout" in df["ram_used"].values
 
             # I want to get name, params, exp, pruning, cycles, cost, nodes
             df = (
@@ -170,6 +172,8 @@ def pruning():
                     "pruning": [not ("noprune" in config["metadata"]["compile.json"])],
                     "cycles": [cycles],
                     "cost": [egraph_cost],
+                    "timeout": [timeout],
+                    "compile_time": [compile_time],
                     "memory_used": [memory_used]
                 })
             )
@@ -236,7 +240,7 @@ def compile_est_cycles():
             [
                 # "Mar29-1443" in config["date"],
                 # "Apr10-1252" in config["date"] or "Apr09-1813" in config["date"],
-                "Apr11" in config["date"],
+                "Apr12-1031" in config["date"],
                 "key" in config and config["key"] == "performance",
             ]
         ):

@@ -106,6 +106,10 @@ impl Desugar for lang::VecAst {
                 Box::new(left.desugar(n_lanes)),
                 Box::new(right.desugar(n_lanes)),
             ),
+            lang::VecAst::VecMulSgn(left, right) => lang::VecAst::VecMulSgn(
+                Box::new(left.desugar(n_lanes)),
+                Box::new(right.desugar(n_lanes)),
+            ),
             lang::VecAst::VecNeg(inner) => {
                 lang::VecAst::VecNeg(Box::new(inner.desugar(n_lanes)))
             }
@@ -116,6 +120,11 @@ impl Desugar for lang::VecAst {
                 lang::VecAst::VecSgn(Box::new(inner.desugar(n_lanes)))
             }
             lang::VecAst::VecMAC(a, b, c) => lang::VecAst::VecMAC(
+                Box::new(a.desugar(n_lanes)),
+                Box::new(b.desugar(n_lanes)),
+                Box::new(c.desugar(n_lanes)),
+            ),
+            lang::VecAst::VecMULS(a, b, c) => lang::VecAst::VecMULS(
                 Box::new(a.desugar(n_lanes)),
                 Box::new(b.desugar(n_lanes)),
                 Box::new(c.desugar(n_lanes)),
@@ -206,6 +215,10 @@ impl AlphaRenamable for lang::VecAst {
                 Box::new(x.rename(suffix)),
                 Box::new(y.rename(suffix)),
             ),
+            lang::VecAst::VecMulSgn(x, y) => lang::VecAst::VecMulSgn(
+                Box::new(x.rename(suffix)),
+                Box::new(y.rename(suffix)),
+            ),
             lang::VecAst::VecNeg(x) => {
                 lang::VecAst::VecNeg(Box::new(x.rename(suffix)))
             }
@@ -216,6 +229,11 @@ impl AlphaRenamable for lang::VecAst {
                 lang::VecAst::VecSgn(Box::new(x.rename(suffix)))
             }
             lang::VecAst::VecMAC(a, b, c) => lang::VecAst::VecMAC(
+                Box::new(a.rename(suffix)),
+                Box::new(b.rename(suffix)),
+                Box::new(c.rename(suffix)),
+            ),
+            lang::VecAst::VecMULS(a, b, c) => lang::VecAst::VecMULS(
                 Box::new(a.rename(suffix)),
                 Box::new(b.rename(suffix)),
                 Box::new(c.rename(suffix)),

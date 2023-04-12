@@ -19,11 +19,15 @@
     "/",
     "+",
     "*",
-    "-"
+    "-",
+    "~*"
+  ],
+  "triops": [
+    "mac",
+    "muls"
   ],
   "use_scalar": true,
   "use_vector": true,
-  "vector_mac": true,
   "variable_duplication": false,
   "vector_size": 1,
   "always_smt": true,

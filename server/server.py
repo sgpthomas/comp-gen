@@ -239,7 +239,7 @@ def single_run(config, alive):
                 print("Dead!!")
                 with memory_csv.open("a") as f:
                     print(
-                        "{},{}".format(time.time(), "timeout"),
+                        "{},{}".format(time_diff, "timeout"),
                         file=f,
                         flush=True
                     )

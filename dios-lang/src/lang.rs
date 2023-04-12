@@ -91,8 +91,9 @@ define_language! {
 
         // MAC takes 3 lists: acc, v1, v2
         "VecMAC" = VecMAC([Id; 3]),
+        "VecMULS" = VecMULS([Id; 3]),
 
-    // Comment
+        // Comment
         Const(Value),
 
         // language items are parsed in order, and we want symbol to
@@ -127,6 +128,7 @@ pub enum VecAst {
     VecMul(Box<VecAst>, Box<VecAst>),
     VecMinus(Box<VecAst>, Box<VecAst>),
     VecDiv(Box<VecAst>, Box<VecAst>),
+    VecMulSgn(Box<VecAst>, Box<VecAst>),
 
     VecNeg(Box<VecAst>),
     #[allow(unused)]
@@ -135,6 +137,7 @@ pub enum VecAst {
     VecSgn(Box<VecAst>),
 
     VecMAC(Box<VecAst>, Box<VecAst>, Box<VecAst>),
+    VecMULS(Box<VecAst>, Box<VecAst>, Box<VecAst>),
 
     Const(Value),
     Symbol(String),
@@ -198,6 +201,11 @@ impl VecAst {
                 let right_id = right.to_recexpr(expr);
                 expr.add(VecLang::VecDiv([left_id, right_id]))
             }
+            VecAst::VecMulSgn(left, right) => {
+                let left_id = left.to_recexpr(expr);
+                let right_id = right.to_recexpr(expr);
+                expr.add(VecLang::VecMulSgn([left_id, right_id]))
+            }
             VecAst::Ite(_, _, _) => todo!(),
             VecAst::Sqrt(inner) => {
                 let id = inner.to_recexpr(expr);
@@ -228,6 +236,12 @@ impl VecAst {
                 let b_id = b.to_recexpr(expr);
                 let c_id = c.to_recexpr(expr);
                 expr.add(VecLang::VecMAC([a_id, b_id, c_id]))
+            }
+            VecAst::VecMULS(a, b, c) => {
+                let a_id = a.to_recexpr(expr);
+                let b_id = b.to_recexpr(expr);
+                let c_id = c.to_recexpr(expr);
+                expr.add(VecLang::VecMULS([a_id, b_id, c_id]))
             }
             VecAst::Vec(items) => {
                 let ids =
@@ -344,6 +358,11 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
                 VecAst::VecSgn(Box::new(subtree(&expr, *inner).into()))
             }
             VecLang::VecMAC([a, b, c]) => VecAst::VecMAC(
+                Box::new(subtree(&expr, *a).into()),
+                Box::new(subtree(&expr, *b).into()),
+                Box::new(subtree(&expr, *c).into()),
+            ),
+            VecLang::VecMULS([a, b, c]) => VecAst::VecMULS(
                 Box::new(subtree(&expr, *a).into()),
                 Box::new(subtree(&expr, *b).into()),
                 Box::new(subtree(&expr, *c).into()),

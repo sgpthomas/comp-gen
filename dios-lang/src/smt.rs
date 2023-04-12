@@ -172,6 +172,12 @@ pub fn egg_to_z3<'a>(
                 let y_int = &buf[usize::from(*y)];
                 buf.push((x_int * y_int) + acc_int);
             }
+            lang::VecLang::VecMULS([acc, x, y]) => {
+                let acc_int = &buf[usize::from(*acc)];
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+                buf.push(acc_int - (x_int * y_int));
+            }
             lang::VecLang::VecSgn([x]) => {
                 let x_int = &buf[usize::from(*x)];
                 let zero = z3::ast::Int::from_i64(ctx, 0);

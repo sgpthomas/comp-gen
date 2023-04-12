@@ -6,7 +6,6 @@ use ruler::egg;
 use crate::{
     compiler,
     config::RuleSchedulerOpt,
-    cost,
     phases::{Phase, SinglePhase},
     stats::{EggStats, Stats},
     CostMetrics, FromPattern,
@@ -21,23 +20,7 @@ pub struct EqSatResult<
     prog: egg::RecExpr<L>,
     egraph: egg::EGraph<L, N>,
     time_left: Duration,
-    // stats: stats::Stats<L, C>,
 }
-
-// pub trait Saturate<L, N, C>
-// where
-//     L: egg::Language + FromPattern,
-//     N: egg::Analysis<L>,
-//     C: egg::CostFunction<L>,
-// {
-//     fn equality_saturate();
-//     fn run_phase(
-//         &self,
-//         phase: SinglePhase<L, N, C>,
-//         eqsat: EqSatResult<L, N, C>,
-//     ) -> EqSatResult<L, N, C>;
-//     fn compile();
-// }
 
 impl<L, N, C> compiler::Compiler<L, N, C>
 where
@@ -94,11 +77,6 @@ where
             warn!("Dry run! So skipping this phase.");
             return eqsat;
         }
-
-        // info!(
-        //     "Initial Program Depth: {}",
-        //     cost::depth(&eqsat.prog, eqsat.prog.as_ref().len() - 1)
-        // );
 
         // unpack the previous eqsat result
         let EqSatResult {
@@ -182,10 +160,6 @@ where
         }
 
         debug!("Egraph size: {}", runner.egraph.total_size());
-        // debug!(
-        //     "Final Program Depth: {}",
-        //     cost::depth(&prog, prog.as_ref().len() - 1)
-        // );
 
         // Report some stats about this phase
         let stats = Stats::from_runner(
