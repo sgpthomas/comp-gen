@@ -951,19 +951,21 @@ DIR=completed/mat-mul_8x8_8x8/18
 ./estimate.py log $DIR
 #+end_src
 
-#+begin_src async-shell :dir (sgt/dir) :results none :name test :ansi t
+Debug a job by running it locally
+
+#+begin_src async-shell :dir (sgt/dir) :results none :name debug :ansi t
 export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Cargo.toml)"
 export dios_bin=$(realpath ../diospyros/dios)
 export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
 
-cd server/jobs/Apr12-1604-mat-mul_2x2_2x2-0
+cd server/jobs/Apr13-1614-synthesis-60000-0
 ./run.sh
 #+end_src
 
 Debugging why our synthesizer doesn't generate rules like =(sqrt 1) <-> 1=
 
 #+begin_src async-shell :dir (sgt/dir) :results none :ansi t
-RUST_LOG=debug,egg=debug,z3=off cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
+RUST_LOG=info,egg=info,z3=off cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
       synth server/test/out.json --config server/synthesis/debug.json
 #+end_src
 

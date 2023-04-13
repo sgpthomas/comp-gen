@@ -645,9 +645,12 @@ def add_instruction_ruleset():
     """
 
     binops = ["/", "+", "*", "-"]
-    make_synthesis(Path("jobs"), 60000, binops=binops, triops=[], timeout=6000000)
-    make_synthesis(Path("jobs"), 60000, binops=binops, triops=["muls"], timeout=6000000)
-    make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
+    # baseline + muls + mulsgn
+    make_synthesis(Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000)
+    # baseline + muls
+    # make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
+    # baseline + mulsgn
+    # make_synthesis(Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000)
 
 
 def test_instruction_ruleset():
@@ -700,13 +703,13 @@ def test_instruction_ruleset():
 
 def main():
     # overall_performance()
-    pruning_experiments()
+    # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    # add_instruction_ruleset()
+    add_instruction_ruleset()
     # test_instruction_ruleset()
 
 

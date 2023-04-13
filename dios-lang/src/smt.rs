@@ -162,6 +162,21 @@ pub fn egg_to_z3<'a>(
                 let y_int = &buf[usize::from(*y)];
                 buf.push(x_int / y_int);
             }
+            lang::VecLang::VecMulSgn([x, y]) => {
+                // grab smt versions of inputs
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+
+                // make a zero constant
+                let zero = z3::ast::Int::from_i64(ctx, 0);
+
+                // if x > 0 { y } else { -y }
+                let inner: z3::ast::Int = (x_int.gt(&zero)).ite(y_int, &-y_int);
+                // if x == 0 { 0 } else { inner }
+                let sgn = (x_int._eq(&zero)).ite(&zero, &inner);
+
+                buf.push(sgn);
+            }
             lang::VecLang::VecNeg([x]) => {
                 let x_int = &buf[usize::from(*x)];
                 buf.push(-x_int);
@@ -219,8 +234,7 @@ pub fn egg_to_z3<'a>(
             | lang::VecLang::Get(_)
             | lang::VecLang::Vec(_)
             | lang::VecLang::LitVec(_)
-            | lang::VecLang::Concat(_)
-            | lang::VecLang::VecMulSgn(_) => return None,
+            | lang::VecLang::Concat(_) => return None,
         }
     }
     // return the last element
