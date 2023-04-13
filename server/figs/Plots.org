@@ -960,6 +960,13 @@ cd server/jobs/Apr12-1604-mat-mul_2x2_2x2-0
 ./run.sh
 #+end_src
 
+Debugging why our synthesizer doesn't generate rules like =(sqrt 1) <-> 1=
+
+#+begin_src async-shell :dir (sgt/dir) :results none :ansi t
+RUST_LOG=debug,egg=debug,z3=off cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
+      synth server/test/out.json --config server/synthesis/debug.json
+#+end_src
+
 * Potential Names
 
 Chourmas

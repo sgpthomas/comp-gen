@@ -594,11 +594,6 @@ impl SynthLanguage for lang::VecLang {
         synth.egraph = egraph;
     }
 
-    /// Plan for `make_layer`
-    /// even iter
-    ///   normal binary ops
-    /// odd iter
-    ///   depth 1 and depth 2 vector operations
     fn make_layer<'a>(
         ids: Vec<Id>,
         synth: &'a Synthesizer<Self, ruler::Init>,
@@ -707,51 +702,38 @@ impl SynthLanguage for lang::VecLang {
                 })
                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
 
-            Some(vec_unops.chain(vec_binops))
+            let vec_triops = (0..3)
+                .map(|_| ids.clone())
+                .multi_cartesian_product()
+                .filter(move |ids| {
+                    !ids.iter().all(|x| synth.egraph[*x].data.exact)
+                })
+                .map(|ids| [ids[0], ids[1], ids[2]])
+                .flat_map(move |x| {
+                    synth
+                        .lang_config
+                        .triops
+                        .iter()
+                        .map(|op| match op.as_str() {
+                            "mac" => lang::VecLang::VecMAC(x),
+                            "muls" => lang::VecLang::VecMULS(x),
+                            _ => panic!("Unknown vec triop"),
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .filter(move |node| vd || unique_vars(node, &synth.egraph));
+
+            Some(vec_unops.chain(vec_binops).chain(vec_triops))
         } else {
             None
         };
 
-        let vec_triops = (0..3)
-            .map(|_| ids.clone())
-            .multi_cartesian_product()
-            .filter(move |ids| !ids.iter().all(|x| synth.egraph[*x].data.exact))
-            .map(|ids| [ids[0], ids[1], ids[2]])
-            .flat_map(move |x| {
-                synth
-                    .lang_config
-                    .triops
-                    .iter()
-                    .map(|op| match op.as_str() {
-                        "mac" => lang::VecLang::VecMAC(x),
-                        "muls" => lang::VecLang::VecMULS(x),
-                        _ => panic!("Unknown vec triop"),
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .filter(move |node| vd || unique_vars(node, &synth.egraph));
-
-        // let vec_mac = if synth.lang_config.vector_mac {
-        //     let vec_mac = (0..3)
-        //         .map(|_| ids.clone())
-        //         .multi_cartesian_product()
-        //         .filter(move |ids| {
-        //             !ids.iter().all(|x| synth.egraph[*x].data.exact)
-        //         })
-        //         .map(|ids| [ids[0], ids[1], ids[2]])
-        //         .map(lang::VecLang::VecMAC)
-        //         .filter(move |node| vd || unique_vars(node, &synth.egraph));
-        //     Some(vec_mac)
-        // } else {
-        //     None
-        // };
-
         match (binops, vec_stuff) {
             // all are defined
-            (Some(b), Some(v)) => Box::new(b.chain(v).chain(vec_triops)),
+            (Some(b), Some(v)) => Box::new(b.chain(v)),
             // two are defined
-            (Some(i), _) => Box::new(i.chain(vec_triops)),
-            (_, Some(i)) => Box::new(i.chain(vec_triops)),
+            (Some(i), _) => Box::new(i),
+            (_, Some(v)) => Box::new(v),
             // none are defined
             (_, _) => panic!("No binops or vector ops defined."),
         }

@@ -25,6 +25,7 @@ where
 }
 
 /// Find the depth of a `RecExpr` starting at a particular `root` node.
+#[allow(unused)]
 pub fn depth<L: egg::Language, I: Into<egg::Id>>(
     term: &egg::RecExpr<L>,
     root: I,

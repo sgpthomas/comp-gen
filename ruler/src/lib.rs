@@ -638,7 +638,6 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                         let (_, e1) = extract.find_best(id1);
                         let (_, e2) = extract.find_best(id2);
                         if let Some(mut eq) = Equality::new(&e1, &e2) {
-                            // log::debug!("  Candidate {}", eq);
                             eq.ids = Some((id1, id2));
                             new_eqs.insert(eq.name.clone(), eq);
                         }
@@ -755,8 +754,6 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
 
             //     layer.retain(|n| n.all(|id| !has_constants.contains(&id)));
             // }
-
-            // log::info!("Made layer of {} nodes", layer.len());
 
             log::info!(
                 "Made layer! Using chunk size: {}",
