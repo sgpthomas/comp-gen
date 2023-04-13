@@ -68,7 +68,7 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, costfn,
 
 
 def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
-                 key=None, timeout=60 * 30):
+                 key=None, timeout=60 * 30, memory_limit=220):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -77,8 +77,8 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
         "date": date_str,
         "name": name,
         "key": key,
-        "memory_limit": 220,
-        "timeout": timeout,  # 30 minutes
+        "memory_limit": memory_limit,
+        "timeout": timeout,
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
@@ -230,12 +230,13 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60, binops=None, triops=None):
+def make_synthesis(jobs_dir, synth_timeout,
+                   eqsat_iter=3, eqsat_timeout=60, binops=None, triops=None, timeout=6000):
     date_str = datetime.now().strftime("%b%d-%H%M")
-    job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{timeout}", 0)
+    job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{synth_timeout}", 0)
     job_dir.mkdir(exist_ok=False)
     synth_config = json.load((Path("synthesis") / "base.json").open("r"))
-    synth_config["ruler_config"]["abs_timeout"] = timeout
+    synth_config["ruler_config"]["abs_timeout"] = synth_timeout
     synth_config["ruler_config"]["eqsat_iter_limit"] = eqsat_iter
     synth_config["ruler_config"]["eqsat_time_limit"] = eqsat_timeout
     if binops is not None:
@@ -246,9 +247,10 @@ def make_synthesis(jobs_dir, timeout, eqsat_iter=3, eqsat_timeout=60, binops=Non
         "date": date_str,
         "name": "synthesis",
         "memory_limit": 220,
+        "timeout": timeout,
         "command": "./run.sh",
         "metadata": {
-            "timeout": timeout,
+            "timeout": synth_timeout,
             "eqsat_iter_limit": eqsat_iter,
             "eqsat_timeout": eqsat_timeout,
         }
@@ -428,6 +430,7 @@ def pruning_experiments():
         [10, 10, 3, 3],
         [16, 16, 3, 3],
     ]
+    timeout = 360
 
     for p in params:
         # pruning config
@@ -435,20 +438,22 @@ def pruning_experiments():
             Path("jobs"),
             *p,
             rulesets["ruleset_timeout86400"],
-            configs["loop_alt_cost_t180"],
+            configs["loop_alt_cost_t360"],
             "alternative",
             key="pruning",
-            timeout=180 * 4
+            memory_limit=100,
+            timeout=timeout * 10
         )
         # no pruning config
         make_2d_conv(
             Path("jobs"),
             *p,
             rulesets["ruleset_timeout86400"],
-            configs["loop_alt_cost_noprune_t180"],
+            configs["loop_alt_cost_noprune_t360"],
             "alternative",
             key="pruning",
-            timeout=180 * 4
+            memory_limit=100,
+            timeout=timeout * 10
         )
 
 
@@ -640,20 +645,69 @@ def add_instruction_ruleset():
     """
 
     binops = ["/", "+", "*", "-"]
-    make_synthesis(Path("jobs"), 10000, binops=binops, triops=[])
-    make_synthesis(Path("jobs"), 10000, binops=binops, triops=["muls"])
-    make_synthesis(Path("jobs"), 10000, binops=binops, triops=["mac", "muls"])
+    make_synthesis(Path("jobs"), 60000, binops=binops, triops=[], timeout=6000000)
+    make_synthesis(Path("jobs"), 60000, binops=binops, triops=["muls"], timeout=6000000)
+    make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
+
+
+def test_instruction_ruleset():
+    """
+    Run q-prod, qr-decomp with no fused ops, with muls, and with both fused ops
+    """
+
+    base = Path("instruction-rulesets")
+    mac_muls_ruleset = json.load((base / "ruleset.json").open("r"))
+    eqs = mac_muls_ruleset["eqs"]
+
+    def excludes(rule, ops):
+        return all([op not in rule["lhs"] + rule["rhs"] for op in ops])
+
+    json.dump({
+        "params": {},
+        "eqs": list(filter(lambda r: excludes(r, ["MULS", "MAC"]), eqs))
+    }, (base / "no_fused_ruleset.json").open("w"), indent=2)
+    json.dump({
+        "params": {},
+        "eqs": list(filter(lambda r: excludes(r, ["MULS"]), eqs))
+    }, (base / "mac_ruleset.json").open("w"), indent=2)
+    json.dump({
+        "params": {},
+        "eqs": list(filter(lambda r: excludes(r, ["MAC"]), eqs))
+    }, (base / "muls_ruleset.json").open("w"), indent=2)
+
+    rulesets = dict_from_dir(Path("instruction-rulesets"))
+
+    for (n, r) in rulesets.items():
+        qr_decomp(
+            Path("jobs"),
+            3,
+            r,
+            configs["loop_alt_cost_t360"],
+            "alternative",
+            key="instruction",
+            timeout=1000
+        )
+
+        q_prod(
+            Path("jobs"),
+            r,
+            configs["loop_alt_cost_t360"],
+            "alternative",
+            key="instruction",
+            timeout=1000
+        )
 
 
 def main():
     # overall_performance()
-    # pruning_experiments()
+    pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    add_instruction_ruleset()
+    # add_instruction_ruleset()
+    # test_instruction_ruleset()
 
 
 if __name__ == "__main__":

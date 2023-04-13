@@ -1,0 +1,9 @@
+index,benchmark,params,exp,rules,cycles,cost
+0,q-prod,0,16,mac_ruleset,108,49.867999999999995
+1,q-prod,0,19,muls_ruleset,109,44.867999999999995
+2,q-prod,0,18,no_fused_ruleset,108,55.86799999999998
+3,q-prod,0,17,ruleset,108,40.867999999999995
+4,qr-decomp,3,18,mac_ruleset,1440,160296124.691
+5,qr-decomp,3,19,muls_ruleset,1333,160296089.69099998
+6,qr-decomp,3,20,no_fused_ruleset,1353,160296210.69099998
+7,qr-decomp,3,17,ruleset,1339,160296011.69099998

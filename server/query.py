@@ -139,7 +139,9 @@ def pruning():
         if all(
             [
                 # "Mar27-1209" in config["date"] or "Mar27-1552" in config["date"],
-                "Apr12-1457" in config["date"],
+                # "Apr12-1759" in config["date"], # or "Apr12-2041" in config["date"] or "Apr12-2118" in config["date"],
+                # "Apr12-2353" in config["date"] or "Apr13-0925" in config["date"],
+                "Apr13-1000" in config["date"],
                 "key" in config and config["key"] == "pruning",
             ]
         ):
@@ -161,6 +163,8 @@ def pruning():
             df = pd.read_csv(memory_csv, header=None, names=["timestamp", "ram_used"])
             memory_used = (df >> replace({"timeout": "-1"}) >> agg(["max"]))["ram_used"].values[0]
             compile_time = (df >> agg(["max"]))["timestamp"].values[0]
+
+            killed = "killed" in df["ram_used"].values
             timeout = "timeout" in df["ram_used"].values
 
             # I want to get name, params, exp, pruning, cycles, cost, nodes
@@ -173,6 +177,7 @@ def pruning():
                     "cycles": [cycles],
                     "cost": [egraph_cost],
                     "timeout": [timeout],
+                    "killed": [killed],
                     "compile_time": [compile_time],
                     "memory_used": [memory_used]
                 })
@@ -493,6 +498,52 @@ def ruleset_ablation():
     )
 
 
+def instruction():
+    res = []
+    for config_path in Path("completed").glob("**/config.json"):
+        exp_path = Path(config_path.parents[0])
+        config = json.load(config_path.open("r"))
+
+        if "_" in config["name"]:
+            name, params = config["name"].split("_", 1)
+        else:
+            name = config["name"]
+            params = "0"
+
+        if all(["key" in config and config["key"] == "instruction"]):
+            cycles_csv = exp_path / "results" / "cycles.csv"
+
+            egraph_cost = None
+            cycles = None
+            if cycles_csv.exists():
+                df = pd.read_csv(cycles_csv)
+                cycles = df["cycles"].values[0]
+
+            egraph_cost = (
+                pd.read_csv(exp_path / "data.csv")
+                >> filter_by(X.iteration == "report")
+                >> filter_by(X.name == "cost")
+                >> iloc([-1])
+            )["value"].values[0]
+
+            res.append(
+                pd.DataFrame(data={
+                    "benchmark": [name],
+                    "params": [params],
+                    "exp": [exp_path.name],
+                    "rules": Path(config["metadata"]["rules.json"]).stem,
+                    "cycles": [cycles],
+                    "cost": [egraph_cost]
+                })
+            )
+    out = Path("figs") / "data" / "instruction.csv"
+    (pd.concat(res)
+        >> sort_values(by=["benchmark", "params", "rules"], key=cmp_params)
+        >> reset_index(drop=True)
+        >> display()
+        >> to_csv(out, index_label="index"))
+
+
 def play():
     # _ = latest_date()
 
@@ -511,13 +562,14 @@ def play():
 def main():
     # exp_iter("2d-conv_3x3_3x3")
     pruning()
-    compile_est_cycles()
+    # compile_est_cycles()
     # stock_dios()
     # scheduler()
     # play()
     # fix()
     # noeqsat()
-    ruleset_ablation()
+    # ruleset_ablation()
+    instruction()
 
 
 if __name__ == "__main__":

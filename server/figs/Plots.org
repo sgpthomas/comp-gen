@@ -174,11 +174,9 @@ faces <- data %>%
   select(saturated) %>%
   mutate(
     bold=to_face(saturated)
-  ) %>%
-  print(n=20)
+  )
 
 data <- data %>%
-  print(n=142) %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
@@ -195,15 +193,14 @@ data <- data %>%
     noeqsat = norm / noeqsat,
     naive = norm / naive,
     naive.fixed = norm / naive.fixed,
-    naive.clang = norm / naive.clang
+    naive.clang = norm / naive.clang,
   ) %>%
   pivot_longer(
     cols = c("naive.fixed", "naive.clang", "nature", "dios", "compgen"),
     names_to = "kernel",
     values_to = "cycles"
   ) %>%
-  select(name, kernel, cycles) %>%
-  print(n=60)
+  select(name, kernel, cycles)
 
 data %>%
   ggplot(aes(
@@ -250,6 +247,34 @@ data %>%
 
 #+RESULTS:
 [[file:cycles-performance.svg]]
+
+#+begin_src R
+data <- full_join(full_join(
+  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
+  read_csv("data/est_cycles.csv")
+  %>% filter(timeout == "180")
+  %>% filter(params != "18x18_2x2")
+  %>% filter(params != "18x18_3x3")
+  %>% filter(params != "18x18_4x4")
+  %>% filter(params != "18x18_18x18")
+  %>% filter(params != "20x20_20x20")
+), read_csv("data/noeqsat.csv"))
+
+data %>% filter(kernel == "nature" | kernel == "compgen") %>%
+  select(kernel, benchmark, params, cycles) %>%
+  pivot_wider(
+    names_from=kernel,
+    values_from=cycles
+  ) %>%
+  mutate(
+    speedup=nature / compgen 
+  ) %>% summarise(mean = mean(speedup, na.rm = T), n = n())
+#+end_src
+
+#+RESULTS:
+|             mean |  n |
+|------------------+----|
+| 3.20486977175277 | 21 |
 
 *** NEXT Compilation time
 
@@ -624,10 +649,11 @@ Things to fix:
 #+header: :width 9 :height 5
 #+begin_src R :results graphics file :file pruning.svg
 data <- read_csv("data/pruning.csv")
+killed_height <- 4500
 data %>%
   mutate(
-    pattern=if_else(cycles < 0, T, F),
-    cycles=if_else(cycles < 0, 1500, cycles),
+    pattern=killed,
+    cycles=if_else(killed, killed_height, cycles),
     params=str_replace_all(params, "_", " ")
   ) %>%
   print(n=10) %>%
@@ -647,9 +673,9 @@ data %>%
     pattern_density=0.35,
   ) +
   geom_hline(
-    yintercept=1500,
+    yintercept=killed_height,
     color="red"
-  ) + annotate("text", x=3, y=1560, label="TIMEOUT", size=8, color="red") +
+  ) + annotate("text", x=3, y=killed_height + 250, label="KILLED", size=8, color="red") +
   scale_fill_manual(
     values=c("#eeeeee", "#fb9a99"),
     labels=c("No Pruning", "Pruning")
@@ -666,7 +692,7 @@ data %>%
   guides(pattern="none") +
   theme_minimal() +
   theme(
-    ## legend.position = c(0.9, 0.9),
+    legend.position = "top",
     legend.title=element_blank(),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
@@ -811,6 +837,50 @@ data %>%
 
 #+RESULTS:
 [[file:ruleset-ablation.svg]]
+
+** Instruction Ablation
+
+#+header: :width 6 :height 6
+#+begin_src R :results graphics file :file instruction.svg
+data <- read_csv("data/instruction.csv") %>% filter(benchmark == "qr-decomp")
+
+data %>%
+  mutate(
+    mac=rules == "mac_ruleset" | rules == "ruleset",
+    muls=rules == "muls_ruleset" | rules == "ruleset",
+    speedup=round(1353 / cycles, 2)*100,
+    show=if_else(speedup >= 100, str_c("+", speedup-100, "%"), str_c("-", 100-speedup, "%"))
+  ) %>%
+  print(n=10) %>%
+  ggplot(aes(
+    x=mac,
+    y=muls,
+    fill=show,
+    label=show
+  )) + geom_tile() + geom_text(size=13) +
+  scale_x_discrete(
+    labels=c("False", "True")
+  ) +
+  scale_y_discrete(
+    labels=c("False", "True")
+  ) +
+  scale_fill_brewer(
+    palette="Blues",
+    direction=-1
+  ) +
+  labs(x="MAC Instruction", y="MULS Instruction", title="Speedup over no fused ops") +
+  theme_minimal() +
+  theme(
+    ## axis.text.x = element_text(color=faces$bold),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none",
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold"),
+  )
+#+end_src
+
+#+RESULTS:
+[[file:instruction.svg]]
 
 ** Misc
 
