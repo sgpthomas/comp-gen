@@ -403,11 +403,8 @@ impl SynthLanguage for lang::VecLang {
             }),
             #[rustfmt::skip]
             lang::VecLang::VecMulSgn([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| match (l, r) {
-                    (lang::Value::Int(a), lang::Value::Int(b)) => {
-                        integer_division(sgn(*a), *b).map(lang::Value::Int)
-                    }
-                    _ => None,
+                lang::Value::vec2_op(l, r, |l, r| {
+                    lang::Value::int2(l, r, |l, r| lang::Value::Int(sgn(l) * r))
                 })
             }),
             #[rustfmt::skip]
