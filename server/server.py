@@ -24,10 +24,7 @@ def sort_path(path):
 
     # path.replace()
     stem = path.stem.replace("_", "-").replace("x", "-").split("-")
-    stem = list(map(
-        lambda x: int(x) if x.isnumeric() else x,
-        stem
-    ))
+    stem = list(map(lambda x: int(x) if x.isnumeric() else x, stem))
     return stem
 
 
@@ -76,10 +73,7 @@ class GlobalConfig:
         """Commit the current configuration to a file."""
 
         with self.config_path.open("w") as f:
-            data = {
-                "env": self.env,
-                "jobs_at_once": self.jobs_at_once
-            }
+            data = {"env": self.env, "jobs_at_once": self.jobs_at_once}
             json.dump(data, f, indent=2)
 
 
@@ -109,10 +103,9 @@ class Job:
             return False
 
         data = json.load(config.open("r"))
-        return all(map(
-            lambda k: k in data,
-            ["date", "name", "memory_limit", "command"]
-        ))
+        return all(
+            map(lambda k: k in data, ["date", "name", "memory_limit", "command"])
+        )
 
     def exec(self):
         # prepare log files
@@ -130,17 +123,14 @@ class Job:
             env=self.global_config.env,
             stdout=stdout_log.open("w"),
             stderr=stderr_log.open("w"),
-            cwd=self.dir
+            cwd=self.dir,
         )
         return self.proc
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
         parent_dir.mkdir(exist_ok=True)
-        children = filter(
-            lambda x: str(x.name).isnumeric(),
-            parent_dir.glob("*")
-        )
+        children = filter(lambda x: str(x.name).isnumeric(), parent_dir.glob("*"))
         print(list(map(lambda x: x.name, parent_dir.glob("*"))))
         results = parent_dir / str(len(list(children)))
 
@@ -175,7 +165,13 @@ def memory_used_by(pid):
     return mem / float(10 ** 9)
 
 
-def single_run(config, alive):
+def single_run(config, alive, update=False):
+    if update:
+        subprocess.run("git pull -r", shell=True)
+        subprocess.run(
+            "cargo build --release --manifest-path=../dios-lang/Cargo.toml", shell=True
+        )
+
     print("Looking for jobs...")
 
     # reload the config, to catch any potential changes
@@ -208,11 +204,7 @@ def single_run(config, alive):
             # record memory usage
             memory_csv.touch()
             with memory_csv.open("a") as f:
-                print(
-                    "{},{}".format(time_diff, memory_used),
-                    file=f,
-                    flush=True
-                )
+                print("{},{}".format(time_diff, memory_used), file=f, flush=True)
 
             # if we have exceeded the memory limit, kill this
             # process and write a line out to memory.csv
@@ -223,11 +215,7 @@ def single_run(config, alive):
                 proc.wait()
                 print("Dead!")
                 with memory_csv.open("a") as f:
-                    print(
-                        "{},{}".format(time_diff, "killed"),
-                        file=f,
-                        flush=True
-                    )
+                    print("{},{}".format(time_diff, "killed"), file=f, flush=True)
 
             # if we have exceeded the time limit, kill this
             # process and write a line out to memory.csv
@@ -238,11 +226,7 @@ def single_run(config, alive):
                 proc.wait()
                 print("Dead!!")
                 with memory_csv.open("a") as f:
-                    print(
-                        "{},{}".format(time_diff, "timeout"),
-                        file=f,
-                        flush=True
-                    )
+                    print("{},{}".format(time_diff, "timeout"), file=f, flush=True)
 
         # if the job isn't alive, add it to the dead list
         else:
@@ -260,11 +244,13 @@ def main():
 
     try:
         alive = {}
+        i = 0
         while True:
             config.reload()
-            single_run(config, alive)
+            single_run(config, alive, update=i == 0)
 
             time.sleep(5)
+            i = (i + 1) % 10
 
     except KeyboardInterrupt:
         print("Stopping...")
