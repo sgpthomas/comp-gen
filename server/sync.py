@@ -24,18 +24,20 @@ def do_send(name):
     # send the complete jobs to the server so that the number's it generates
     # are the same as the ones we have
     print("Sending complete jobs", end="...")
-    subprocess.run([
-        "rsync", "-avh",
+    subprocess.run(" ".join([
+        "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
+        "-avh",
         "completed/",
         f"ubuntu@{ip}:~/comp-gen/server/completed"
-    ])
+    ]), shell=True)
     print("Done")
     print("Sending jobs", end="...")
-    subprocess.run([
-        "rsync", "-avh",
+    subprocess.run(" ".join([
+        "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
+        "-avh",
         "jobs/",
         f"ubuntu@{ip}:~/comp-gen/server/jobs"
-    ])
+    ]), shell=True)
     print("Done")
     print("Cleaning jobs")
     subprocess.run(["rm", "-r", "jobs"])
@@ -46,19 +48,21 @@ def do_retreive(name):
     ip = get_aws_ip_by_name(name)
 
     print("Syncing in-progress jobs", end="...")
-    subprocess.run([
-        "rsync", "-avh", "--delete",
+    subprocess.run(" ".join([
+        "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
+        "-avh", "--delete",
         f"ubuntu@{ip}:~/comp-gen/server/jobs/",
         "in-progress",
-    ])
+    ]), shell=True)
     print("Done")
 
     print("Syncing completed", end="...")
-    subprocess.run([
-        "rsync", "-avh",
+    subprocess.run(" ".join([
+        "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
+        "-avh",
         f"ubuntu@{ip}:~/comp-gen/server/completed/",
         "completed",
-    ])
+    ]), shell=True)
     print("Done")
 
 

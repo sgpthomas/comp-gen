@@ -74,15 +74,20 @@ def estimate_kernel(
 
     # if a kernel file doesn't exist, try pulling one out of the log file
     if not (exp_path / results / "kernel.c").exists():
-        stderr_log = exp_dir / "stderr.log"
-        progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
-        if len(progs) == 0:
-            print("No kernel found.")
-            return
 
-        prog = progs[-1].split(": ")[1]
-        with (exp_path / results / "res.rkt").open("w") as res:
-            res.write(prog)
+        # if res.rkt doesn't exists, try pulling one from the log
+        if not (exp_path / results / "res.rkt").exists():
+            stderr_log = exp_dir / "stderr.log"
+            progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
+            if len(progs) == 0:
+                print("No kernel found.")
+                return
+
+            prog = progs[-1].split(": ")[1]
+            with (exp_path / results / "res.rkt").open("w") as res:
+                res.write(prog)
+
+        # we have a res.rkt now, compile it
         subprocess.run([
             "../../diospyros/dios", "-w", "4",
             "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
@@ -298,7 +303,8 @@ def log(exp_dir, results):
                     force=True,
                     results="iter_results",
                     benchmark_name=benchmark_name,
-                    params=params
+                    params=params,
+                    debug=True
                 )
                 >> mutate(
                     phase=phase_name,
