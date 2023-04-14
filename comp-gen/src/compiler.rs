@@ -203,6 +203,7 @@ where
         self.total_iter_limit = config.total_iter_limit;
         self.timeout = config.timeout;
         self.dry_run = config.dry_run;
+        self.debug = config.debug;
         self.dump_rules = config.dump_rules;
         self.reuse_egraphs = config.reuse_egraphs;
         self.phases = config.phase.clone().into();

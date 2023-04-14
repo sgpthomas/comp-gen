@@ -21,6 +21,7 @@ pub struct CompilerConfiguration {
     pub total_iter_limit: usize,
     pub timeout: u64,
     pub dry_run: bool,
+    pub debug: bool,
     pub dump_rules: bool,
     pub reuse_egraphs: bool,
     pub cd_filter: Option<f64>,
