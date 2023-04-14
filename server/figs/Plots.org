@@ -904,6 +904,19 @@ data %>%
 #+RESULTS:
 [[file:iter_cost.svg]]
 
+* Overview Example
+
+For exposition purposes, we want to explain /why/ these large ruleset blow up the graph. Ideally we want to find a particular rule that does this.
+
+#+begin_src async-shell :dir (sgt/dir) :results none :name overview
+export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Cargo.toml)"
+export dios_bin=$(realpath ../diospyros/dios)
+export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
+
+cd server/overview/
+./run.sh
+#+end_src
+
 * Copy Images to paper
 
 #+begin_src async-shell :results none

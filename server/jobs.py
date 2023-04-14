@@ -701,6 +701,17 @@ def test_instruction_ruleset():
         )
 
 
+def overview_example():
+    make_2d_conv(
+        Path("jobs"),
+        *[2, 2, 2, 2],
+        rulesets["ruleset_timeout86400"],
+        configs["all-simple"],
+        "alternative",
+        key="overview"
+    )
+
+
 def main():
     # overall_performance()
     # pruning_experiments()
@@ -711,6 +722,7 @@ def main():
     # scheduler()
     add_instruction_ruleset()
     # test_instruction_ruleset()
+    overview_example()
 
 
 if __name__ == "__main__":

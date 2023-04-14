@@ -1,0 +1,13 @@
+{
+  "date": "Apr14-1226",
+  "name": "2d-conv_2x2_2x2",
+  "key": "overview",
+  "memory_limit": 220,
+  "timeout": 1800,
+  "command": "./run.sh",
+  "metadata": {
+    "rules.json": "/home/samthomas/Research/comp-gen/experiments/rulesets/ruleset_timeout86400.json",
+    "compile.json": "/home/samthomas/Research/comp-gen/experiments/configs/all-simple.json",
+    "costfn": "alternative"
+  }
+}
