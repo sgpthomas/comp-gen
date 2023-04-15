@@ -194,7 +194,7 @@ def update(name, time, commit, diff):
         pd.read_csv(out) >> display()
 
     if commit:
-        df >> to_csv(out, indent=False)
+        df >> to_csv(out)
 
 
 if __name__ == "__main__":

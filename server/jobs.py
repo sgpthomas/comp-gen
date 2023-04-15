@@ -345,8 +345,8 @@ def overall_performance():
         [8, 8, 8, 8],
         [10, 10, 10, 10],
         [16, 16, 16, 16],
-        # [18, 18, 18, 18],
-        # [20, 20, 20, 20]
+        [18, 18, 18, 18],
+        [20, 20, 20, 20]
     ]
     conv_2d_sizes = [
         [3, 3, 2, 2],
@@ -360,9 +360,9 @@ def overall_performance():
         [16, 16, 2, 2],
         [16, 16, 3, 3],
         [16, 16, 4, 4],
-        # [18, 18, 2, 2],
-        # [18, 18, 3, 3],
-        # [18, 18, 4, 4],
+        [18, 18, 2, 2],
+        [18, 18, 3, 3],
+        [18, 18, 4, 4],
     ]
     q_prod_params = [
         0
@@ -386,7 +386,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 2
+            timeout=json.load(c.open("r"))["timeout"] * 5
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -397,11 +397,18 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 2
+            timeout=json.load(c.open("r"))["timeout"] * 5
         )
 
     for _, c in itertools.product(q_prod_params, cs):
-        q_prod(Path("jobs"), ruleset, c, "alternative", key="performance", timeout=60 * 40)
+        q_prod(
+            Path("jobs"),
+            ruleset,
+            c,
+            "alternative",
+            key="performance",
+            timeout=json.load(c.open("r"))["timeout"] * 5
+        )
 
     for size, c in itertools.product(qr_decomp_sizes, cs):
         qr_decomp(
@@ -411,7 +418,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 2
+            timeout=json.load(c.open("r"))["timeout"] * 5
         )
 
 
@@ -713,16 +720,16 @@ def overview_example():
 
 
 def main():
-    # overall_performance()
+    overall_performance()
     # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    add_instruction_ruleset()
+    # add_instruction_ruleset()
     # test_instruction_ruleset()
-    overview_example()
+    # overview_example()
 
 
 if __name__ == "__main__":

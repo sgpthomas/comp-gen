@@ -104,7 +104,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update est_cycles -t latest --diff
+./query2.py update est_cycles --commit
 #+end_src
 
 * Tables
@@ -287,7 +287,7 @@ data %>% filter(kernel == "nature" | kernel == "compgen") %>%
 #+header: :width 9 :height 4
 #+begin_src R :results graphics file :file compile-times.svg
 data <- full_join(
-  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
+  read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
   %>% filter(timeout == "180")
   %>% filter(params != "18x18_2x2")
@@ -347,7 +347,6 @@ data %>%
     yintercept=180,
   ) +
   ## scale_y_log10() +
-  coord_cartesian(ylim=c(0, 600)) +
   scale_fill_manual(
     values = c("#33a02c", "#fb9a99"),
     labels=c("Diospyros", "Compgen")
@@ -928,7 +927,7 @@ time ./run.sh
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo *.svg); do
+for f in $(echo compile-times.svg); do
     echo "Exporting $f to $DEST/${f%.*}.pdf"
     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 done
