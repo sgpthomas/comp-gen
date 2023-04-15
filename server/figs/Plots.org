@@ -101,6 +101,12 @@ Run query to generate aggregated data files
 python3.11 query.py
 #+end_src
 
+Rewriting my =query.py= script.
+
+#+begin_src async-shell :name query
+./query2.py update est_cycles -t latest
+#+end_src
+
 * Tables
 
 Generate the SLoC table for the evaluation section

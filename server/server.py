@@ -171,6 +171,8 @@ def single_run(config, alive, update=False):
         subprocess.run(
             "cargo build --release --manifest-path=../dios-lang/Cargo.toml", shell=True
         )
+        subprocess.run("git pull -r", shell=True, cwd="../../custom-diospyros")
+        subprocess.run("make -B dios dios-example-gen", shell=True, cwd="../../custom-diospyros")
 
     print("Looking for jobs...")
 
