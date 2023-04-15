@@ -104,7 +104,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update est_cycles -t latest
+./query2.py update est_cycles -t latest --diff
 #+end_src
 
 * Tables

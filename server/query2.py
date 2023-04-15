@@ -170,7 +170,8 @@ def ls(key, time):
 @click.argument("name")
 @click.option("-t", "--time")
 @click.option("--commit", is_flag=True)
-def update(name, time, commit):
+@click.option("--diff", is_flag=True)
+def update(name, time, commit, diff):
     if name not in QUERIES:
         raise Exception(f"{name} is not a known query. Choose:\n{list(QUERIES.keys())}")
 
@@ -182,12 +183,18 @@ def update(name, time, commit):
     exps = all_experiments(key=config["key"], time=query_date)
 
     res = []
-    for name, row in exps.iterrows():
+    for _, row in exps.iterrows():
         res.append(pd.DataFrame(data=config["func"](row)))
     df = pd.concat(res) >> reset_index(drop=True) >> display()
 
+    out = Path("figs") / "data" / f"{name}.csv"
+
+    if diff:
+        print("Old version:")
+        pd.read_csv(out) >> display()
+
     if commit:
-        df >> to_csv(Path("figs") / "data" / f"{config['name']}.csv", indent=False)
+        df >> to_csv(out, indent=False)
 
 
 if __name__ == "__main__":

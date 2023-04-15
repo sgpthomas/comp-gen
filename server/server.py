@@ -114,6 +114,19 @@ class Job:
         stdout_log.touch()
         stderr_log.touch()
 
+        compgen_commit = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True)
+        dios_commit = subprocess.run(
+            "git rev-parse HEAD",
+            shell=True,
+            capture_output=True,
+            cwd="../../custom-diospyros"
+        )
+        with (self.dir / "commit.txt").open("w") as f:
+            f.writelines([
+                f"comp-gen: {compgen_commit}",
+                f"diospyros: {dios_commit}",
+            ])
+
         # save start time
         self.start_time = time.time()
 
