@@ -53,79 +53,80 @@ def estimate_kernel(
         params=None,
         debug=False
 ):
-    exp_path = Path(exp_dir)
+    try:
+        exp_path = Path(exp_dir)
 
-    if (exp_path / "config.json").exists():
-        config = json.load((exp_path / "config.json").open("r"))
-        if "_" in config["name"]:
-            benchmark_name, params = config["name"].split("_", 1)
-        else:
-            benchmark_name = config["name"]
-            params = None
+        if (exp_path / "config.json").exists():
+            config = json.load((exp_path / "config.json").open("r"))
+            if "_" in config["name"]:
+                benchmark_name, params = config["name"].split("_", 1)
+            else:
+                benchmark_name = config["name"]
+                params = None
 
-    # find the harness file that is associated with this benchmark
-    # looks in `harnesses/benchmark_name.c`
-    harness_file = Path("harnesses") / f"{benchmark_name}.c"
-    util_file = Path("harnesses") / "utils.h"
+        # find the harness file that is associated with this benchmark
+        # looks in `harnesses/benchmark_name.c`
+        harness_file = Path("harnesses") / f"{benchmark_name}.c"
+        util_file = Path("harnesses") / "utils.h"
 
-    if not harness_file.exists():
-        print(f"Harness file for {benchmark_name} doesn't exist.")
-        return
-
-    # if a kernel file doesn't exist, try pulling one out of the log file
-    if not (exp_path / results / "kernel.c").exists():
-
-        # if res.rkt doesn't exists, try pulling one from the log
-        if not (exp_path / results / "res.rkt").exists():
-            stderr_log = exp_dir / "stderr.log"
-            progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
-            if len(progs) == 0:
-                print("No kernel found.")
-                return
-
-            prog = progs[-1].split(": ")[1]
-            with (exp_path / results / "res.rkt").open("w") as res:
-                res.write(prog)
-
-        # we have a res.rkt now, compile it
-        subprocess.run([
-            "../../diospyros/dios", "-w", "4",
-            "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
-            str(exp_path / results)
-        ])
-
-        if not (exp_path / results / "kernel.c").exists():
-            print("Failed to produce kernel.c!")
+        if not harness_file.exists():
+            print(f"Harness file for {benchmark_name} doesn't exist.")
             return
 
-    # copy file into results directory
-    shutil.copy(harness_file, exp_path / results / "harness.c")
-    shutil.copy(util_file, exp_path / results / "utils.h")
+        # if a kernel file doesn't exist, try pulling one out of the log file
+        if not (exp_path / results / "kernel.c").exists():
 
-    cmd = [
-        "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
-        # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
-        "-std=c++11", "-mlongcalls",
-        "-O3", "-LNO:simd", "-fvectorize",
-        "-mtext-section-literals",
-        "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
-        "-DOUTFILE='\"cycles.csv\"'"
-    ]
-    cmd += param_strings(benchmark_name, params)
-    cmd += [
-        "-I", "/usr/include/eigen3",
-        "-I", "~/Research/xtensa/fusiong3_library/include",
-        "-I", "~/Research/xtensa/fusiong3_library/include_private",
-        "kernel.c",
-    ]
+            # if res.rkt doesn't exists, try pulling one from the log
+            if not (exp_path / results / "res.rkt").exists():
+                stderr_log = exp_dir / "stderr.log"
+                progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
+                if len(progs) == 0:
+                    print("No kernel found.")
+                    return
 
-    # run xt compiler
-    if force or not (exp_path / results / "kernel.o").exists():
-        print("Compiling", end="...", flush=True)
-        subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
-        # run once to generate .s files, and then again to generate object file
+                prog = progs[-1].split(": ")[1]
+                with (exp_path / results / "res.rkt").open("w") as res:
+                    print(len(prog))
+                    res.write(prog)
 
-        try:
+            # we have a res.rkt now, compile it
+            subprocess.run([
+                "../../diospyros/dios", "-w", "4",
+                "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
+                str(exp_path / results),
+            ], timeout=60 * 1)
+
+            if not (exp_path / results / "kernel.c").exists():
+                print("Failed to produce kernel.c!")
+                return
+
+        # copy file into results directory
+        shutil.copy(harness_file, exp_path / results / "harness.c")
+        shutil.copy(util_file, exp_path / results / "utils.h")
+
+        cmd = [
+            "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
+            # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
+            "-std=c++11", "-mlongcalls",
+            "-O3", "-LNO:simd", "-fvectorize",
+            "-mtext-section-literals",
+            "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
+            "-DOUTFILE='\"cycles.csv\"'"
+        ]
+        cmd += param_strings(benchmark_name, params)
+        cmd += [
+            "-I", "/usr/include/eigen3",
+            "-I", "~/Research/xtensa/fusiong3_library/include",
+            "-I", "~/Research/xtensa/fusiong3_library/include_private",
+            "kernel.c",
+        ]
+
+        # run xt compiler
+        if force or not (exp_path / results / "kernel.o").exists():
+            print("Compiling", end="...", flush=True)
+            subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
+            # run once to generate .s files, and then again to generate object file
+
             if debug:
                 subprocess.run(" ".join(cmd + ["-S"]), shell=True,
                                cwd=exp_path / results, timeout=60 * 5)
@@ -135,28 +136,31 @@ def estimate_kernel(
                 cwd=exp_path / results,
                 timeout=60 * 5  # 5 minutes
             )
-        except subprocess.TimeoutExpired:
-            print("timeout!!", end="...", flush=True)
-            (exp_path / results / "cycles.csv").touch("w")
+
+            print("Done")
+
+        # simulate the resulting object file
+        print("Simulating", end="...", flush=True)
+        xt_run_cmd = ["~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run"]
+        if debug:
+            xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
+        xt_run_cmd += ["kernel.o"]
+        subprocess.run(" ".join(xt_run_cmd), shell=True, cwd=exp_path / results, capture_output=False)
         print("Done")
 
-    # simulate the resulting object file
-    print("Simulating", end="...", flush=True)
-    xt_run_cmd = ["~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run"]
-    if debug:
-        xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
-    xt_run_cmd += ["kernel.o"]
-    subprocess.run(" ".join(xt_run_cmd), shell=True, cwd=exp_path / results, capture_output=False)
-    print("Done")
+        df = pd.read_csv(exp_path / results / "cycles.csv")
 
-    df = pd.read_csv(exp_path / results / "cycles.csv")
+        if override != "":
+            df = (df.replace(to_replace="compgen", value=override)
+                  >> to_csv(exp_path / results / "cycles.csv"))
 
-    if override != "":
-        df = (df.replace(to_replace="compgen", value=override)
-              >> to_csv(exp_path / results / "cycles.csv"))
-
-    print(df)
-    return df
+        print(df)
+        return df
+    except subprocess.TimeoutExpired:
+        print("Timeout!!")
+        cycles_csv = exp_path / results / "cycles.csv"
+        cycles_csv.touch()
+        return pd.DataFrame()
 
 
 @click.group()
