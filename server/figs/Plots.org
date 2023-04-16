@@ -3,8 +3,8 @@
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
 
 #+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none :name dios
-git checkout master
-git pull -r
+# git checkout master
+# git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
@@ -104,7 +104,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update diospyros
+./query2.py update est_cycles -t latest --commit
 #+end_src
 
 * Tables
@@ -142,6 +142,7 @@ Import the R libraries that we will use.
 library(tidyverse)
 library(extrafont)
 library(ggpattern)
+library(tikzDevice)
 #+end_src
 
 ** Performance graphs
@@ -152,18 +153,16 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 9 :height 4
-#+begin_src R :results graphics file :file cycles-performance.svg
-data <- full_join(full_join(
-  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
+#+header: :width 650 :height 300
+
+#+header: :width 6.85 :height 2.85
+#+begin_src R :results graphics output file :file cycles-performance.tikz
+data <- full_join(
+  read_csv("data/diospyros.csv"),
   read_csv("data/est_cycles.csv")
   %>% filter(timeout == "180")
-  %>% filter(params != "18x18_2x2")
-  %>% filter(params != "18x18_3x3")
-  %>% filter(params != "18x18_4x4")
   %>% filter(params != "18x18_18x18")
-  %>% filter(params != "20x20_20x20")
-), read_csv("data/noeqsat.csv"))
+)
 
 to_face <- function(sat) {
   map_chr(sat, function(x) {
@@ -191,12 +190,12 @@ data <- data %>%
     values_from=cycles
   ) %>%
   mutate(
+    benchmark=recode(benchmark, "qr-decomp"="qr"),
     name = str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
     norm = naive.fixed,
     compgen = norm / compgen,
     dios = norm / dios,
     nature = norm / nature,
-    noeqsat = norm / noeqsat,
     naive = norm / naive,
     naive.fixed = norm / naive.fixed,
     naive.clang = norm / naive.clang,
@@ -209,6 +208,7 @@ data <- data %>%
   select(name, kernel, cycles)
 
 data %>%
+  group_by(benchmark) %>%
   ggplot(aes(
     xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
     xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
@@ -219,7 +219,7 @@ data %>%
   geom_rect(
     position="dodge",
     color="black",
-    ) +
+  ) +
   geom_hline(yintercept=1, linetype="solid", color="black") +
   labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
   scale_x_continuous(
@@ -242,21 +242,31 @@ data %>%
   theme_minimal() +
   theme(
     axis.title.x = element_blank(),
-    ## axis.text.x = element_text(color=faces$bold),
-    ## legend.position = c(0.80, 0.77),
+    axis.title.y = element_text(size=8, face="bold"),
+
+    axis.text.x = element_text(size=5),
+    axis.text.y = element_text(size=8),
+
     legend.position = "top",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold"),
-    panel.spacing.x = unit(0, "lines")
+    legend.background = element_blank(),
+    legend.text = element_text(size=7, face="bold"),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.margin = margin(0, 0, 2, 0),
+
+    panel.spacing.x = unit(0, "lines"),
+
+    strip.placement = "outside"
   )
 #+end_src
 
 #+RESULTS:
-[[file:cycles-performance.svg]]
+[[file:cycles-performance.tikz]]
 
-#+begin_src R
+#+begin_src R :session cycest
 data <- full_join(full_join(
-  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
+  read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
   %>% filter(timeout == "180")
   %>% filter(params != "18x18_2x2")
@@ -280,12 +290,16 @@ data %>% filter(kernel == "nature" | kernel == "compgen") %>%
 #+RESULTS:
 |             mean |  n |
 |------------------+----|
-| 3.20486977175277 | 21 |
+| 3.27463214032345 | 21 |
 
-*** NEXT Compilation time
+*** DONE Compilation time
+CLOSED: [2023-04-16 Sun 10:04]
+:LOGBOOK:
+- State "DONE"       from "NEXT"       [2023-04-16 Sun 10:04]
+:END:
 
-#+header: :width 9 :height 4
-#+begin_src R :results graphics file :file compile-times.svg
+#+header: :width 3 :height 2
+#+begin_src R :results graphics file :file compile-times.tikz
 data <- full_join(
   read_csv("data/stock_cycles.csv"),
   read_csv("data/est_cycles.csv")
@@ -311,7 +325,7 @@ data <- data %>%
     values_from=compile_time
   ) %>%
   mutate(
-    benchmark=recode(benchmark, "qr-decomp"="qr"),
+    benchmark=recode(benchmark, "qr-decomp"="qr", "q-prod"="q"),
     name = str_replace_all(params, "_", "\n")
     ## compgen = compgen / dios,
     ## dios = 1.0,
@@ -355,15 +369,34 @@ data %>%
   theme_minimal() +
   theme(
     axis.title.x = element_blank(),
-    ## legend.position = c(0.9, 0.9),
+    axis.title.y = element_text(size=8, face="bold"),
+
+    axis.text.x = element_text(size=3.5),
+    axis.text.y = element_text(size=7),
+
     legend.position = "top",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold"),
+    legend.background = element_blank(),
+    legend.text = element_text(size=7, face="bold"),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.margin = margin(0, 0, 2, 0),
+
     panel.spacing.x = unit(0, "lines"),
+
     strip.placement = "outside",
-    strip.text.x = element_text(
-      angle=0
-    ),
+    strip.text.x = element_text(size=6, face="bold"),
+    
+    ## axis.title.x = element_blank(),
+    ## ## legend.position = c(0.9, 0.9),
+    ## legend.position = "top",
+    ## legend.background = element_rect(fill = "white"),
+    ## text = element_text(size=6, face="bold"),
+    ## panel.spacing.x = unit(0, "lines"),
+    ## strip.placement = "outside",
+    ## strip.text.x = element_text(
+    ##   angle=0
+    ## ),
     ## strip.background.x = element_rect(
     ##   color="black", linetype="solid",
     ## ),
@@ -371,7 +404,7 @@ data %>%
 #+end_src
 
 #+RESULTS:
-[[file:compile-times.svg]]
+[[file:compile-times.tikz]]
 
 *** Memory Usage
 
@@ -612,6 +645,195 @@ data %>%
 #+RESULTS:
 [[file:compilation_timeout_ablation.svg]]
 
+** TODO Pruning
+
+#+header: :width 300 :height 200
+
+#+header: :width 3 :height 2
+#+begin_src R :results graphics file :file pruning.tikz
+data <- read_csv("data/pruning.csv")
+killed_height <- 4500
+data %>%
+  mutate(
+    pattern=killed,
+    cycles=if_else(killed, killed_height, cycles),
+    params=str_replace_all(params, "_", " ")
+  ) %>%
+  print(n=10) %>%
+  ggplot(aes(
+    x=factor(params, levels=unique(params)),
+    y=cycles,
+    fill=pruning,
+    pattern=pattern
+  )) +
+  geom_col_pattern(
+    position="dodge",
+    width=0.5,
+    color="black",
+    pattern_color="black",
+    pattern_spacing=0.05,
+    pattern_density=0.35,
+  ) +
+  geom_hline(
+    yintercept=killed_height,
+    color="red"
+  ) +
+  scale_fill_manual(
+    values=c("#eeeeee", "#fb9a99"),
+    labels=c("No Pruning", "Pruning")
+  ) +
+  scale_pattern_manual(
+    values=c("none", "stripe"),
+  ) +
+  labs(
+    x="2d-conv Params",
+    y="Cost",
+    fill="Pruning"
+  ) +
+  guides(pattern="none", fill=guide_legend(override.aes = list(pattern="none"))) +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.y = element_text(size=8, face="bold"),
+
+    axis.text.x = element_text(size=5),
+    axis.text.y = element_text(size=7),
+
+    legend.position = "top",
+    legend.background = element_blank(),
+    legend.text = element_text(size=7, face="bold"),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.margin = margin(0, 0, 2, 0),
+  )
+#+end_src
+
+#+RESULTS:
+[[file:pruning.tikz]]
+
+** Ruleset ablation
+
+#+header: :width 11 :height 4
+
+#+header: :width 3 :height 2
+#+begin_src R :results graphics file :file ruleset-ablation.tikz
+data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
+noeqsat <- read_csv("data/noeqsat.csv") %>%
+  mutate(ruleset=0, noeqsat=cycles) %>%
+  select(-c(kernel, correct, cycles, ruleset)) %>%
+  filter(benchmark == "2d-conv")
+
+data <- left_join(
+  data,
+  noeqsat,
+  by=c("benchmark", "params"),
+)
+
+data <- data %>%
+  select(benchmark, params, exp, ruleset, cycles, cost, noeqsat) %>%
+  mutate(
+    name=str_c(str_replace_all(params, "_", "\n")),
+  ) %>%
+  group_by(params) %>%
+  filter(ruleset > 0) %>%
+  filter(ruleset != 43200) %>%
+  filter(ruleset != 86400) %>%
+  print(n=10) %>%
+  mutate(
+    # calculate speedup against the second item in every group
+    across(cycles:cost, ~ .[1] / .)
+    ## cycles=noeqsat / cycles
+    ## across(cycles:cost, ~ .[3] / .)
+  ) %>% print(n=10)
+
+data %>%
+  ggplot(aes(
+    ## x=names,
+    ## y=cycles,
+    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
+    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ymin=0, ymax=cycles,
+    fill=factor(ruleset)
+  )) +
+  geom_rect(
+    position="dodge",
+    color="black"
+  ) +
+  geom_hline(yintercept=1, linetype="solid", color="black") +
+  scale_x_continuous(
+    label=unique(data$name),
+    breaks=1:length(unique(data$name))
+  ) +
+  scale_fill_brewer(
+    palette = "YlOrBr",
+  ) +
+  labs(fill="Timeout", y="Speedup Cycles", x="2d-conv Params") +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.y = element_text(size=8, face="bold"),
+
+    axis.text.x = element_text(size=5),
+    axis.text.y = element_text(size=7),
+
+    legend.position = "top",
+    legend.background = element_blank(),
+    legend.text = element_text(size=7),
+    legend.title = element_text(size=7, face="bold"),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.margin = margin(0, 0, 2, 0),
+  )
+#+end_src
+
+#+RESULTS:
+[[file:ruleset-ablation.tikz]]
+
+** Instruction Ablation
+
+#+header: :width 6 :height 6
+#+begin_src R :results graphics file :file instruction.svg
+data <- read_csv("data/instruction.csv") %>% filter(benchmark == "qr-decomp")
+
+data %>%
+  mutate(
+    mac=rules == "mac_ruleset" | rules == "ruleset",
+    muls=rules == "muls_ruleset" | rules == "ruleset",
+    speedup=round(1353 / cycles, 2)*100,
+    show=if_else(speedup >= 100, str_c("+", speedup-100, "%"), str_c("-", 100-speedup, "%"))
+  ) %>%
+  print(n=10) %>%
+  ggplot(aes(
+    x=mac,
+    y=muls,
+    fill=show,
+    label=show
+  )) + geom_tile() + geom_text(size=13) +
+  scale_x_discrete(
+    labels=c("False", "True")
+  ) +
+  scale_y_discrete(
+    labels=c("False", "True")
+  ) +
+  scale_fill_brewer(
+    palette="Blues",
+    direction=-1
+  ) +
+  labs(x="MAC Instruction", y="MULS Instruction", title="Speedup over no fused ops") +
+  theme_minimal() +
+  theme(
+    ## axis.text.x = element_text(color=faces$bold),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none",
+    legend.background = element_rect(fill = "white"),
+    text = element_text(size=16, face="bold"),
+  )
+#+end_src
+
+#+RESULTS:
+[[file:instruction.svg]]
+
 ** TODO Greedy Cost Works
 
 The data here is wrong I think. Fix the data
@@ -643,69 +865,6 @@ data %>%
 
 #+RESULTS:
 [[file:greedy_cost.svg]]
-
-** TODO Pruning Works
-
-Things to fix:
-- [X] Put true first in the legend
-- [ ] Get rid of the last data point (from the python generation script)
-- [ ] Make the =y-axis= use estimated cycles rather than cost (so that we know that we are doing the right thing)
-
-#+header: :width 9 :height 5
-#+begin_src R :results graphics file :file pruning.svg
-data <- read_csv("data/pruning.csv")
-killed_height <- 4500
-data %>%
-  mutate(
-    pattern=killed,
-    cycles=if_else(killed, killed_height, cycles),
-    params=str_replace_all(params, "_", " ")
-  ) %>%
-  print(n=10) %>%
-  ggplot(aes(
-    x=factor(params, levels=unique(params)),
-    y=cycles,
-    fill=pruning,
-    pattern=pattern
-  )) +
-  geom_col_pattern(
-    position="dodge",
-    width=0.5,
-    color="black",
-    pattern_color="black",
-    pattern_fill="red",
-    pattern_spacing=0.05,
-    pattern_density=0.35,
-  ) +
-  geom_hline(
-    yintercept=killed_height,
-    color="red"
-  ) + annotate("text", x=3, y=killed_height + 250, label="KILLED", size=8, color="red") +
-  scale_fill_manual(
-    values=c("#eeeeee", "#fb9a99"),
-    labels=c("No Pruning", "Pruning")
-  ) +
-  scale_pattern_manual(
-    values=c("none", "stripe"),
-  ) +
-  ## scale_x_log10() + annotation_logticks(sides = "b") +
-  labs(
-    x="2d-conv Params",
-    y="Cost",
-    fill="Pruning"
-  ) +
-  guides(pattern="none") +
-  theme_minimal() +
-  theme(
-    legend.position = "top",
-    legend.title=element_blank(),
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold")
-  )
-#+end_src
-
-#+RESULTS:
-[[file:pruning.svg]]
 
 ** Backoff scheduler doesn't work
 
@@ -774,119 +933,6 @@ data %>%
 #+RESULTS:
 [[file:scheduler-backoff-cost.svg]]
 
-** Ruleset ablation
-
-#+header: :width 11 :height 4
-#+begin_src R :results graphics file :file ruleset-ablation.svg
-data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
-noeqsat <- read_csv("data/noeqsat.csv") %>%
-  mutate(ruleset=0, noeqsat=cycles) %>%
-  select(-c(kernel, correct, cycles, ruleset)) %>%
-  filter(benchmark == "2d-conv")
-
-data <- left_join(
-  data,
-  noeqsat,
-  by=c("benchmark", "params"),
-)
-
-data <- data %>%
-  select(benchmark, params, exp, ruleset, cycles, cost, noeqsat) %>%
-  mutate(
-    name=str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
-  ) %>%
-  group_by(params) %>%
-  filter(ruleset > 0) %>%
-  filter(ruleset != 43200) %>%
-  filter(ruleset != 86400) %>%
-  print(n=10) %>%
-  mutate(
-    # calculate speedup against the second item in every group
-    across(cycles:cost, ~ .[1] / .)
-    ## cycles=noeqsat / cycles
-    ## across(cycles:cost, ~ .[3] / .)
-  ) %>% print(n=10)
-
-data %>%
-  ggplot(aes(
-    ## x=names,
-    ## y=cycles,
-    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
-    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0, ymax=cycles,
-    fill=factor(ruleset)
-  )) +
-  geom_rect(
-    position="dodge",
-    color="black"
-  ) +
-  geom_hline(yintercept=1, linetype="solid", color="black") +
-  scale_x_continuous(
-    label=unique(data$name),
-    breaks=1:length(unique(data$name))
-  ) +
-  scale_fill_brewer(
-    palette = "YlOrBr",
-  ) +
-  labs(fill="Timeout", y="Speedup Cycles") +
-  theme_minimal() +
-  theme(
-    axis.title.x = element_blank(),
-    ## legend.position = c(0.80, 0.77),
-    ## legend.position = "top",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=20, face="bold"),
-    panel.spacing.x = unit(0, "lines")
-  )
-#+end_src
-
-#+RESULTS:
-[[file:ruleset-ablation.svg]]
-
-** Instruction Ablation
-
-#+header: :width 6 :height 6
-#+begin_src R :results graphics file :file instruction.svg
-data <- read_csv("data/instruction.csv") %>% filter(benchmark == "qr-decomp")
-
-data %>%
-  mutate(
-    mac=rules == "mac_ruleset" | rules == "ruleset",
-    muls=rules == "muls_ruleset" | rules == "ruleset",
-    speedup=round(1353 / cycles, 2)*100,
-    show=if_else(speedup >= 100, str_c("+", speedup-100, "%"), str_c("-", 100-speedup, "%"))
-  ) %>%
-  print(n=10) %>%
-  ggplot(aes(
-    x=mac,
-    y=muls,
-    fill=show,
-    label=show
-  )) + geom_tile() + geom_text(size=13) +
-  scale_x_discrete(
-    labels=c("False", "True")
-  ) +
-  scale_y_discrete(
-    labels=c("False", "True")
-  ) +
-  scale_fill_brewer(
-    palette="Blues",
-    direction=-1
-  ) +
-  labs(x="MAC Instruction", y="MULS Instruction", title="Speedup over no fused ops") +
-  theme_minimal() +
-  theme(
-    ## axis.text.x = element_text(color=faces$bold),
-    plot.title = element_text(hjust = 0.5),
-    legend.position = "none",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold"),
-  )
-#+end_src
-
-#+RESULTS:
-[[file:instruction.svg]]
-
 ** Misc
 
 #+begin_src R :results graphics file :file iter_cost.svg
@@ -927,10 +973,21 @@ time ./run.sh
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-for f in $(echo compile-times.svg); do
-    echo "Exporting $f to $DEST/${f%.*}.pdf"
-    inkscape $f --export-filename="$DEST/${f%.*}.pdf"
-done
+# for f in $(echo compile-times.svg); do
+#     echo "Exporting $f to $DEST/${f%.*}.pdf"
+#     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
+# done
+
+function g() {
+    while read; do
+        for f in $(echo *.tikz); do
+            echo "Exporting $f to $DEST/${f%.*}.tex"
+            cp $f "$DEST/${f%.*}.tex"
+        done
+    done
+}
+
+fswatch -o . | g
 #+end_src
 
 * Debugging

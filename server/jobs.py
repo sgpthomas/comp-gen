@@ -666,24 +666,24 @@ def test_instruction_ruleset():
     """
 
     base = Path("instruction-rulesets")
-    mac_muls_ruleset = json.load((base / "ruleset.json").open("r"))
-    eqs = mac_muls_ruleset["eqs"]
+    muls_mulsgn_ruleset = json.load((base / "ruleset.json").open("r"))
+    eqs = muls_mulsgn_ruleset["eqs"]
 
     def excludes(rule, ops):
         return all([op not in rule["lhs"] + rule["rhs"] for op in ops])
 
     json.dump({
         "params": {},
-        "eqs": list(filter(lambda r: excludes(r, ["MULS", "MAC"]), eqs))
-    }, (base / "no_fused_ruleset.json").open("w"), indent=2)
+        "eqs": list(filter(lambda r: excludes(r, ["MULS", "MulSgn"]), eqs))
+    }, (base / "base.json").open("w"), indent=2)
     json.dump({
         "params": {},
         "eqs": list(filter(lambda r: excludes(r, ["MULS"]), eqs))
-    }, (base / "mac_ruleset.json").open("w"), indent=2)
+    }, (base / "mulsgn.json").open("w"), indent=2)
     json.dump({
         "params": {},
-        "eqs": list(filter(lambda r: excludes(r, ["MAC"]), eqs))
-    }, (base / "muls_ruleset.json").open("w"), indent=2)
+        "eqs": list(filter(lambda r: excludes(r, ["MulSgn"]), eqs))
+    }, (base / "muls.json").open("w"), indent=2)
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
@@ -720,7 +720,7 @@ def overview_example():
 
 
 def main():
-    overall_performance()
+    # overall_performance()
     # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
@@ -728,7 +728,7 @@ def main():
     # ruleset_synthesis()
     # scheduler()
     # add_instruction_ruleset()
-    # test_instruction_ruleset()
+    test_instruction_ruleset()
     # overview_example()
 
 

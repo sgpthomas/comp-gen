@@ -100,7 +100,12 @@ def timed_out(exp_path):
 
 def total_time(exp_path):
     df = memory_df(exp_path) >> filter_by(X.ram_used != "timeout", X.ram_used != "killed")
-    return df["timestamp"] >> agg(["max", "min"]) >> agg(lambda x: x["max"] - x["min"])
+    if len(df.index) == 1:
+        return df["timestamp"].values[0]
+    elif len(df.index) > 1:
+        return df["timestamp"] >> agg(["max", "min"]) >> agg(lambda x: x["max"] - x["min"])
+    else:
+        return -1
 
 
 def extraction_time(exp_path):
@@ -109,16 +114,17 @@ def extraction_time(exp_path):
 
 
 def compile_time(exp_path):
-    return total_time(exp_path) - extraction_time(exp_path)
+    return max(0, total_time(exp_path) - extraction_time(exp_path))
 
 
 def cycles(exp_path):
     cycles_csv = exp_path / "results" / "cycles.csv"
-    if cycles_csv.exists():
+    try:
         data = pd.read_csv(cycles_csv)
         if len(data["cycles"].values) > 0:
             return data["cycles"].values[0]
-    return -1
+    except Exception:
+        return -1
 
 
 def egraph_cost(exp_path):
@@ -170,7 +176,7 @@ def diospyros_cycles(egg_kernel_csv):
             ]))
 
 
-@query(key="performance", pinned_date="Apr12-1031")
+@query(key="performance", pinned_date="Apr15-1612")
 def est_cycles(row):
     x = row.exp_dir
     return pd.DataFrame(data={
@@ -237,6 +243,8 @@ def update(name, time, commit, diff):
         pd.read_csv(out) >> display()
 
     if commit:
+        new_time = exps["date"].unique()
+        print(f"Pin this time: {new_time}")
         df >> to_csv(out)
 
 

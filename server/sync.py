@@ -27,6 +27,8 @@ def do_send(name):
     subprocess.run(" ".join([
         "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
         "-avh",
+        "--exclude", "*.log",
+        "--exclude", "*.rkt",
         "completed/",
         f"ubuntu@{ip}:~/comp-gen/server/completed"
     ]), shell=True)
@@ -35,6 +37,7 @@ def do_send(name):
     subprocess.run(" ".join([
         "rsync", "-e 'ssh -o StrictHostKeyChecking=no'",
         "-avh",
+        "--exclude", "*.rkt",
         "jobs/",
         f"ubuntu@{ip}:~/comp-gen/server/jobs"
     ]), shell=True)
