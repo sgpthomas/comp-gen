@@ -4,7 +4,7 @@ import click
 import json
 import pandas as pd
 from pathlib import Path
-from dfply import filter_by, X, select
+from dfply import filter_by, X, select, mutate
 from utils import sort_values, sorter, reset_index, display, agg, replace, iloc, to_csv
 from datetime import datetime
 
@@ -23,7 +23,7 @@ def query(key=None, pinned_date=None):
     return inner
 
 
-def all_experiments(base="completed", key=None, time=None):
+def all_experiments(base="completed", query_key=None, query_time=None):
     res = []
     for config_path in Path(base).glob("**/config.json"):
         config = json.load(config_path.open("r"))
@@ -50,14 +50,14 @@ def all_experiments(base="completed", key=None, time=None):
         key=sorter
     ) >> reset_index(drop=True)
 
-    if key is not None:
-        exps >>= filter_by(X.key == key)
+    if query_key is not None:
+        exps >>= filter_by(X.key == query_key)
 
-    if time == "latest":
+    if query_time == "latest":
         max_time = exps["datetime"].max()
         exps >>= filter_by(X.datetime == max_time)
-    elif time is not None:
-        exps >>= filter_by(X.date.str.contains(time))
+    elif query_time is not None:
+        exps >>= filter_by(X.date.str.contains(query_time))
 
     return exps
 
@@ -134,10 +134,46 @@ def egraph_cost(exp_path):
         return -1
 
 
+def diospyros_cycles(egg_kernel_csv):
+    exp_dir = Path(egg_kernel_csv.parents[0])
+    benchmark = egg_kernel_csv.parents[1].stem
+    if benchmark != "q-prod":
+        params = egg_kernel_csv.parents[0].stem.rsplit("_", 1)[0]
+    else:
+        params = "0"
+
+    stats = json.load((exp_dir / "stats.json").open("r"))
+
+    return (pd.read_csv(egg_kernel_csv)
+            >> mutate(
+                benchmark=benchmark,
+                params=params,
+                compile_time=stats["time"],
+                max_ram_used=stats["memory"] / float(10 ** 9),
+                saturated=stats["saturated"])
+            >> replace({
+                "Diospyros": "dios",
+                "Naive": "naive",
+                "Naive hard size vec": "naive.clang",
+                "Naive hard size": "naive.fixed",
+                "Nature": "nature",
+                "Eigen": "eigen"
+            })
+            >> select([
+                "kernel",
+                "benchmark",
+                "params",
+                "cycles",
+                "compile_time",
+                "max_ram_used",
+                "saturated"
+            ]))
+
+
 @query(key="performance", pinned_date="Apr12-1031")
 def est_cycles(row):
     x = row.exp_dir
-    return {
+    return pd.DataFrame(data={
         "kernel": ["compgen"],
         "benchmark": [row.benchmark],
         "params": [row.params],
@@ -151,7 +187,14 @@ def est_cycles(row):
         "extraction_time": [extraction_time(x)],
         "total_time": [total_time(x)],
         "max_ram_used": [max_ram(x)]
-    }
+    })
+
+
+@query(key="diospyros", pinned_date="Apr1-0000")
+def diospyros(row):
+    return (pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
+            >> sort_values(by=["benchmark", "params"], key=sorter)
+            >> reset_index(drop=True, names=["index"]))
 
 
 @click.group()
@@ -180,16 +223,16 @@ def update(name, time, commit, diff):
         query_date = time
     else:
         query_date = config["pinned_date"]
-    exps = all_experiments(key=config["key"], time=query_date)
+    exps = all_experiments(query_key=config["key"], query_time=query_date)
 
     res = []
     for _, row in exps.iterrows():
-        res.append(pd.DataFrame(data=config["func"](row)))
+        res.append(config["func"](row))
     df = pd.concat(res) >> reset_index(drop=True) >> display()
 
     out = Path("figs") / "data" / f"{name}.csv"
 
-    if diff:
+    if diff and out.exists():
         print("Old version:")
         pd.read_csv(out) >> display()
 
