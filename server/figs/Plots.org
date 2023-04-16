@@ -9,7 +9,7 @@ git pull -r
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
 tmux new -d -s diospyros
-tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 1800 --skiplargemem --skiprun -o results-t1800" ENTER
+tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -44,7 +44,7 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        -o ~/Research/comp-gen/server/diospyros-results
+        -o ~/Research/comp-gen/server/completed/diospyros/0
 #+end_src
 
 ** Syncing diospyros-results between machines

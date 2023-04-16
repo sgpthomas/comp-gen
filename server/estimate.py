@@ -124,13 +124,20 @@ def estimate_kernel(
         print("Compiling", end="...", flush=True)
         subprocess.run("rm -f kernel.o", shell=True, cwd=exp_path / results)
         # run once to generate .s files, and then again to generate object file
-        if debug:
-            subprocess.run(" ".join(cmd + ["-S"]), shell=True, cwd=exp_path / results)
-        subprocess.run(
-            " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
-            shell=True,
-            cwd=exp_path / results
-        )
+
+        try:
+            if debug:
+                subprocess.run(" ".join(cmd + ["-S"]), shell=True,
+                               cwd=exp_path / results, timeout=60 * 5)
+            subprocess.run(
+                " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
+                shell=True,
+                cwd=exp_path / results,
+                timeout=60 * 5  # 5 minutes
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout!!", end="...", flush=True)
+            (exp_path / results / "cycles.csv").touch("w")
         print("Done")
 
     # simulate the resulting object file

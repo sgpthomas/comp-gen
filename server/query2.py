@@ -193,7 +193,7 @@ def est_cycles(row):
 @query(key="diospyros", pinned_date="Apr1-0000")
 def diospyros(row):
     return (pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
-            >> sort_values(by=["benchmark", "params"], key=sorter)
+            >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)
             >> reset_index(drop=True, names=["index"]))
 
 
