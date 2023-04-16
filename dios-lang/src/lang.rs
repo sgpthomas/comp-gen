@@ -347,7 +347,10 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
                 Box::new(subtree(&expr, *left).into()),
                 Box::new(subtree(&expr, *right).into()),
             ),
-            VecLang::VecMulSgn(_) => todo!(),
+            VecLang::VecMulSgn([left, right]) => VecAst::VecMulSgn(
+                Box::new(subtree(&expr, *left).into()),
+                Box::new(subtree(&expr, *right).into()),
+            ),
             VecLang::VecNeg([inner]) => {
                 VecAst::VecNeg(Box::new(subtree(&expr, *inner).into()))
             }
