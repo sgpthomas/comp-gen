@@ -10,14 +10,21 @@ import itertools
 from typing import Callable
 
 
-def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, costfn,
-            key=None, timeout=60 * 30):
+def mat_mul(
+    jobs_dir,
+    a_rows,
+    a_cols,
+    b_rows,
+    b_cols,
+    ruleset,
+    compile,
+    costfn,
+    key=None,
+    timeout=60 * 30,
+):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"mat-mul_{a_rows}x{a_cols}_{b_rows}x{b_cols}"
-    job_dir = unique_name(
-        jobs_dir / f"{date_str}-{name}",
-        0
-    )
+    job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
     job_dir.mkdir(exist_ok=False)
     config = {
         "date": date_str,
@@ -29,46 +36,61 @@ def mat_mul(jobs_dir, a_rows, a_cols, b_rows, b_cols, ruleset, compile, costfn,
         "metadata": {
             "rules.json": str(ruleset),
             "compile.json": str(compile),
-            "costfn": costfn
-        }
+            "costfn": costfn,
+        },
     }
     params = {
         "A-rows": a_rows,
         "A-cols": a_cols,
         "B-rows": b_rows,
         "B-cols": b_cols,
-        "reg-size": 4
+        "reg-size": 4,
     }
     shutil.copy(ruleset, job_dir / "rules.json")
     shutil.copy(compile, job_dir / "compile.json")
     command = [
         "RUST_LOG=debug,egg=info",
-        "$compgen_bin", "compile", "mat-mul",
-        "--dios-bin", "$dios_bin",
-        "--dios-example-bin", "$dios_example_bin",
-        "--dios-params", "params.json",
-        "--vector-width", "4",
-        "--rules", "rules.json",
-        "--config", "compile.json",
-        "--output-dir", "results",
-        "--costfn", costfn
+        "$compgen_bin",
+        "compile",
+        "mat-mul",
+        "--dios-bin",
+        "$dios_bin",
+        "--dios-example-bin",
+        "$dios_example_bin",
+        "--dios-params",
+        "params.json",
+        "--vector-width",
+        "4",
+        "--rules",
+        "rules.json",
+        "--config",
+        "compile.json",
+        "--output-dir",
+        "results",
+        "--costfn",
+        costfn,
     ]
 
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
     with (job_dir / "run.sh").open("w") as f:
-        f.writelines(
-            "\n".join([
-                "#!/usr/bin/env bash",
-                "",
-                " ".join(command)
-            ])
-        )
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
-                 key=None, timeout=60 * 30, memory_limit=220):
+def make_2d_conv(
+    jobs_dir,
+    irows,
+    icols,
+    frows,
+    fcols,
+    ruleset,
+    compile,
+    costfn,
+    key=None,
+    timeout=60 * 30,
+    memory_limit=220,
+):
     date_str = datetime.now().strftime("%b%d-%H%M")
     name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
@@ -83,8 +105,8 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
         "metadata": {
             "rules.json": str(ruleset),
             "compile.json": str(compile),
-            "costfn": costfn
-        }
+            "costfn": costfn,
+        },
     }
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
     params = {
@@ -92,7 +114,7 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
         "input-cols": icols,
         "filter-rows": frows,
         "filter-cols": fcols,
-        "reg-size": 4
+        "reg-size": 4,
     }
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
@@ -101,25 +123,29 @@ def make_2d_conv(jobs_dir, irows, icols, frows, fcols, ruleset, compile, costfn,
 
     command = [
         "RUST_LOG=debug,egg=info",
-        "$compgen_bin", "compile", "2d-conv",
-        "--dios-bin", "$dios_bin",
-        "--dios-example-bin", "$dios_example_bin",
-        "--dios-params", "params.json",
-        "--vector-width", "4",
-        "--rules", "rules.json",
-        "--config", "compile.json",
-        "--output-dir", "results",
-        "--costfn", costfn
+        "$compgen_bin",
+        "compile",
+        "2d-conv",
+        "--dios-bin",
+        "$dios_bin",
+        "--dios-example-bin",
+        "$dios_example_bin",
+        "--dios-params",
+        "params.json",
+        "--vector-width",
+        "4",
+        "--rules",
+        "rules.json",
+        "--config",
+        "compile.json",
+        "--output-dir",
+        "results",
+        "--costfn",
+        costfn,
     ]
 
     with (job_dir / "run.sh").open("w") as f:
-        f.writelines(
-            "\n".join([
-                "#!/usr/bin/env bash",
-                "",
-                " ".join(command)
-            ])
-        )
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
     # make the run script executable
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
@@ -140,13 +166,11 @@ def q_prod(jobs_dir, ruleset, compile, costfn, key=None, timeout=60 * 30):
         "metadata": {
             "rules.json": str(ruleset),
             "compile.json": str(compile),
-            "costfn": costfn
-        }
+            "costfn": costfn,
+        },
     }
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    params = {
-        "reg-size": 4
-    }
+    params = {"reg-size": 4}
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
     shutil.copy(ruleset, job_dir / "rules.json")
@@ -154,25 +178,29 @@ def q_prod(jobs_dir, ruleset, compile, costfn, key=None, timeout=60 * 30):
 
     command = [
         "RUST_LOG=debug,egg=info",
-        "$compgen_bin", "compile", "q-prod",
-        "--dios-bin", "$dios_bin",
-        "--dios-example-bin", "$dios_example_bin",
-        "--dios-params", "params.json",
-        "--vector-width", "4",
-        "--rules", "rules.json",
-        "--config", "compile.json",
-        "--output-dir", "results",
-        "--costfn", costfn
+        "$compgen_bin",
+        "compile",
+        "q-prod",
+        "--dios-bin",
+        "$dios_bin",
+        "--dios-example-bin",
+        "$dios_example_bin",
+        "--dios-params",
+        "params.json",
+        "--vector-width",
+        "4",
+        "--rules",
+        "rules.json",
+        "--config",
+        "compile.json",
+        "--output-dir",
+        "results",
+        "--costfn",
+        costfn,
     ]
 
     with (job_dir / "run.sh").open("w") as f:
-        f.writelines(
-            "\n".join([
-                "#!/usr/bin/env bash",
-                "",
-                " ".join(command)
-            ])
-        )
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
     # make the run script executable
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
@@ -192,14 +220,11 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
         "metadata": {
             "rules.json": str(ruleset),
             "compile.json": str(compile),
-            "costfn": costfn
+            "costfn": costfn,
         },
     }
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    params = {
-        "N": N,
-        "reg-size": 4
-    }
+    params = {"N": N, "reg-size": 4}
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
     shutil.copy(ruleset, job_dir / "rules.json")
@@ -207,31 +232,42 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
 
     command = [
         "RUST_LOG=debug,egg=info",
-        "$compgen_bin", "compile", "qr-decomp",
-        "--dios-bin", "$dios_bin",
-        "--dios-example-bin", "$dios_example_bin",
-        "--dios-params", "params.json",
-        "--vector-width", "4",
-        "--rules", "rules.json",
-        "--config", "compile.json",
-        "--output-dir", "results",
-        "--costfn", costfn
+        "$compgen_bin",
+        "compile",
+        "qr-decomp",
+        "--dios-bin",
+        "$dios_bin",
+        "--dios-example-bin",
+        "$dios_example_bin",
+        "--dios-params",
+        "params.json",
+        "--vector-width",
+        "4",
+        "--rules",
+        "rules.json",
+        "--config",
+        "compile.json",
+        "--output-dir",
+        "results",
+        "--costfn",
+        costfn,
     ]
 
     with (job_dir / "run.sh").open("w") as f:
-        f.writelines(
-            "\n".join([
-                "#!/usr/bin/env bash",
-                "",
-                " ".join(command)
-            ])
-        )
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
     # make the run script executable
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
-def make_synthesis(jobs_dir, synth_timeout,
-                   eqsat_iter=3, eqsat_timeout=60, binops=None, triops=None, timeout=6000):
+def make_synthesis(
+    jobs_dir,
+    synth_timeout,
+    eqsat_iter=3,
+    eqsat_timeout=60,
+    binops=None,
+    triops=None,
+    timeout=6000,
+):
     date_str = datetime.now().strftime("%b%d-%H%M")
     job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{synth_timeout}", 0)
     job_dir.mkdir(exist_ok=False)
@@ -253,25 +289,22 @@ def make_synthesis(jobs_dir, synth_timeout,
             "timeout": synth_timeout,
             "eqsat_iter_limit": eqsat_iter,
             "eqsat_timeout": eqsat_timeout,
-        }
+        },
     }
     json.dump(job_config, (job_dir / "config.json").open("w"), indent=2)
     json.dump(synth_config, (job_dir / "synth.json").open("w"), indent=2)
 
     command = [
         "RUST_LOG=debug,egg=info,z3=off",
-        "$compgen_bin", "synth", "ruleset.json",
-        "--config", "synth.json"
+        "$compgen_bin",
+        "synth",
+        "ruleset.json",
+        "--config",
+        "synth.json",
     ]
 
     with (job_dir / "run.sh").open("w") as f:
-        f.writelines(
-            "\n".join([
-                "#!/usr/bin/env bash",
-                "",
-                " ".join(command)
-            ])
-        )
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
     # make the run script executable
     os.chmod(str(job_dir / "run.sh"), 0o777)
 
@@ -346,7 +379,7 @@ def overall_performance():
         [10, 10, 10, 10],
         [16, 16, 16, 16],
         [18, 18, 18, 18],
-        [20, 20, 20, 20]
+        [20, 20, 20, 20],
     ]
     conv_2d_sizes = [
         [3, 3, 2, 2],
@@ -364,13 +397,8 @@ def overall_performance():
         [18, 18, 3, 3],
         [18, 18, 4, 4],
     ]
-    q_prod_params = [
-        0
-    ]
-    qr_decomp_sizes = [
-        3,
-        4
-    ]
+    q_prod_params = [0]
+    qr_decomp_sizes = [3, 4]
     ruleset = rulesets["ruleset_timeout86400"]
     cs = [
         configs["loop_alt_cost_t180"],
@@ -386,7 +414,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5
+            timeout=json.load(c.open("r"))["timeout"] * 5,
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -397,7 +425,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5
+            timeout=json.load(c.open("r"))["timeout"] * 5,
         )
 
     for _, c in itertools.product(q_prod_params, cs):
@@ -407,7 +435,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5
+            timeout=json.load(c.open("r"))["timeout"] * 5,
         )
 
     for size, c in itertools.product(qr_decomp_sizes, cs):
@@ -418,7 +446,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5
+            timeout=json.load(c.open("r"))["timeout"] * 5,
         )
 
 
@@ -449,7 +477,7 @@ def pruning_experiments():
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 10
+            timeout=timeout * 10,
         )
         # no pruning config
         make_2d_conv(
@@ -460,7 +488,7 @@ def pruning_experiments():
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 10
+            timeout=timeout * 10,
         )
 
 
@@ -484,7 +512,7 @@ def understand_cost_function():
             rulesets["expanding_vecmac"],
             configs["loop_alt_cost_t1800"],
             "alternative",
-            key="fix"
+            key="fix",
         )
 
 
@@ -522,24 +550,10 @@ def no_eqsat():
 
     # create all the jobs
     for size in mat_mul_sizes:
-        mat_mul(
-            Path("jobs"),
-            *size,
-            ruleset,
-            config,
-            "alternative",
-            key="noeqsat"
-        )
+        mat_mul(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
 
     for size in conv_2d_sizes:
-        make_2d_conv(
-            Path("jobs"),
-            *size,
-            ruleset,
-            config,
-            "alternative",
-            key="noeqsat"
-        )
+        make_2d_conv(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
 
     q_prod(Path("jobs"), ruleset, config, "alternative", key="noeqsat")
 
@@ -570,25 +584,19 @@ def ruleset_ablation():
         return config["metadata"]["timeout"]
 
     rules = dict_from_dir(
-        Path("completed") / "synthesis",
-        pat="**/ruleset.json",
-        key=read_time
+        Path("completed") / "synthesis", pat="**/ruleset.json", key=read_time
     )
-    rs = (list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
-          + [rulesets["ruleset_timeout43200"]]
-          + [rulesets["ruleset_timeout86400"]]
-          # + [rulesets["expanding_vecmac"]]
-          # + [rulesets["original_dios_rules"]]
-          )
+    rs = (
+        list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
+        + [rulesets["ruleset_timeout43200"]]
+        + [rulesets["ruleset_timeout86400"]]
+        # + [rulesets["expanding_vecmac"]]
+        # + [rulesets["original_dios_rules"]]
+    )
     exps = itertools.product(conv_2d_sizes, rs)
     for (size, r) in exps:
         make_2d_conv(
-            Path("jobs"),
-            *size,
-            r,
-            config,
-            "alternative",
-            key="ruleset_ablation"
+            Path("jobs"), *size, r, config, "alternative", key="ruleset_ablation"
         )
 
 
@@ -603,7 +611,10 @@ def ruleset_synthesis():
         # 6000,
         # 60000,
         # 600000,
-        60 * 60 * 24 * 3
+        60
+        * 60
+        * 24
+        * 3
     ]
 
     eqsat_settings = [
@@ -621,9 +632,7 @@ def scheduler():
     Make a job that uses all the rules with the backoff scheduler.
     """
 
-    size = [
-        [8, 8, 3, 3]
-    ]
+    size = [[8, 8, 3, 3]]
 
     for s in size:
         make_2d_conv(
@@ -632,7 +641,7 @@ def scheduler():
             rulesets["ruleset_timeout86400"],
             configs["all-backoff"],
             "alternative",
-            key="scheduler"
+            key="scheduler",
         )
         make_2d_conv(
             Path("jobs"),
@@ -640,7 +649,7 @@ def scheduler():
             rulesets["ruleset_timeout86400"],
             configs["all-simple"],
             "alternative",
-            key="scheduler"
+            key="scheduler",
         )
 
 
@@ -653,7 +662,9 @@ def add_instruction_ruleset():
 
     binops = ["/", "+", "*", "-"]
     # baseline + muls + mulsgn
-    make_synthesis(Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000)
+    make_synthesis(
+        Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000
+    )
     # baseline + muls
     # make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
     # baseline + mulsgn
@@ -664,26 +675,53 @@ def test_instruction_ruleset():
     """
     Run q-prod, qr-decomp with no fused ops, with muls, and with both fused ops
     """
+    global rulesets
 
-    base = Path("instruction-rulesets")
-    muls_mulsgn_ruleset = json.load((base / "ruleset.json").open("r"))
-    eqs = muls_mulsgn_ruleset["eqs"]
+    rulesets_dir = Path("instruction-rulesets")
+    print(rulesets)
+    base_path = rulesets["ruleset_timeout86400"]
+    mulsgn_path = Path("completed") / "synthesis" / "17" / "ruleset.json"
+    muls_path = Path("completed") / "synthesis" / "10" / "ruleset.json"
+    base_ruleset = json.load(base_path.open("r"))
+    mulsgn_ruleset = json.load(mulsgn_path.open("r"))
+    muls_ruleset = json.load(muls_path.open("r"))
 
-    def excludes(rule, ops):
-        return all([op not in rule["lhs"] + rule["rhs"] for op in ops])
+    def includes(ruleset, ops):
+        return list(
+            filter(lambda r: all([op in r["lhs"] + r["rhs"] for op in ops]), ruleset)
+        )
 
-    json.dump({
-        "params": {},
-        "eqs": list(filter(lambda r: excludes(r, ["MULS", "MulSgn"]), eqs))
-    }, (base / "base.json").open("w"), indent=2)
-    json.dump({
-        "params": {},
-        "eqs": list(filter(lambda r: excludes(r, ["MULS"]), eqs))
-    }, (base / "mulsgn.json").open("w"), indent=2)
-    json.dump({
-        "params": {},
-        "eqs": list(filter(lambda r: excludes(r, ["MulSgn"]), eqs))
-    }, (base / "muls.json").open("w"), indent=2)
+    json.dump(
+        {"params": {}, "eqs": base_ruleset["eqs"]},
+        (rulesets_dir / "base.json").open("w"),
+        indent=2,
+    )
+    json.dump(
+        {
+            "params": {},
+            "eqs": base_ruleset["eqs"] + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
+        },
+        (rulesets_dir / "mulsgn.json").open("w"),
+        indent=2,
+    )
+    json.dump(
+        {
+            "params": {},
+            "eqs": base_ruleset["eqs"] + includes(muls_ruleset["eqs"], ["VecMULS"]),
+        },
+        (rulesets_dir / "muls.json").open("w"),
+        indent=2,
+    )
+    json.dump(
+        {
+            "params": {},
+            "eqs": base_ruleset["eqs"]
+            + includes(muls_ruleset["eqs"], ["VecMULS"])
+            + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
+        },
+        (rulesets_dir / "mulsgn_muls.json").open("w"),
+        indent=2,
+    )
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
@@ -695,16 +733,7 @@ def test_instruction_ruleset():
             configs["loop_alt_cost_t360"],
             "alternative",
             key="instruction",
-            timeout=1000
-        )
-
-        q_prod(
-            Path("jobs"),
-            r,
-            configs["loop_alt_cost_t360"],
-            "alternative",
-            key="instruction",
-            timeout=1000
+            timeout=1000,
         )
 
 
@@ -715,7 +744,7 @@ def overview_example():
         rulesets["ruleset_timeout86400"],
         configs["all-simple"],
         "alternative",
-        key="overview"
+        key="overview",
     )
 
 

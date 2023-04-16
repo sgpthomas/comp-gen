@@ -203,6 +203,20 @@ def diospyros(row):
             >> reset_index(drop=True, names=["index"]))
 
 
+@query(key="instruction", pinned_date="Apr16-1443")
+def instruction(row):
+    return pd.DataFrame(data={
+        "date": [row.date],
+        "benchmark": [row.benchmark],
+        "param": [row.params],
+        "exp": [row.exp_dir.name],
+        "rules": [ruleset(row.exp_dir)],
+        "cycles": [cycles(row.exp_dir)],
+        "cost": [egraph_cost(row.exp_dir)],
+        "dir": [row.exp_dir]
+    })
+
+
 @click.group()
 def cli():
     pass
@@ -212,7 +226,7 @@ def cli():
 @click.argument("key")
 @click.option("-t", "--time")
 def ls(key, time):
-    all_experiments(key=key, time=time) >> select(~X.datetime) >> display()
+    all_experiments(query_key=key, query_time=time) >> select(~X.datetime) >> display()
 
 
 @cli.command()

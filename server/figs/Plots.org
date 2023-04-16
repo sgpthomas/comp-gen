@@ -15,7 +15,7 @@ tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180
 Copy the results back here, so that we can analyze them.
 
 #+begin_src async-shell :dir (sgt/dir "server") :var IP=(ec2/get-ip "exp") :results none :name dios
-rsync -avh ubuntu@$IP:~/diospyros/results/ diospyros-results-log
+rsync -avh ubuntu@$IP:~/diospyros/results-t180/ completed/diospyros/1
 #+end_src
 
 Some changes to diospyros are needed before we can run estimation. We need to go into =evaluation/shared.mk= and edit the paths so that they point to the right places.
@@ -85,14 +85,14 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 ./estimate.py many latest --key performance
 #+end_src
 
+#+begin_src async-shell :name sync
+rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
+#+end_src
+
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
 ./process.py all completed/
-#+end_src
-
-#+begin_src async-shell :name sync
-rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
 #+end_src
 
 Run query to generate aggregated data files
@@ -104,7 +104,8 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update est_cycles -t latest --commit
+./query2.py ls instruction
+./query2.py update instruction --diff -t latest --commit
 #+end_src
 
 * Tables
@@ -143,6 +144,7 @@ library(tidyverse)
 library(extrafont)
 library(ggpattern)
 library(tikzDevice)
+library(xtable)
 #+end_src
 
 ** Performance graphs
@@ -792,47 +794,38 @@ data %>%
 
 ** Instruction Ablation
 
-#+header: :width 6 :height 6
-#+begin_src R :results graphics file :file instruction.svg
-data <- read_csv("data/instruction.csv") %>% filter(benchmark == "qr-decomp")
+#+header: :file instruction.tex
 
-data %>%
+#+header: :results output 
+
+#+begin_src R 
+data <- read_csv("data/instruction.csv", show_col_types=F, progress=F) %>%
+  filter(benchmark == "qr-decomp") %>%
   mutate(
-    mac=rules == "mac_ruleset" | rules == "ruleset",
-    muls=rules == "muls_ruleset" | rules == "ruleset",
-    speedup=round(1353 / cycles, 2)*100,
+    muls=if_else(rules == "muls" | rules == "ruleset", "MULS", "No MULS"),
+    mulsgn=if_else(rules == "mulsgn" | rules == "ruleset", "MulSgn", "No MulSgn"),
+    speedup=round(1229 / cycles, 2)*100,
     show=if_else(speedup >= 100, str_c("+", speedup-100, "%"), str_c("-", 100-speedup, "%"))
   ) %>%
+  select(muls, mulsgn, show) %>%
   print(n=10) %>%
-  ggplot(aes(
-    x=mac,
-    y=muls,
-    fill=show,
-    label=show
-  )) + geom_tile() + geom_text(size=13) +
-  scale_x_discrete(
-    labels=c("False", "True")
-  ) +
-  scale_y_discrete(
-    labels=c("False", "True")
-  ) +
-  scale_fill_brewer(
-    palette="Blues",
-    direction=-1
-  ) +
-  labs(x="MAC Instruction", y="MULS Instruction", title="Speedup over no fused ops") +
-  theme_minimal() +
-  theme(
-    ## axis.text.x = element_text(color=faces$bold),
-    plot.title = element_text(hjust = 0.5),
-    legend.position = "none",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=16, face="bold"),
-  )
+  pivot_wider(names_from=c(muls), values_from=show) %>%
+  mutate(` `=mulsgn) %>%
+  select(` `, `MULS`, `No MULS`)
+
+## print(xtable(
+##   data,
+##   caption=str_c(
+##     "Cycle estimates for QR-Decomp for all",
+##     " combinations of including MAC and MULS instructions."
+##   )), include.rownames=FALSE)
 #+end_src
 
 #+RESULTS:
-[[file:instruction.svg]]
+|           | MULS | No MULS |
+|-----------+------+---------|
+| MulSgn    |  +2% |     +0% |
+| No MulSgn |  +2% |     +0% |
 
 ** TODO Greedy Cost Works
 
@@ -980,7 +973,7 @@ DEST=$(realpath ~/Research/comp-gen-paper/figures)
 
 function g() {
     while read; do
-        for f in $(echo *.tikz); do
+        for f in $(echo *.tikz *.tex); do
             echo "Exporting $f to $DEST/${f%.*}.tex"
             cp $f "$DEST/${f%.*}.tex"
         done
