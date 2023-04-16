@@ -1,18 +1,3 @@
-* Start jobs and sync data
-
-Create jobs.
-
-#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./jobs.py
-ls jobs
-#+end_src
-
-Sync jobs.
-
-#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py both
-#+end_src
-
 * Getting Diospyros Numbers
 
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
@@ -67,6 +52,21 @@ python3 evaluation/eval_benchmarks.py \
 #+begin_src async-shell :name dios :dir (sgt/dir "server") :results none
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-results-log/ \
       diospyros-results-log
+#+end_src
+
+* Start jobs and sync data
+
+Create jobs.
+
+#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
+./jobs.py
+ls jobs
+#+end_src
+
+Sync jobs.
+
+#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
+./sync.py both
 #+end_src
 
 * Data processing
