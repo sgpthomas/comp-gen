@@ -157,11 +157,18 @@ impl egg::CostFunction<VecLang> for VecCostFn {
                         1.
                     })
             }
+            VecLang::SqrtSgn(vals) => {
+                self.op
+                    * (if self.op_proportional {
+                        vals.len() as f64 - 1.
+                    } else {
+                        1.
+                    })
+            }
 
             VecLang::Sgn(..) => self.op,
             VecLang::Neg(..) => self.op,
             VecLang::Sqrt(..) => self.op,
-            VecLang::Sqr(..) => self.op,
 
             VecLang::VecAdd(..) => self.vec_op,
             VecLang::VecMinus(..) => self.vec_op,
@@ -171,13 +178,13 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::VecDiv(..) => self.vec_op,
             VecLang::VecNeg(..) => self.vec_op,
             VecLang::VecSqrt(..) => self.vec_op,
-            VecLang::VecSqr(..) => self.vec_op,
             VecLang::VecSgn(..) => self.vec_op,
             VecLang::Or(_) => self.vec_op,
             VecLang::And(_) => self.vec_op,
             VecLang::Ite(_) => self.vec_op,
             VecLang::Lt(_) => self.vec_op,
             VecLang::VecMulSgn(_) => self.vec_op,
+            VecLang::VecSqrtSgn(..) => self.vec_op,
             // _ => VEC_OP,
         };
         enode.fold(op_cost, |sum, id| sum + costs(id))

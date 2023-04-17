@@ -182,6 +182,14 @@ fn sgn(x: i64) -> i64 {
     }
 }
 
+fn sqrt_sgn(x: i64, y: i64) -> Option<i64> {
+    if x >= 0 {
+        Some(x.sqrt() * -sgn(y))
+    } else {
+        None
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiosConstant {
     pub kind: String,
@@ -293,6 +301,14 @@ impl SynthLanguage for lang::VecLang {
             lang::VecLang::Lt([l, r]) => {
                 map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Bool(l < r)))
             }
+            lang::VecLang::SqrtSgn([l, r]) => map!(
+                get,
+                l, r => if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
+                    sqrt_sgn(*lv, *rv).map(lang::Value::Int)
+                } else {
+                    None
+                }
+            ),
             lang::VecLang::Sgn([x]) => {
                 map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(sgn(x))))
             }
@@ -309,9 +325,6 @@ impl SynthLanguage for lang::VecLang {
                     _ => None,
                 })
                 .collect::<Vec<_>>(),
-            lang::VecLang::Sqr([x]) => {
-                map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(x * x)))
-            }
             lang::VecLang::Neg([x]) => {
                 map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(-x)))
             }
@@ -411,6 +424,16 @@ impl SynthLanguage for lang::VecLang {
                 })
             }),
             #[rustfmt::skip]
+            lang::VecLang::VecSqrtSgn([l, r]) => map!(get, l, r => {
+                lang::Value::vec2_op(l, r, |l, r| {
+                    if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
+                        sqrt_sgn(*lv, *rv).map(lang::Value::Int)
+                    } else {
+                        None
+                    }
+                })
+            }),
+            #[rustfmt::skip]
             lang::VecLang::VecNeg([l]) => map!(get, l => {
                 lang::Value::vec1(l, |l| {
                     if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
@@ -442,23 +465,6 @@ impl SynthLanguage for lang::VecLang {
                                 .map(|tup| match tup {
                                     lang::Value::Int(a) => lang::Value::Int(a.sqrt()),
                                     x => panic!("SQRT: Ill-formed: {}", x),
-                                })
-                                .collect::<Vec<_>>(),
-                        ))
-                    } else {
-                        None
-                    }
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecSqr([l]) => map!(get, l => {
-                lang::Value::vec1(l, |l| {
-                    if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
-                        Some(lang::Value::Vec(
-                            l.iter()
-                                .map(|tup| match tup {
-                                    lang::Value::Int(a) => lang::Value::Int(a * a),
-                                    x => panic!("SQR: Ill-formed: {}", x),
                                 })
                                 .collect::<Vec<_>>(),
                         ))
@@ -623,7 +629,7 @@ impl SynthLanguage for lang::VecLang {
         iter -= 1; // make iter start at 0
 
         // only do binops for iters < 2
-        let binops = if iter < 2 && synth.lang_config.use_scalar {
+        let binops = if iter <= 2 && synth.lang_config.use_scalar {
             let us = ids
                 .clone()
                 .into_iter()
@@ -637,7 +643,6 @@ impl SynthLanguage for lang::VecLang {
                             "neg" => lang::VecLang::Neg([x]),
                             "sgn" => lang::VecLang::Sgn([x]),
                             "sqrt" => lang::VecLang::Sqrt([x]),
-                            "sqr" => lang::VecLang::Sqr([x]),
                             _ => panic!("Unknown vec unop"),
                         })
                         .collect_vec()
@@ -662,6 +667,7 @@ impl SynthLanguage for lang::VecLang {
                             "or" => Some(lang::VecLang::Or(x)),
                             "&&" => Some(lang::VecLang::And(x)),
                             "<" => Some(lang::VecLang::Lt(x)),
+                            "sqrtsgn" => Some(lang::VecLang::SqrtSgn(x)),
                             "~*" => None,
                             _ => panic!("Unknown binop"),
                         })
@@ -673,7 +679,7 @@ impl SynthLanguage for lang::VecLang {
             None
         };
 
-        let vec_stuff = if synth.lang_config.use_vector {
+        let vec_stuff = if iter > 2 && synth.lang_config.use_vector {
             let vec_unops = ids
                 .clone()
                 .into_iter()
@@ -687,7 +693,6 @@ impl SynthLanguage for lang::VecLang {
                             "neg" => lang::VecLang::VecNeg([x]),
                             "sgn" => lang::VecLang::VecSgn([x]),
                             "sqrt" => lang::VecLang::VecSqrt([x]),
-                            "sqr" => lang::VecLang::VecSqr([x]),
                             _ => panic!("Unknown vec unop"),
                         })
                         .collect_vec();
@@ -715,6 +720,7 @@ impl SynthLanguage for lang::VecLang {
                             "*" => lang::VecLang::VecMul(x),
                             "/" => lang::VecLang::VecDiv(x),
                             "~*" => lang::VecLang::VecMulSgn(x),
+                            "sqrtsgn" => lang::VecLang::VecSqrtSgn(x),
                             _ => panic!("Unknown vec binop"),
                         })
                         .collect::<Vec<_>>()

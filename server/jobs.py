@@ -663,7 +663,7 @@ def add_instruction_ruleset():
     binops = ["/", "+", "*", "-"]
     # baseline + muls + mulsgn
     make_synthesis(
-        Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000
+        Path("jobs"), 60000, binops=binops + ["sqrtsgn"], triops=["mac", "muls"], timeout=6000000
     )
     # baseline + muls
     # make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
@@ -682,56 +682,21 @@ def test_instruction_ruleset():
     mulsgn_path = Path("completed") / "synthesis" / "17" / "ruleset.json"
     muls_path = Path("completed") / "synthesis" / "10" / "ruleset.json"
     base_ruleset = json.load(base_path.open("r"))
-    mulsgn_ruleset = json.load(mulsgn_path.open("r"))
     muls_ruleset = json.load(muls_path.open("r"))
 
-    base_eqs = base_ruleset["eqs"] + [
+    extra = [
         {
-            "lhs": "(sqrt 1)",
-            "rhs": "1",
+            "lhs": "(* (sqrt ?a) (sgn (neg ?b)))",
+            "rhs": "(sqrtsgn ?a ?b)",
             "bidirectional": True
         },
         {
-            "lhs": "(sqrt 0)",
-            "rhs": "0",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(sgn 0)",
-            "rhs": "0",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(sgn 1)",
-            "rhs": "1",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(VecMinus (Vec ?a) (Vec ?b))",
-            "rhs": "(Vec (- ?a ?b))",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(VecSgn (Vec ?a))",
-            "rhs": "(Vec (sgn ?a))",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(* 0 1)",
-            "rhs": "0",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(* ?a ?a)",
-            "rhs": "(sqr ?a)",
-            "bidirectional": True
-        },
-        {
-            "lhs": "(VecMul ?a ?a)",
-            "rhs": "(VecSqr ?a)",
+            "lhs": "(Vec (sqrtsgn ?a ?b))",
+            "rhs": "(VecSqrtSgn (Vec ?a) (Vec ?b))",
             "bidirectional": True
         }
     ]
+    base_eqs = base_ruleset["eqs"]
 
     def includes(ruleset, ops):
         return list(
@@ -746,9 +711,9 @@ def test_instruction_ruleset():
     json.dump(
         {
             "params": {},
-            "eqs": base_eqs + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
+            "eqs": base_eqs + extra,
         },
-        (rulesets_dir / "mulsgn.json").open("w"),
+        (rulesets_dir / "sqrtsgn.json").open("w"),
         indent=2,
     )
     json.dump(
@@ -764,9 +729,9 @@ def test_instruction_ruleset():
             "params": {},
             "eqs": base_eqs
             + includes(muls_ruleset["eqs"], ["VecMULS"])
-            + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
+            + extra
         },
-        (rulesets_dir / "mulsgn_muls.json").open("w"),
+        (rulesets_dir / "sqrtsgn_muls.json").open("w"),
         indent=2,
     )
 
@@ -776,7 +741,7 @@ def test_instruction_ruleset():
     qr_decomp(
         Path("jobs"),
         3,
-        rulesets["base"],
+        rulesets["sqrtsgn_muls"],
         configs["loop_alt_cost_t360"],
         "alternative",
         key="instruction",
@@ -803,8 +768,8 @@ def main():
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    # add_instruction_ruleset()
-    test_instruction_ruleset()
+    add_instruction_ruleset()
+    # test_instruction_ruleset()
     # overview_example()
 
 

@@ -114,6 +114,24 @@ pub fn egg_to_z3<'a>(
                 // solver.assert(&y_int._eq(&zero).not());
                 buf.push(x_int / y_int);
             }
+            lang::VecLang::SqrtSgn([x, y]) => {
+                let x_int = &buf[usize::from(*x)];
+                let y_int = &buf[usize::from(*y)];
+
+                let sqrt_int = sqrt_fun
+                    .apply(&[x_int])
+                    .as_int()
+                    .expect("z3 Sqrt didn't return an int.");
+
+                let zero = z3::ast::Int::from_i64(ctx, 0);
+                let one = z3::ast::Int::from_i64(ctx, 1);
+                let m_one = z3::ast::Int::from_i64(ctx, -1);
+
+                let inner: z3::ast::Int = (y_int.gt(&zero)).ite(&m_one, &one);
+                let neg_sgn = (x_int._eq(&zero)).ite(&zero, &inner);
+
+                buf.push(sqrt_int * neg_sgn)
+            }
             lang::VecLang::Neg([x]) => {
                 let x_int = &buf[usize::from(*x)];
                 buf.push(-x_int);
@@ -137,10 +155,6 @@ pub fn egg_to_z3<'a>(
                         .as_int()
                         .expect("z3 Sqrt didn't return an int."),
                 );
-            }
-            lang::VecLang::Sqr([x]) => {
-                let x_int = &buf[usize::from(*x)];
-                buf.push(x_int * x_int);
             }
 
             // an attempt to support vector operators.
@@ -217,9 +231,23 @@ pub fn egg_to_z3<'a>(
                         .expect("z3 Sqrt didn't return an int."),
                 );
             }
-            lang::VecLang::VecSqr([x]) => {
+            lang::VecLang::VecSqrtSgn([x, y]) => {
                 let x_int = &buf[usize::from(*x)];
-                buf.push(x_int * x_int);
+                let y_int = &buf[usize::from(*y)];
+
+                let sqrt_int = sqrt_fun
+                    .apply(&[x_int])
+                    .as_int()
+                    .expect("z3 Sqrt didn't return an int.");
+
+                let zero = z3::ast::Int::from_i64(ctx, 0);
+                let one = z3::ast::Int::from_i64(ctx, 1);
+                let m_one = z3::ast::Int::from_i64(ctx, -1);
+
+                let inner: z3::ast::Int = (y_int.gt(&zero)).ite(&m_one, &one);
+                let neg_sgn = (x_int._eq(&zero)).ite(&zero, &inner);
+
+                buf.push(sqrt_int * neg_sgn)
             }
             lang::VecLang::Vec(inner) if inner.len() == 1 => {
                 let x = inner[0];

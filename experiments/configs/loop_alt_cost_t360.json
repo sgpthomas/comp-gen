@@ -15,7 +15,7 @@
         "phases": [
           {
             "name": "pre-compile",
-            "cd": [null, 25.0],
+            "cd": [null, 41.0],
             "ca": [5.0, 1000.0],
             "node_limit": 500000,
             "timeout": 30,

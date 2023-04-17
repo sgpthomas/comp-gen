@@ -1062,13 +1062,18 @@ DIR=completed/mat-mul_8x8_8x8/20
 
 Debug a job by running it locally
 
-#+begin_src async-shell :dir (sgt/dir) :results none :name debug :ansi t
-export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Cargo.toml)"
-export dios_bin=$(realpath ../diospyros/dios)
-export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
+#+begin_src async-shell :dir (sgt/dir "server") :results none :name debug :ansi t
+export compgen_bin="cargo run --release --manifest-path=$(realpath ../dios-lang/Cargo.toml)"
+export dios_bin=$(realpath ../../diospyros/dios)
+export dios_example_bin=$(realpath ../../diospyros/dios-example-gen)
 
-cd server/jobs/Apr17-1545-qr-decomp_3-0
+DIR="jobs/Apr17-1729-synthesis-60000-0"
+cd $DIR
 ./run.sh
+
+# cd ../..
+# ./estimate.py single $DIR --debug --force
+# ./correlate.py $DIR/results/kernel.s $DIR/results/kernel.c
 #+end_src
 
 Debugging why our synthesizer doesn't generate rules like =(sqrt 1) <-> 1=
