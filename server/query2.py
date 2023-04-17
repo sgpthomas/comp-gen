@@ -228,8 +228,32 @@ def cli():
 @cli.command()
 @click.argument("key")
 @click.option("-t", "--time")
-def ls(key, time):
-    all_experiments(query_key=key, query_time=time) >> select(~X.datetime) >> display()
+@click.option("-m", "--metric", multiple=True)
+def ls(key, time, metric):
+    exps = all_experiments(query_key=key, query_time=time)
+
+    res = []
+    for _, row in exps.iterrows():
+        data = {
+            "date": [row.date],
+            "key": [row.key],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp_dir": [row.exp_dir]
+        }
+        for m in metric:
+
+            val = None
+            if m == "soft_timeout":
+                val = soft_timeout(row.exp_dir)
+            else:
+                raise Exception
+
+            data[m] = val
+
+        res.append(pd.DataFrame(data=data))
+
+    pd.concat(res) >> reset_index(drop=True) >> display()
 
 
 @cli.command()
