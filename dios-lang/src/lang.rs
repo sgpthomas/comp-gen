@@ -62,6 +62,7 @@ define_language! {
         "sgn" = Sgn([Id; 1]),
         "sqrt" = Sqrt([Id; 1]),
         "neg" = Neg([Id; 1]),
+        "sqr" = Sqr([Id; 1]),
 
         // Lists have a variable number of elements
         "List" = List(Box<[Id]>),
@@ -87,7 +88,9 @@ define_language! {
         // Vector operations that take 1 vector of inputs
         "VecNeg" = VecNeg([Id; 1]),
         "VecSqrt" = VecSqrt([Id; 1]),
+        "VecSqr" = VecSqr([Id; 1]),
         "VecSgn" = VecSgn([Id; 1]),
+        // "VecRAdd" = VecRAdd([Id; 1]),
 
         // MAC takes 3 lists: acc, v1, v2
         "VecMAC" = VecMAC([Id; 3]),
@@ -118,6 +121,7 @@ pub enum VecAst {
     Get(Box<VecAst>, Box<VecAst>),
 
     Sqrt(Box<VecAst>),
+    Sqr(Box<VecAst>),
     Sgn(Box<VecAst>),
     Neg(Box<VecAst>),
 
@@ -131,9 +135,8 @@ pub enum VecAst {
     VecMulSgn(Box<VecAst>, Box<VecAst>),
 
     VecNeg(Box<VecAst>),
-    #[allow(unused)]
     VecSqrt(Box<VecAst>),
-    #[allow(unused)]
+    VecSqr(Box<VecAst>),
     VecSgn(Box<VecAst>),
 
     VecMAC(Box<VecAst>, Box<VecAst>, Box<VecAst>),
@@ -211,6 +214,10 @@ impl VecAst {
                 let id = inner.to_recexpr(expr);
                 expr.add(VecLang::Sqrt([id]))
             }
+            VecAst::Sqr(inner) => {
+                let id = inner.to_recexpr(expr);
+                expr.add(VecLang::Sqr([id]))
+            }
             VecAst::Sgn(inner) => {
                 let id = inner.to_recexpr(expr);
                 expr.add(VecLang::Sgn([id]))
@@ -226,6 +233,10 @@ impl VecAst {
             VecAst::VecSqrt(inner) => {
                 let id = inner.to_recexpr(expr);
                 expr.add(VecLang::VecSqrt([id]))
+            }
+            VecAst::VecSqr(inner) => {
+                let id = inner.to_recexpr(expr);
+                expr.add(VecLang::VecSqr([id]))
             }
             VecAst::VecSgn(inner) => {
                 let id = inner.to_recexpr(expr);
@@ -310,6 +321,9 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
             VecLang::Sqrt([inner]) => {
                 VecAst::Sqrt(Box::new(subtree(&expr, *inner).into()))
             }
+            VecLang::Sqr([inner]) => {
+                VecAst::Sqr(Box::new(subtree(&expr, *inner).into()))
+            }
             VecLang::Neg([inner]) => {
                 VecAst::Neg(Box::new(subtree(&expr, *inner).into()))
             }
@@ -356,6 +370,9 @@ impl From<egg::RecExpr<VecLang>> for VecAst {
             }
             VecLang::VecSqrt([inner]) => {
                 VecAst::VecSqrt(Box::new(subtree(&expr, *inner).into()))
+            }
+            VecLang::VecSqr([inner]) => {
+                VecAst::VecSqr(Box::new(subtree(&expr, *inner).into()))
             }
             VecLang::VecSgn([inner]) => {
                 VecAst::VecSgn(Box::new(subtree(&expr, *inner).into()))

@@ -1067,7 +1067,7 @@ export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Car
 export dios_bin=$(realpath ../diospyros/dios)
 export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
 
-cd server/jobs/Apr16-2341-qr-decomp_3-0
+cd server/jobs/Apr17-1545-qr-decomp_3-0
 ./run.sh
 #+end_src
 

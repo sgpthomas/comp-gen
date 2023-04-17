@@ -19,7 +19,7 @@
             "ca": [5.0, 1000.0],
             "node_limit": 500000,
             "timeout": 30,
-            "iter_limit": 3,
+            "iter_limit": 2,
             "fresh_egraph": true,
             "disabled": false
           },

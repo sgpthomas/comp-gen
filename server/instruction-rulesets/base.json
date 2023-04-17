@@ -900,6 +900,21 @@
       "lhs": "(VecSgn (Vec ?a))",
       "rhs": "(Vec (sgn ?a))",
       "bidirectional": true
+    },
+    {
+      "lhs": "(* 0 1)",
+      "rhs": "0",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(* ?a ?a)",
+      "rhs": "(sqr ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(VecMul ?a ?a)",
+      "rhs": "(VecSqr ?a)",
+      "bidirectional": true
     }
   ]
 }

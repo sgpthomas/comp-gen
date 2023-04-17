@@ -161,6 +161,7 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::Sgn(..) => self.op,
             VecLang::Neg(..) => self.op,
             VecLang::Sqrt(..) => self.op,
+            VecLang::Sqr(..) => self.op,
 
             VecLang::VecAdd(..) => self.vec_op,
             VecLang::VecMinus(..) => self.vec_op,
@@ -170,6 +171,7 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::VecDiv(..) => self.vec_op,
             VecLang::VecNeg(..) => self.vec_op,
             VecLang::VecSqrt(..) => self.vec_op,
+            VecLang::VecSqr(..) => self.vec_op,
             VecLang::VecSgn(..) => self.vec_op,
             VecLang::Or(_) => self.vec_op,
             VecLang::And(_) => self.vec_op,

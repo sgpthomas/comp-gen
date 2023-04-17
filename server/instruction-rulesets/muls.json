@@ -902,6 +902,21 @@
       "bidirectional": true
     },
     {
+      "lhs": "(* 0 1)",
+      "rhs": "0",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(* ?a ?a)",
+      "rhs": "(sqr ?a)",
+      "bidirectional": true
+    },
+    {
+      "lhs": "(VecMul ?a ?a)",
+      "rhs": "(VecSqr ?a)",
+      "bidirectional": true
+    },
+    {
       "lhs": "(VecAdd (VecMULS ?f ?e ?d) (VecMULS ?c ?b ?a))",
       "rhs": "(VecAdd (VecMULS ?f ?a ?b) (VecMULS ?c ?d ?e))",
       "bidirectional": false

@@ -309,6 +309,9 @@ impl SynthLanguage for lang::VecLang {
                     _ => None,
                 })
                 .collect::<Vec<_>>(),
+            lang::VecLang::Sqr([x]) => {
+                map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(x * x)))
+            }
             lang::VecLang::Neg([x]) => {
                 map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(-x)))
             }
@@ -439,6 +442,23 @@ impl SynthLanguage for lang::VecLang {
                                 .map(|tup| match tup {
                                     lang::Value::Int(a) => lang::Value::Int(a.sqrt()),
                                     x => panic!("SQRT: Ill-formed: {}", x),
+                                })
+                                .collect::<Vec<_>>(),
+                        ))
+                    } else {
+                        None
+                    }
+                })
+            }),
+            #[rustfmt::skip]
+            lang::VecLang::VecSqr([l]) => map!(get, l => {
+                lang::Value::vec1(l, |l| {
+                    if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
+                        Some(lang::Value::Vec(
+                            l.iter()
+                                .map(|tup| match tup {
+                                    lang::Value::Int(a) => lang::Value::Int(a * a),
+                                    x => panic!("SQR: Ill-formed: {}", x),
                                 })
                                 .collect::<Vec<_>>(),
                         ))
@@ -617,6 +637,7 @@ impl SynthLanguage for lang::VecLang {
                             "neg" => lang::VecLang::Neg([x]),
                             "sgn" => lang::VecLang::Sgn([x]),
                             "sqrt" => lang::VecLang::Sqrt([x]),
+                            "sqr" => lang::VecLang::Sqr([x]),
                             _ => panic!("Unknown vec unop"),
                         })
                         .collect_vec()
@@ -666,6 +687,7 @@ impl SynthLanguage for lang::VecLang {
                             "neg" => lang::VecLang::VecNeg([x]),
                             "sgn" => lang::VecLang::VecSgn([x]),
                             "sqrt" => lang::VecLang::VecSqrt([x]),
+                            "sqr" => lang::VecLang::VecSqr([x]),
                             _ => panic!("Unknown vec unop"),
                         })
                         .collect_vec();

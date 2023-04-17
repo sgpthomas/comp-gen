@@ -716,6 +716,21 @@ def test_instruction_ruleset():
             "rhs": "(Vec (sgn ?a))",
             "bidirectional": True
         },
+        {
+            "lhs": "(* 0 1)",
+            "rhs": "0",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(* ?a ?a)",
+            "rhs": "(sqr ?a)",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(VecMul ?a ?a)",
+            "rhs": "(VecSqr ?a)",
+            "bidirectional": True
+        }
     ]
 
     def includes(ruleset, ops):
@@ -757,16 +772,16 @@ def test_instruction_ruleset():
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
-    for (n, r) in rulesets.items():
-        qr_decomp(
-            Path("jobs"),
-            3,
-            r,
-            configs["loop_alt_cost_t360"],
-            "alternative",
-            key="instruction",
-            timeout=7200,
-        )
+    # for (n, r) in rulesets.items():
+    qr_decomp(
+        Path("jobs"),
+        3,
+        rulesets["base"],
+        configs["loop_alt_cost_t360"],
+        "alternative",
+        key="instruction",
+        timeout=7200,
+    )
 
 
 def overview_example():

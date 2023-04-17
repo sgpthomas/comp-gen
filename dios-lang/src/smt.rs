@@ -138,6 +138,10 @@ pub fn egg_to_z3<'a>(
                         .expect("z3 Sqrt didn't return an int."),
                 );
             }
+            lang::VecLang::Sqr([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(x_int * x_int);
+            }
 
             // an attempt to support vector operators.
             // I think I should just be able to map them
@@ -212,6 +216,10 @@ pub fn egg_to_z3<'a>(
                         .as_int()
                         .expect("z3 Sqrt didn't return an int."),
                 );
+            }
+            lang::VecLang::VecSqr([x]) => {
+                let x_int = &buf[usize::from(*x)];
+                buf.push(x_int * x_int);
             }
             lang::VecLang::Vec(inner) if inner.len() == 1 => {
                 let x = inner[0];
