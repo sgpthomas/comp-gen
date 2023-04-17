@@ -150,30 +150,33 @@ def diospyros_cycles(egg_kernel_csv):
 
     stats = json.load((exp_dir / "stats.json").open("r"))
 
-    return (pd.read_csv(egg_kernel_csv)
-            >> mutate(
-                benchmark=benchmark,
-                params=params,
-                compile_time=stats["time"],
-                max_ram_used=stats["memory"] / float(10 ** 9),
-                saturated=stats["saturated"])
-            >> replace({
-                "Diospyros": "dios",
-                "Naive": "naive",
-                "Naive hard size vec": "naive.clang",
-                "Naive hard size": "naive.fixed",
-                "Nature": "nature",
-                "Eigen": "eigen"
-            })
-            >> select([
-                "kernel",
-                "benchmark",
-                "params",
-                "cycles",
-                "compile_time",
-                "max_ram_used",
-                "saturated"
-            ]))
+    try:
+        return (pd.read_csv(egg_kernel_csv)
+                >> mutate(
+                    benchmark=benchmark,
+                    params=params,
+                    compile_time=stats["time"],
+                    max_ram_used=stats["memory"] / float(10 ** 9),
+                    saturated=stats["saturated"])
+                >> replace({
+                    "Diospyros": "dios",
+                    "Naive": "naive",
+                    "Naive hard size vec": "naive.clang",
+                    "Naive hard size": "naive.fixed",
+                    "Nature": "nature",
+                    "Eigen": "eigen"
+                })
+                >> select([
+                    "kernel",
+                    "benchmark",
+                    "params",
+                    "cycles",
+                    "compile_time",
+                    "max_ram_used",
+                    "saturated"
+                ]))
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
 
 
 @query(key="performance", pinned_date="Apr15-1612")
@@ -196,7 +199,7 @@ def est_cycles(row):
     })
 
 
-@query(key="diospyros", pinned_date="Apr1-0000")
+@query(key="diospyros", pinned_date="Apr16-1712")
 def diospyros(row):
     return (pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
             >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)

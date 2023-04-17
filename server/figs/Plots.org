@@ -10,6 +10,7 @@ make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
 tmux new -d -s diospyros
 tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
+# python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180
 #+end_src
 
 Copy the results back here, so that we can analyze them.
@@ -87,6 +88,9 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 
 #+begin_src async-shell :name sync
 rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ completed
+# rsync -avh \
+#       --exclude "*compile-log.txt" \
+#       completed/ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed
 #+end_src
 
 Process all the log files and generate data csvs.
@@ -104,8 +108,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py ls instruction
-./query2.py update instruction --diff -t latest --commit
+./query2.py update est_cycles -t latest --commit
 #+end_src
 
 * Tables
@@ -149,6 +152,37 @@ library(xtable)
 
 ** Performance graphs
 
+*** Label Formatting Function
+
+#+begin_src R
+shrink <- function(input) {
+  parts <- str_split(input, "x", simplify=T)
+  if (parts[1] == parts[2]) {
+    str_c(parts[1], "$^2$", collapse="")
+  } else {
+    input
+  }
+}
+
+format <- function(input) {
+  str_flatten(map(str_split(input, "_", simplify=T), shrink), collapse="\n")
+}
+
+format_vec <- function(input) {
+  str_replace_all(input, "_", "\n")
+}
+
+format_vec(c("10x10_2x2", "12x12_3x3"))
+#+end_src
+
+#+RESULTS:
+|     x |
+|-------|
+| 10x10 |
+|   2x2 |
+| 12x12 |
+|   3x3 |
+
 *** DONE Cycle count
 CLOSED: [2023-03-29 Wed 10:03]
 :LOGBOOK:
@@ -162,8 +196,6 @@ CLOSED: [2023-03-29 Wed 10:03]
 data <- full_join(
   read_csv("data/diospyros.csv"),
   read_csv("data/est_cycles.csv")
-  %>% filter(timeout == "180")
-  %>% filter(params != "18x18_18x18")
 )
 
 to_face <- function(sat) {
@@ -192,8 +224,17 @@ data <- data %>%
     values_from=cycles
   ) %>%
   mutate(
-    benchmark=recode(benchmark, "qr-decomp"="qr"),
-    name = str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
+    benchmark=recode(benchmark,
+                     "qr-decomp"="QrD",
+                     "2d-conv"="2DC",
+                     "mat-mul"="MM",
+                     "q-prod"="QP"
+                     ),
+    name = str_c(
+      str_replace_all(str_replace_all(params, "x", "$\\\\times$"), "_", "\n"),
+      "\n",
+      benchmark
+    ),
     norm = naive.fixed,
     compgen = norm / compgen,
     dios = norm / dios,
@@ -246,8 +287,8 @@ data %>%
     axis.title.x = element_blank(),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=5),
-    axis.text.y = element_text(size=8),
+    axis.text.x = element_text(size=5, color="black"),
+    axis.text.y = element_text(size=8, color="black"),
 
     legend.position = "top",
     legend.background = element_blank(),
@@ -303,14 +344,8 @@ CLOSED: [2023-04-16 Sun 10:04]
 #+header: :width 3 :height 2
 #+begin_src R :results graphics file :file compile-times.tikz
 data <- full_join(
-  read_csv("data/stock_cycles.csv"),
+  read_csv("data/diospyros.csv"),
   read_csv("data/est_cycles.csv")
-  %>% filter(timeout == "180")
-  %>% filter(params != "18x18_2x2")
-  %>% filter(params != "18x18_3x3")
-  %>% filter(params != "18x18_4x4")
-  %>% filter(params != "18x18_18x18")
-  %>% filter(params != "20x20_20x20")
 )
 
 # fix the order of params cat var
@@ -321,28 +356,23 @@ data <- data %>%
   ## filter(greedy == "True") %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, compile_time) %>%
-  group_by(benchmark) %>%
   pivot_wider(
     names_from=kernel,
     values_from=compile_time
   ) %>%
+  group_by(benchmark) %>%
   mutate(
     benchmark=recode(benchmark, "qr-decomp"="qr", "q-prod"="q"),
-    name = str_replace_all(params, "_", "\n")
-    ## compgen = compgen / dios,
-    ## dios = 1.0,
+    ## name=str_replace_all(params, "_", "\n")
+    ## name=if_else(str_detect(params, "x"), row_number(), params),
+    name=row_number()
   ) %>%
+  print(n=100) %>%
   pivot_longer(
     cols = c("dios", "compgen"),
     names_to = "kernel",
     values_to = "compile_time"
   )
-  ## pivot_longer(
-  ##   cols = !benchmark,
-  ##   names_to = "compiler",
-  ##   values_to = "cycles"
-  ## ) %>% 
-  ## filter(compiler == "stock_norm" | compiler == "compgen_norm") %>%
 data %>%
   ggplot(aes(
     x=factor(name, levels=unique(name)),
@@ -362,6 +392,7 @@ data %>%
   geom_hline(
     yintercept=180,
   ) +
+  coord_cartesian(ylim = c(0, 1000)) +
   ## scale_y_log10() +
   scale_fill_manual(
     values = c("#33a02c", "#fb9a99"),
@@ -373,8 +404,8 @@ data %>%
     axis.title.x = element_blank(),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=3.5),
-    axis.text.y = element_text(size=7),
+    axis.text.x = element_text(size=5, color="black"),
+    axis.text.y = element_text(size=7, color="black"),
 
     legend.position = "top",
     legend.background = element_blank(),
@@ -977,6 +1008,7 @@ function g() {
             echo "Exporting $f to $DEST/${f%.*}.tex"
             cp $f "$DEST/${f%.*}.tex"
         done
+        make -C $(realpath ~/Research/comp-gen-paper) -B
     done
 }
 
@@ -1027,7 +1059,7 @@ export compgen_bin="cargo run --release --manifest-path=$(realpath dios-lang/Car
 export dios_bin=$(realpath ../diospyros/dios)
 export dios_example_bin=$(realpath ../diospyros/dios-example-gen)
 
-cd server/jobs/Apr13-1614-synthesis-60000-0
+cd server/jobs/Apr16-2341-qr-decomp_3-0
 ./run.sh
 #+end_src
 

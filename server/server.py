@@ -123,8 +123,8 @@ class Job:
         )
         with (self.dir / "commit.txt").open("w") as f:
             f.writelines([
-                f"comp-gen: {compgen_commit}",
-                f"diospyros: {dios_commit}",
+                f"comp-gen: {compgen_commit.stdout.strip()}\n",
+                f"diospyros: {dios_commit.stdout.strip()}\n",
             ])
 
         # save start time

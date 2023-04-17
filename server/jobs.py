@@ -678,7 +678,6 @@ def test_instruction_ruleset():
     global rulesets
 
     rulesets_dir = Path("instruction-rulesets")
-    print(rulesets)
     base_path = rulesets["ruleset_timeout86400"]
     mulsgn_path = Path("completed") / "synthesis" / "17" / "ruleset.json"
     muls_path = Path("completed") / "synthesis" / "10" / "ruleset.json"
@@ -686,20 +685,53 @@ def test_instruction_ruleset():
     mulsgn_ruleset = json.load(mulsgn_path.open("r"))
     muls_ruleset = json.load(muls_path.open("r"))
 
+    base_eqs = base_ruleset["eqs"] + [
+        {
+            "lhs": "(sqrt 1)",
+            "rhs": "1",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(sqrt 0)",
+            "rhs": "0",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(sgn 0)",
+            "rhs": "0",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(sgn 1)",
+            "rhs": "1",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(VecMinus (Vec ?a) (Vec ?b))",
+            "rhs": "(Vec (- ?a ?b))",
+            "bidirectional": True
+        },
+        {
+            "lhs": "(VecSgn (Vec ?a))",
+            "rhs": "(Vec (sgn ?a))",
+            "bidirectional": True
+        },
+    ]
+
     def includes(ruleset, ops):
         return list(
             filter(lambda r: all([op in r["lhs"] + r["rhs"] for op in ops]), ruleset)
         )
 
     json.dump(
-        {"params": {}, "eqs": base_ruleset["eqs"]},
+        {"params": {}, "eqs": base_eqs},
         (rulesets_dir / "base.json").open("w"),
         indent=2,
     )
     json.dump(
         {
             "params": {},
-            "eqs": base_ruleset["eqs"] + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
+            "eqs": base_eqs + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
         },
         (rulesets_dir / "mulsgn.json").open("w"),
         indent=2,
@@ -707,7 +739,7 @@ def test_instruction_ruleset():
     json.dump(
         {
             "params": {},
-            "eqs": base_ruleset["eqs"] + includes(muls_ruleset["eqs"], ["VecMULS"]),
+            "eqs": base_eqs + includes(muls_ruleset["eqs"], ["VecMULS"]),
         },
         (rulesets_dir / "muls.json").open("w"),
         indent=2,
@@ -715,7 +747,7 @@ def test_instruction_ruleset():
     json.dump(
         {
             "params": {},
-            "eqs": base_ruleset["eqs"]
+            "eqs": base_eqs
             + includes(muls_ruleset["eqs"], ["VecMULS"])
             + includes(mulsgn_ruleset["eqs"], ["MulSgn"]),
         },
@@ -733,7 +765,7 @@ def test_instruction_ruleset():
             configs["loop_alt_cost_t360"],
             "alternative",
             key="instruction",
-            timeout=1000,
+            timeout=7200,
         )
 
 
