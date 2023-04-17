@@ -19,6 +19,12 @@ Copy the results back here, so that we can analyze them.
 rsync -avh ubuntu@$IP:~/diospyros/results-t180/ completed/diospyros/1
 #+end_src
 
+#+header: :dir (ec2/tramp "exp" "custom-diospyros")
+#+begin_src async-shell :results none :name dios
+DIR="../comp-gen/server/completed/qr-decomp_4/3/results"
+./dios -w 4 --egg --suppress-git -o $DIR/kernel.c $DIR
+#+end_src
+
 Some changes to diospyros are needed before we can run estimation. We need to go into =evaluation/shared.mk= and edit the paths so that they point to the right places.
 
 I don't have the expert matrix kernel, so I comment out that from the =mat-mul/harness.c=
@@ -45,7 +51,8 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        -o ~/Research/comp-gen/server/completed/diospyros/0
+        --force \
+        -o ~/Research/comp-gen/server/completed/diospyros/1
 #+end_src
 
 ** Syncing diospyros-results between machines
@@ -83,7 +90,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key performance
+./estimate.py many latest --key instruction
 #+end_src
 
 #+begin_src async-shell :name sync
@@ -1045,11 +1052,12 @@ cp harnesses/2d-conv.c $EXP/harness.c
 #+end_src
 
 #+begin_src async-shell :name test :dir (sgt/dir "server") :results none
-DIR=completed/mat-mul_8x8_8x8/18
+DIR=completed/mat-mul_8x8_8x8/20
 # ~/Research/diospyros/dios -w 4 --egg --suppress-git \
 #                           -o $DIR/results/kernel.c \
 #                           $DIR/results
-./estimate.py log $DIR
+# ./estimate.py single $DIR --debug --force
+./correlate.py $DIR/results/kernel.s $DIR/results/kernel.c
 #+end_src
 
 Debug a job by running it locally

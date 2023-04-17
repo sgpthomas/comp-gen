@@ -94,7 +94,7 @@ def estimate_kernel(
                 "../../diospyros/dios", "-w", "4",
                 "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
                 str(exp_path / results),
-            ], timeout=60 * 1)
+            ], timeout=60 * 30)
 
             if not (exp_path / results / "kernel.c").exists():
                 print("Failed to produce kernel.c!")
@@ -134,7 +134,7 @@ def estimate_kernel(
                 " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
                 shell=True,
                 cwd=exp_path / results,
-                timeout=60 * 5  # 5 minutes
+                timeout=60 * 10
             )
 
             print("Done")
@@ -174,14 +174,16 @@ def cli():
 @click.option("--results", default="results")
 @click.option("--name", default=None)
 @click.option("--params", default=None)
-def single(exp_dir, force, results, name, params):
+@click.option("--debug", is_flag=True)
+def single(exp_dir, force, results, name, params, debug):
     print(f"Estimating cycles for {exp_dir}")
     estimate_kernel(
         exp_dir,
         results=results,
         force=force,
         benchmark_name=name,
-        params=params
+        params=params,
+        debug=debug
     )
 
 
