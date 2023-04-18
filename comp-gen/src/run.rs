@@ -204,23 +204,33 @@ where
                 loops,
                 timeout,
             } => {
-                for i in 0..*loops {
+                let orig_time_left = eqsat.time_left.clone();
+                if let Some(to) = timeout {
+                    info!("Loop has timeout as {to}s; with {:?} total time remaining.", eqsat.time_left);
+                    eqsat.time_left =
+                        eqsat.time_left.min(Duration::from_secs(*to as u64));
+                }
+                'outer: for i in 0..*loops {
                     info!("loop {i}");
                     let old_cost = eqsat.cost.clone();
                     // if this loop has a timeout, set time_left to be the loop timeout
-                    if let Some(to) = timeout {
-                        debug!("Loop has timeout as {to}s; with {:?} total time remaining.", eqsat.time_left);
-                        eqsat.time_left = eqsat
-                            .time_left
-                            .min(Duration::from_secs(*to as u64));
-                    }
                     for p in phases {
                         eqsat = self.run_phase(p, eqsat);
+                        if eqsat.time_left.is_zero() {
+                            info!("Loop timed out, stopping early!");
+                            break 'outer;
+                        }
                     }
                     if old_cost == eqsat.cost {
                         info!("Cost didn't change from this iteration, stopping early!");
                         break;
                     }
+                }
+
+                if let Some(to) = timeout {
+                    eqsat.time_left = orig_time_left
+                        .saturating_sub(Duration::from_secs(*to as u64));
+                    info!("Reseting timeout to {:?}", eqsat.time_left);
                 }
             }
         }
