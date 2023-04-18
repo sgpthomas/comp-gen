@@ -115,7 +115,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py ls instruction
+./query2.py update diospyros -t latest --commit
 #+end_src
 
 * Tables
@@ -155,6 +155,8 @@ library(extrafont)
 library(ggpattern)
 library(tikzDevice)
 library(xtable)
+library(gtable)
+library(grid)
 #+end_src
 
 ** Performance graphs
@@ -223,7 +225,6 @@ faces <- data %>%
   )
 
 data <- data %>%
-  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -233,15 +234,12 @@ data <- data %>%
   mutate(
     benchmark=recode(benchmark,
                      "qr-decomp"="QrD",
-                     "2d-conv"="2DC",
-                     "mat-mul"="MM",
+                     "2d-conv"="2DConv",
+                     "mat-mul"="Matrix Mul",
                      "q-prod"="QP"
                      ),
-    name = str_c(
-      str_replace_all(str_replace_all(params, "x", "$\\\\times$"), "_", "\n"),
-      "\n",
-      benchmark
-    ),
+    key = str_c(benchmark, params),
+    name = str_replace_all(str_replace_all(params, "x", "$\\\\times$"), "_", "\n"),
     norm = naive.fixed,
     compgen = norm / compgen,
     dios = norm / dios,
@@ -255,29 +253,40 @@ data <- data %>%
     names_to = "kernel",
     values_to = "cycles"
   ) %>%
-  select(name, kernel, cycles)
+  select(name, kernel, benchmark, params, key, cycles)
 
-data %>%
-  group_by(benchmark) %>%
+names <- (data %>% filter(kernel == "dios"))$name
+
+p <- data %>%
+  group_by(key) %>%
   ggplot(aes(
-    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
-    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
+    ## x=factor(name, levels=unique(name)),
+    ## y=cycles,
+    xmin=as.numeric(factor(key, levels=unique(key))) - 0.35,
+    xmax=as.numeric(factor(key, levels=unique(key))) + 0.35,
     ymin=0,
     ymax=cycles,
     fill=factor(kernel, levels=unique(kernel))
   )) +
+  facet_grid(
+    ~benchmark,
+    switch="x",
+    scales = "free_x", space="free_x"
+  ) +
   geom_rect(
     position="dodge",
     color="black",
+    linewidth=0.3
   ) +
-  geom_hline(yintercept=1, linetype="solid", color="black") +
   labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
   scale_x_continuous(
-    label=unique(data$name),
-    breaks=1:length(unique(data$name))
+    label=names,
+    breaks=1:length(names)
   ) +
   scale_y_continuous(
-    trans="log2"
+    trans="log2",
+    breaks=c(1, 4, 16),
+    labels=c("1$\\times$", "4$\\times$", "16$\\times$"),
   ) +
   scale_fill_brewer(
     palette = "Paired",
@@ -286,10 +295,10 @@ data %>%
       "Naive (vectorized)",
       "Nature",
       "Diospyros",
-      "Compgen"
+      "Isaria"
     )
   ) +
-  theme_minimal() +
+  theme_classic() +
   theme(
     axis.title.x = element_blank(),
     axis.title.y = element_text(size=8, face="bold"),
@@ -305,10 +314,37 @@ data %>%
     legend.box.spacing = unit(0, "lines"), 
     legend.margin = margin(0, 0, 2, 0),
 
-    panel.spacing.x = unit(0, "lines"),
+    panel.background = element_blank(),
+    panel.spacing.x = unit(1, "lines"),
 
-    strip.placement = "outside"
+    plot.margin = margin(0, 0, 0, 0),
+
+    strip.placement = "outside",
+    strip.background = element_blank()
   )
+
+pb <- ggplot_build(p)
+pg <- ggplot_gtable(pb)
+
+data2npc <- function(x, panel = 1L, axis = "x") {
+  range <- pb$layout$panel_params[[panel]][[paste0(axis,".range")]]
+  scales::rescale(c(range, x), c(0,1))[-c(1,2)]
+}
+
+major_grid <- sapply(c(-1, 0, 1, 2, 3, 4, 5), data2npc, axis="y")
+
+pg <- gtable_add_grob(
+  pg,
+  segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
+               gp=gpar(col=c("gray", "black", "gray", "gray", "gray", "gray", "gray"),
+                       lwd=c(0.9, 1, 0.9, 0.9, 0.9, 0.9, 0.9))),
+  t=7, b=9,
+  l=5, r=11,
+  z=0
+)
+
+grid.newpage()
+grid.draw(pg)
 #+end_src
 
 #+RESULTS:
@@ -348,10 +384,12 @@ CLOSED: [2023-04-16 Sun 10:04]
 - State "DONE"       from "NEXT"       [2023-04-16 Sun 10:04]
 :END:
 
-#+header: :width 3 :height 2
-#+begin_src R :results graphics file :file compile-times.tikz
+#+header: :width 13 :height 5  :file compile-times.svg
+
+#+header: :width 3 :height 2 :file compile-times.tikz
+#+begin_src R :results graphics file
 data <- full_join(
-  read_csv("data/diospyros.csv"),
+  read_csv("data/diospyros.csv") %>% mutate(compile_time=eqsat_time),
   read_csv("data/est_cycles.csv")
 )
 
@@ -369,7 +407,11 @@ data <- data %>%
   ) %>%
   group_by(benchmark) %>%
   mutate(
-    benchmark=recode(benchmark, "qr-decomp"="qr", "q-prod"="q"),
+    benchmark=recode(benchmark,
+                     "2d-conv"="2DConv",
+                     "mat-mul"="Matrix Mul",
+                     "qr-decomp"="QrD",
+                     "q-prod"="QP"),
     ## name=str_replace_all(params, "_", "\n")
     ## name=if_else(str_detect(params, "x"), row_number(), params),
     name=row_number()
@@ -380,7 +422,8 @@ data <- data %>%
     names_to = "kernel",
     values_to = "compile_time"
   )
-data %>%
+
+p <- data %>%
   ggplot(aes(
     x=factor(name, levels=unique(name)),
     y=compile_time,
@@ -394,24 +437,27 @@ data %>%
   geom_col(
     position="dodge",
     color="black",
-    width=0.5
+    width=0.5,
+    linewidth=0.3
   ) +
-  geom_hline(
-    yintercept=180,
-  ) +
-  coord_cartesian(ylim = c(0, 1000)) +
+  ## geom_hline(
+  ##   yintercept=180,
+  ## ) +
+  ## coord_cartesian(ylim = c(0, 1000)) +
   ## scale_y_log10() +
   scale_fill_manual(
-    values = c("#33a02c", "#fb9a99"),
-    labels=c("Diospyros", "Compgen")
+    values=c("#33a02c", "#fb9a99"),
+    labels=c("Diospyros", "Isaria")
   ) +
+  scale_y_continuous(expand=c(0, 0)) +
   labs(y="Compile Time", fill="Compiler") +
-  theme_minimal() +
+  theme_classic() +
   theme(
     axis.title.x = element_blank(),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=5, color="black"),
+    ## axis.text.x = element_text(size=5, color="black"),
+    axis.text.x = element_blank(),
     axis.text.y = element_text(size=7, color="black"),
 
     legend.position = "top",
@@ -422,25 +468,37 @@ data %>%
     legend.box.spacing = unit(0, "lines"), 
     legend.margin = margin(0, 0, 2, 0),
 
-    panel.spacing.x = unit(0, "lines"),
+    panel.background = element_blank(),
+    panel.spacing.x = unit(0.5, "lines"),
 
     strip.placement = "outside",
     strip.text.x = element_text(size=6, face="bold"),
-    
-    ## axis.title.x = element_blank(),
-    ## ## legend.position = c(0.9, 0.9),
-    ## legend.position = "top",
-    ## legend.background = element_rect(fill = "white"),
-    ## text = element_text(size=6, face="bold"),
-    ## panel.spacing.x = unit(0, "lines"),
-    ## strip.placement = "outside",
-    ## strip.text.x = element_text(
-    ##   angle=0
-    ## ),
-    ## strip.background.x = element_rect(
-    ##   color="black", linetype="solid",
-    ## ),
+    strip.background = element_blank(),
   )
+
+pb <- ggplot_build(p)
+pg <- ggplot_gtable(pb)
+
+data2npc <- function(x, panel = 1L, axis = "x") {
+  range <- pb$layout$panel_params[[panel]][[paste0(axis,".range")]]
+  scales::rescale(c(range, x), c(0,1))[-c(1,2)]
+}
+
+major_grid <- sapply(c(0, 150, 180, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
+
+pg <- gtable_add_grob(
+  pg,
+  segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
+               gp=gpar(col=c("gray", "gray", "black", "gray",
+                             "gray", "gray", "gray", "gray", "gray"),
+                       lwd=c(0.9, 0.1, 1, 0.9, 0.1, 0.9, 0.1, 0.9, 0.1))),
+  t=7, b=9,
+  l=5, r=11,
+  z=0
+)
+
+grid.newpage()
+grid.draw(pg)
 #+end_src
 
 #+RESULTS:
@@ -556,7 +614,7 @@ data %>%
     position="dodge",
     color="black",
   ) +
-  geom_hline(yintercept=1, linetype="solid", color="black") +
+  ## geom_hline(yintercept=1, linetype="solid", color="black") +
   labs(x="2d-conv", y="Speed up over No Equality Saturation", fill="Compiler") +
   scale_x_continuous(
     label=unique(data$name),
@@ -1009,17 +1067,33 @@ DEST=$(realpath ~/Research/comp-gen-paper/figures)
 #     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
 # done
 
-function g() {
-    while read; do
-        for f in $(echo *.tikz *.tex); do
-            echo "Exporting $f to $DEST/${f%.*}.tex"
-            cp $f "$DEST/${f%.*}.tex"
-        done
-        make -C $(realpath ~/Research/comp-gen-paper) -B
-    done
-}
+# function g() {
+#     while read -d \0 event; do
+#         echo ${event}
+#         cp $event "$DEST/$(basename $event .tikz).tex"
+#         # if [ "${event#*.}" = "tikz" ]; then
+#         #     echo "Exporting $event to $DEST/$(basename $event .tikz).tex"
+#         # fi
+#     done
+# }
 
-fswatch -o . | g
+# while true; do
+#     for f in $(echo *.tikz *.tex); do
+#         echo "Exporting $f to $DEST/${f%.*}.tex"
+#         cp $f "$DEST/${f%.*}.tex"
+#         make -C $DEST/.. single
+#     done
+#     sleep 2
+# done
+
+inotifywait --monitor --format "%f" \
+--event modify,create ./ \
+| while read f; do
+    if [ "${f#*.}" = "tikz" ]; then
+        echo "Exporting $f to $DEST/$(basename $f .tikz).tex"
+        cp "$f" "$DEST/$(basename $f .tikz).tex"
+    fi
+done
 #+end_src
 
 * Debugging

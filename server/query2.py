@@ -149,13 +149,19 @@ def diospyros_cycles(egg_kernel_csv):
         params = "0"
 
     stats = json.load((exp_dir / "stats.json").open("r"))
+    lines = (exp_dir / "compile-log.txt").open("r").readlines()
+    eqsat_time = list(filter(
+        lambda x: x != 0,
+        map(lambda x: int(x.split(": ")[1]) if "Eqsat" in x else 0, lines)
+    ))
 
     try:
         return (pd.read_csv(egg_kernel_csv)
                 >> mutate(
                     benchmark=benchmark,
                     params=params,
-                    compile_time=stats["time"],
+                    total_time=stats["time"],
+                    eqsat_time=eqsat_time[0] / 1000.0,
                     max_ram_used=stats["memory"] / float(10 ** 9),
                     saturated=stats["saturated"])
                 >> replace({
@@ -171,7 +177,8 @@ def diospyros_cycles(egg_kernel_csv):
                     "benchmark",
                     "params",
                     "cycles",
-                    "compile_time",
+                    "total_time",
+                    "eqsat_time",
                     "max_ram_used",
                     "saturated"
                 ]))
