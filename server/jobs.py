@@ -771,9 +771,9 @@ def optimization_effect():
     print("Creating overall performance jobs")
 
     mat_mul_sizes = [
-        [2, 2, 2, 2],
-        [2, 3, 3, 3],
-        [3, 3, 3, 3],
+        # [2, 2, 2, 2],
+        # [2, 3, 3, 3],
+        # [3, 3, 3, 3],
         [4, 4, 4, 4],
         [8, 8, 8, 8],
         [10, 10, 10, 10],
@@ -785,7 +785,7 @@ def optimization_effect():
         # [3, 3, 2, 2],
         # [3, 3, 3, 3],
         # [3, 5, 3, 3],
-        # [4, 4, 3, 3],
+        [4, 4, 3, 3],
         [8, 8, 3, 3],
         [10, 10, 2, 2],
         [10, 10, 3, 3],
@@ -793,7 +793,7 @@ def optimization_effect():
         [16, 16, 2, 2],
         [16, 16, 3, 3],
         # [16, 16, 4, 4],
-        # [18, 18, 2, 2],
+        [18, 18, 2, 2],
         # [18, 18, 3, 3],
         # [18, 18, 4, 4],
     ]
@@ -805,7 +805,7 @@ def optimization_effect():
     ruleset = rulesets["ruleset_timeout86400"]
     cs = [
         configs["loop_alt_cost_t180_w_opt"],
-        # configs["loop_alt_cost_t1800"]
+        configs["loop_alt_cost_t180_n_opt"],
     ]
 
     # create all the jobs
