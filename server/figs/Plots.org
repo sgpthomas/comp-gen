@@ -386,7 +386,7 @@ CLOSED: [2023-04-16 Sun 10:04]
 
 #+header: :width 13 :height 5  :file compile-times.svg
 
-#+header: :width 3 :height 2 :file compile-times.tikz
+#+header: :width 3.3 :height 2 :file compile-times.tikz
 #+begin_src R :results graphics file
 data <- full_join(
   read_csv("data/diospyros.csv") %>% mutate(compile_time=eqsat_time),
@@ -411,7 +411,7 @@ data <- data %>%
                      "2d-conv"="2DConv",
                      "mat-mul"="Matrix Mul",
                      "qr-decomp"="QrD",
-                     "q-prod"="QP"),
+                     "q-prod"="Q"),
     ## name=str_replace_all(params, "_", "\n")
     ## name=if_else(str_detect(params, "x"), row_number(), params),
     name=row_number()
@@ -437,7 +437,7 @@ p <- data %>%
   geom_col(
     position="dodge",
     color="black",
-    width=0.5,
+    width=0.75,
     linewidth=0.3
   ) +
   ## geom_hline(
@@ -458,22 +458,24 @@ p <- data %>%
 
     ## axis.text.x = element_text(size=5, color="black"),
     axis.text.x = element_blank(),
-    axis.text.y = element_text(size=7, color="black"),
+    axis.text.y = element_text(size=8, color="black"),
 
     legend.position = "top",
     legend.background = element_blank(),
-    legend.text = element_text(size=7, face="bold"),
+    legend.text = element_text(size=8, face="bold"),
     legend.title = element_blank(),
     legend.key.size = unit(0.75, "lines"),
     legend.box.spacing = unit(0, "lines"), 
     legend.margin = margin(0, 0, 2, 0),
 
     panel.background = element_blank(),
-    panel.spacing.x = unit(0.5, "lines"),
+    panel.spacing.x = unit(0.2, "lines"),
 
     strip.placement = "outside",
-    strip.text.x = element_text(size=6, face="bold"),
+    strip.text.x = element_text(size=8, face="bold"),
     strip.background = element_blank(),
+
+    plot.margin = margin(0, 0, 0, 0)
   )
 
 pb <- ggplot_build(p)
@@ -755,7 +757,7 @@ data %>%
   mutate(
     pattern=killed,
     cycles=if_else(killed, killed_height, cycles),
-    params=str_replace_all(params, "_", " ")
+    params=str_replace_all(params, "_", "\n")
   ) %>%
   print(n=10) %>%
   ggplot(aes(
@@ -772,10 +774,10 @@ data %>%
     pattern_spacing=0.05,
     pattern_density=0.35,
   ) +
-  geom_hline(
-    yintercept=killed_height,
-    color="red"
-  ) +
+  ## geom_hline(
+  ##   yintercept=killed_height,
+  ##   color="red"
+  ## ) +
   scale_fill_manual(
     values=c("#eeeeee", "#fb9a99"),
     labels=c("No Pruning", "Pruning")
@@ -783,19 +785,20 @@ data %>%
   scale_pattern_manual(
     values=c("none", "stripe"),
   ) +
+  scale_y_continuous(expand=c(0, 0)) +
   labs(
-    x="2d-conv Params",
-    y="Cost",
+    x="2DConv Params",
+    y="Estimated Cycles",
     fill="Pruning"
   ) +
   guides(pattern="none", fill=guide_legend(override.aes = list(pattern="none"))) +
-  theme_minimal() +
+  theme_classic() +
   theme(
-    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.x = element_text(size=8, face="bold"),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=5),
-    axis.text.y = element_text(size=7),
+    axis.text.x = element_text(size=8, color="black"),
+    axis.text.y = element_text(size=8, color="black"),
 
     legend.position = "top",
     legend.background = element_blank(),
@@ -803,7 +806,10 @@ data %>%
     legend.title = element_blank(),
     legend.key.size = unit(0.75, "lines"),
     legend.box.spacing = unit(0, "lines"), 
-    legend.margin = margin(0, 0, 2, 0),
+    legend.margin = margin(0, 0, 4, 0),
+
+    panel.grid.major.y = element_line(color="grey", linewidth=0.9),
+    panel.grid.minor.y = element_line(color="grey", linewidth=0.1)
   )
 #+end_src
 
@@ -814,8 +820,8 @@ data %>%
 
 #+header: :width 11 :height 4
 
-#+header: :width 3 :height 2
-#+begin_src R :results graphics file :file ruleset-ablation.tikz
+#+header: :width 3.3 :height 2 :file ruleset-ablation.tikz
+#+begin_src R :results graphics file
 data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
 noeqsat <- read_csv("data/noeqsat.csv") %>%
   mutate(ruleset=0, noeqsat=cycles) %>%
@@ -863,17 +869,22 @@ data %>%
     label=unique(data$name),
     breaks=1:length(unique(data$name))
   ) +
+  scale_y_continuous(
+    labels=c("1$\\times$", "2$\\times$"),
+    breaks=c(1, 2),
+    expand=c(0, 0)
+  ) +
   scale_fill_brewer(
     palette = "YlOrBr",
   ) +
-  labs(fill="Timeout", y="Speedup Cycles", x="2d-conv Params") +
-  theme_minimal() +
+  labs(fill="Timeout", y="Speedup over Timeout=60", x="2DConv Params") +
+  theme_classic() +
   theme(
-    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.x = element_text(size=8, face="bold"),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=5),
-    axis.text.y = element_text(size=7),
+    axis.text.x = element_text(size=8, color="black"),
+    axis.text.y = element_text(size=8, color="black"),
 
     legend.position = "top",
     legend.background = element_blank(),
@@ -882,6 +893,11 @@ data %>%
     legend.key.size = unit(0.75, "lines"),
     legend.box.spacing = unit(0, "lines"), 
     legend.margin = margin(0, 0, 2, 0),
+
+    panel.grid.major.y = element_line(color="grey", linewidth=0.9),
+    panel.grid.minor.y = element_line(color="grey", linewidth=0.1),
+
+    plot.margin = margin(0, 0, 0, 0)
   )
 #+end_src
 
@@ -890,38 +906,38 @@ data %>%
 
 ** Instruction Ablation
 
-#+header: :file instruction.tex
-
-#+header: :results output 
-
+#+header: :results output file :file instruction.tex
 #+begin_src R 
-data <- read_csv("data/instruction.csv", show_col_types=F, progress=F) %>%
+data <- read_csv(
+  "data/instruction.csv",
+  show_col_types=F,
+  progress=F,
+  col_names=T
+) %>%
   filter(benchmark == "qr-decomp") %>%
   mutate(
-    muls=if_else(rules == "muls" | rules == "ruleset", "MULS", "No MULS"),
-    mulsgn=if_else(rules == "mulsgn" | rules == "ruleset", "MulSgn", "No MulSgn"),
-    speedup=round(1229 / cycles, 2)*100,
-    show=if_else(speedup >= 100, str_c("+", speedup-100, "%"), str_c("-", 100-speedup, "%"))
+    muls=if_else(str_detect(rules, "muls"), "MULS", "No MULS"),
+    sqrtsgn=if_else(str_detect(rules, "sqrtsgn"), "SqrtSgn", "No SqrtSgn"),
+    speedup=(1198.0 / cycles) * 100,
+    show=if_else(speedup >= 100,
+                 str_c("+", round(speedup-100, 1), "%"),
+                 str_c("-", 100-speedup, "%"))
   ) %>%
-  select(muls, mulsgn, show) %>%
-  print(n=10) %>%
-  pivot_wider(names_from=c(muls), values_from=show) %>%
-  mutate(` `=mulsgn) %>%
+  select(muls, sqrtsgn, show) %>%
+  pivot_wider(names_from=muls, values_from=show) %>%
+  mutate(` `=sqrtsgn) %>%
   select(` `, `MULS`, `No MULS`)
 
-## print(xtable(
-##   data,
-##   caption=str_c(
-##     "Cycle estimates for QR-Decomp for all",
-##     " combinations of including MAC and MULS instructions."
-##   )), include.rownames=FALSE)
+print(xtable(
+  data,
+  caption=str_c(
+    "Cycle estimates for QR-Decomp for all",
+    " combinations of including MAC and MULS instructions."
+  )), include.rownames=FALSE)
 #+end_src
 
 #+RESULTS:
-|           | MULS | No MULS |
-|-----------+------+---------|
-| MulSgn    |  +2% |     +0% |
-| No MulSgn |  +2% |     +0% |
+[[file:instruction.tex]]
 
 ** TODO Greedy Cost Works
 

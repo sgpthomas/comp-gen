@@ -1,422 +1,422 @@
-% Created by tikzDevice version 0.12.4 on 2023-04-17 21:01:53
+% Created by tikzDevice version 0.12.4 on 2023-04-17 23:30:45
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
-\path[use as bounding box,fill=fillColor,fill opacity=0.00] (0,0) rectangle (216.81,144.54);
+\path[use as bounding box,fill=fillColor,fill opacity=0.00] (0,0) rectangle (238.49,144.54);
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{255,255,255}
 \definecolor{fillColor}{RGB}{255,255,255}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round,line cap=round,fill=fillColor] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[draw=drawColor,line width= 0.6pt,line join=round,line cap=round,fill=fillColor] ( -0.00,  0.00) rectangle (238.49,144.54);
 \end{scope}
 \begin{scope}
-\path[clip] ( 30.77, 25.11) rectangle (211.31,128.01);
+\path[clip] ( 26.77, 21.38) rectangle (238.49,133.51);
 \definecolor{drawColor}{RGB}{190,190,190}
 
-\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 30.77, 25.11) -- (391.85, 25.11);
+\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 26.77, 21.38) -- (450.21, 21.38);
 
-\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 30.77, 38.90) -- (391.85, 38.90);
+\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 26.77, 36.40) -- (450.21, 36.40);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 30.77, 41.66) -- (391.85, 41.66);
+\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 26.77, 39.41) -- (450.21, 39.41);
 \definecolor{drawColor}{RGB}{190,190,190}
 
-\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 30.77, 52.69) -- (391.85, 52.69);
+\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 26.77, 51.43) -- (450.21, 51.43);
 
-\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 30.77, 66.48) -- (391.85, 66.48);
+\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 26.77, 66.46) -- (450.21, 66.46);
 
-\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 30.77, 80.27) -- (391.85, 80.27);
+\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 26.77, 81.49) -- (450.21, 81.49);
 
-\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 30.77, 94.06) -- (391.85, 94.06);
+\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 26.77, 96.51) -- (450.21, 96.51);
 
-\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 30.77,107.85) -- (391.85,107.85);
+\path[draw=drawColor,line width= 0.4pt,line join=round,line cap=round] ( 26.77,111.54) -- (450.21,111.54);
 
-\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 30.77,121.64) -- (391.85,121.64);
+\path[draw=drawColor,line width= 0.0pt,line join=round,line cap=round] ( 26.77,126.57) -- (450.21,126.57);
 \end{scope}
 \begin{scope}
-\path[clip] ( 30.77, 25.11) rectangle (116.86,128.01);
+\path[clip] ( 26.77, 21.38) rectangle (135.12,133.51);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 32.90, 25.11) rectangle ( 34.41, 25.14);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 28.49, 21.38) rectangle ( 31.35, 21.41);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 34.41, 25.11) rectangle ( 35.93, 26.27);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 31.35, 21.38) rectangle ( 34.21, 22.65);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 38.96, 25.11) rectangle ( 40.47, 25.35);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 36.12, 21.38) rectangle ( 38.98, 21.64);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 40.47, 25.11) rectangle ( 41.99, 43.62);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 38.98, 21.38) rectangle ( 41.84, 41.55);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 45.02, 25.11) rectangle ( 46.54, 27.13);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 43.75, 21.38) rectangle ( 46.61, 23.58);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 46.54, 25.11) rectangle ( 48.05, 46.92);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 46.61, 21.38) rectangle ( 49.47, 45.15);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 51.08, 25.11) rectangle ( 52.60, 26.76);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 51.38, 21.38) rectangle ( 54.24, 23.18);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 52.60, 25.11) rectangle ( 54.11, 49.24);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 54.24, 21.38) rectangle ( 57.10, 47.67);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 57.14, 25.11) rectangle ( 58.66, 43.47);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 59.01, 21.38) rectangle ( 61.87, 41.38);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 58.66, 25.11) rectangle ( 60.18, 69.93);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 61.87, 21.38) rectangle ( 64.73, 70.22);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 63.21, 25.11) rectangle ( 64.72, 26.53);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 66.64, 21.38) rectangle ( 69.50, 22.92);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 64.72, 25.11) rectangle ( 66.24, 49.25);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 69.50, 21.38) rectangle ( 72.36, 47.69);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 69.27, 25.11) rectangle ( 70.78, 44.00);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 74.27, 21.38) rectangle ( 77.13, 41.96);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 70.78, 25.11) rectangle ( 72.30, 85.03);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 77.13, 21.38) rectangle ( 79.99, 86.68);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 75.33, 25.11) rectangle ( 76.85, 39.98);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 81.90, 21.38) rectangle ( 84.76, 37.58);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 76.85, 25.11) rectangle ( 78.36,106.89);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 84.76, 21.38) rectangle ( 87.62,110.49);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 81.39, 25.11) rectangle ( 82.91, 30.00);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 89.53, 21.38) rectangle ( 92.39, 26.71);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 82.91, 25.11) rectangle ( 84.42,107.74);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 92.39, 21.38) rectangle ( 95.25,111.43);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 87.46, 25.11) rectangle ( 88.97, 40.14);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 97.16, 21.38) rectangle (100.02, 37.75);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 88.97, 25.11) rectangle ( 90.49, 86.20);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (100.02, 21.38) rectangle (102.88, 87.95);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 93.52, 25.11) rectangle ( 95.03, 38.58);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (104.79, 21.38) rectangle (107.65, 36.05);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 95.03, 25.11) rectangle ( 96.55, 90.15);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (107.65, 21.38) rectangle (110.52, 92.25);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 99.58, 25.11) rectangle (101.10, 31.12);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (112.42, 21.38) rectangle (115.28, 27.93);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (101.10, 25.11) rectangle (102.61, 67.91);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (115.28, 21.38) rectangle (118.15, 68.02);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (105.64, 25.11) rectangle (107.16, 38.25);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (120.05, 21.38) rectangle (122.91, 35.70);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (107.16, 25.11) rectangle (108.67, 84.01);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (122.91, 21.38) rectangle (125.78, 85.56);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (111.70, 25.11) rectangle (113.22, 39.38);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (127.68, 21.38) rectangle (130.54, 36.93);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (113.22, 25.11) rectangle (114.74, 90.78);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (130.54, 21.38) rectangle (133.41, 92.94);
 \end{scope}
 \begin{scope}
-\path[clip] (122.88, 25.11) rectangle (178.65,128.01);
+\path[clip] (137.53, 21.38) rectangle (207.73,133.51);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (125.00, 25.11) rectangle (126.52, 25.11);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (139.25, 21.38) rectangle (142.11, 21.38);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (126.52, 25.11) rectangle (128.03, 25.11);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (142.11, 21.38) rectangle (144.97, 21.38);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (131.06, 25.11) rectangle (132.58, 25.12);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (146.88, 21.38) rectangle (149.74, 21.39);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (132.58, 25.11) rectangle (134.10, 25.77);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (149.74, 21.38) rectangle (152.60, 22.10);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (137.13, 25.11) rectangle (138.64, 25.14);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (154.51, 21.38) rectangle (157.37, 21.42);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (138.64, 25.11) rectangle (140.16, 26.84);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (157.37, 21.38) rectangle (160.23, 23.27);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (143.19, 25.11) rectangle (144.70, 25.40);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (162.14, 21.38) rectangle (165.00, 21.70);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (144.70, 25.11) rectangle (146.22, 30.97);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (165.00, 21.38) rectangle (167.86, 27.76);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (149.25, 25.11) rectangle (150.77, 43.54);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (169.77, 21.38) rectangle (172.63, 41.46);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (150.77, 25.11) rectangle (152.28, 65.58);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (172.63, 21.38) rectangle (175.49, 65.48);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (155.31, 25.11) rectangle (156.83, 44.42);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (177.40, 21.38) rectangle (180.26, 42.42);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (156.83, 25.11) rectangle (158.34, 82.27);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (180.26, 21.38) rectangle (183.12, 83.67);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (161.38, 25.11) rectangle (162.89, 37.86);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (185.03, 21.38) rectangle (187.89, 35.28);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (162.89, 25.11) rectangle (164.41, 82.34);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (187.89, 21.38) rectangle (190.75, 83.74);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (167.44, 25.11) rectangle (168.95, 39.10);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (192.66, 21.38) rectangle (195.52, 36.62);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (168.95, 25.11) rectangle (170.47, 86.54);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (195.52, 21.38) rectangle (198.38, 88.32);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (173.50, 25.11) rectangle (175.02, 38.64);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (200.29, 21.38) rectangle (203.15, 36.12);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (175.02, 25.11) rectangle (176.53, 87.44);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (203.15, 21.38) rectangle (206.01, 89.30);
 \end{scope}
 \begin{scope}
-\path[clip] (184.68, 25.11) rectangle (191.95,128.01);
+\path[clip] (210.14, 21.38) rectangle (219.30,133.51);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (186.80, 25.11) rectangle (188.31, 25.39);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (211.86, 21.38) rectangle (214.72, 21.68);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (188.31, 25.11) rectangle (189.83, 42.36);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (214.72, 21.38) rectangle (217.58, 40.17);
 \end{scope}
 \begin{scope}
-\path[clip] (197.97, 25.11) rectangle (211.31,128.01);
+\path[clip] (221.70, 21.38) rectangle (238.49,133.51);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (200.09, 25.11) rectangle (201.61, 43.81);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (223.42, 21.38) rectangle (226.28, 41.75);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (201.61, 25.11) rectangle (203.13, 49.26);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (226.28, 21.38) rectangle (229.14, 47.69);
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (206.16, 25.11) rectangle (207.67,128.01);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (231.05, 21.38) rectangle (233.91,133.51);
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (207.67, 25.11) rectangle (209.19,108.01);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (233.91, 21.38) rectangle (236.77,111.72);
 \end{scope}
 \begin{scope}
-\path[clip] ( 30.77,  5.50) rectangle (116.86, 19.61);
+\path[clip] ( 26.77,  0.00) rectangle (135.12, 15.88);
 \definecolor{drawColor}{gray}{0.10}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.60] at ( 73.82, 10.48) {\bfseries 2DConv};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 80.95,  5.18) {\bfseries 2DConv};
 \end{scope}
 \begin{scope}
-\path[clip] (122.88,  5.50) rectangle (178.65, 19.61);
+\path[clip] (137.53,  0.00) rectangle (207.73, 15.88);
 \definecolor{drawColor}{gray}{0.10}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.60] at (150.77, 10.48) {\bfseries Matrix Mul};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (172.63,  5.18) {\bfseries Matrix Mul};
 \end{scope}
 \begin{scope}
-\path[clip] (184.68,  5.50) rectangle (191.95, 19.61);
+\path[clip] (210.14,  0.00) rectangle (219.30, 15.88);
 \definecolor{drawColor}{gray}{0.10}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.60] at (188.31, 10.48) {\bfseries QP};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (214.72,  5.18) {\bfseries Q};
 \end{scope}
 \begin{scope}
-\path[clip] (197.97,  5.50) rectangle (211.31, 19.61);
+\path[clip] (221.70,  0.00) rectangle (238.49, 15.88);
 \definecolor{drawColor}{gray}{0.10}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.60] at (204.64, 10.48) {\bfseries QrD};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (230.10,  5.18) {\bfseries QrD};
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 30.77, 25.11) --
-	(116.86, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 26.77, 21.38) --
+	(135.12, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{gray}{0.20}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 34.41, 22.36) --
-	( 34.41, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 31.35, 18.63) --
+	( 31.35, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 40.47, 22.36) --
-	( 40.47, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 38.98, 18.63) --
+	( 38.98, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 46.54, 22.36) --
-	( 46.54, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 46.61, 18.63) --
+	( 46.61, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 52.60, 22.36) --
-	( 52.60, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 54.24, 18.63) --
+	( 54.24, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 58.66, 22.36) --
-	( 58.66, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 61.87, 18.63) --
+	( 61.87, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 64.72, 22.36) --
-	( 64.72, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 69.50, 18.63) --
+	( 69.50, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 70.78, 22.36) --
-	( 70.78, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 77.13, 18.63) --
+	( 77.13, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 76.85, 22.36) --
-	( 76.85, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 84.76, 18.63) --
+	( 84.76, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 82.91, 22.36) --
-	( 82.91, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 92.39, 18.63) --
+	( 92.39, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 88.97, 22.36) --
-	( 88.97, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (100.02, 18.63) --
+	(100.02, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 95.03, 22.36) --
-	( 95.03, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (107.65, 18.63) --
+	(107.65, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (101.10, 22.36) --
-	(101.10, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (115.28, 18.63) --
+	(115.28, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (107.16, 22.36) --
-	(107.16, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (122.91, 18.63) --
+	(122.91, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (113.22, 22.36) --
-	(113.22, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (130.54, 18.63) --
+	(130.54, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (122.88, 25.11) --
-	(178.65, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (137.53, 21.38) --
+	(207.73, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{gray}{0.20}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (126.52, 22.36) --
-	(126.52, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (142.11, 18.63) --
+	(142.11, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (132.58, 22.36) --
-	(132.58, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (149.74, 18.63) --
+	(149.74, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (138.64, 22.36) --
-	(138.64, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (157.37, 18.63) --
+	(157.37, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (144.70, 22.36) --
-	(144.70, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (165.00, 18.63) --
+	(165.00, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (150.77, 22.36) --
-	(150.77, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (172.63, 18.63) --
+	(172.63, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (156.83, 22.36) --
-	(156.83, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (180.26, 18.63) --
+	(180.26, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (162.89, 22.36) --
-	(162.89, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (187.89, 18.63) --
+	(187.89, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (168.95, 22.36) --
-	(168.95, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (195.52, 18.63) --
+	(195.52, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (175.02, 22.36) --
-	(175.02, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (203.15, 18.63) --
+	(203.15, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (184.68, 25.11) --
-	(191.95, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (210.14, 21.38) --
+	(219.30, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{gray}{0.20}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (188.31, 22.36) --
-	(188.31, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (214.72, 18.63) --
+	(214.72, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (197.97, 25.11) --
-	(211.31, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (221.70, 21.38) --
+	(238.49, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{gray}{0.20}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (201.61, 22.36) --
-	(201.61, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (226.28, 18.63) --
+	(226.28, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] (207.67, 22.36) --
-	(207.67, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] (233.91, 18.63) --
+	(233.91, 21.38);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 30.77, 25.11) --
-	( 30.77,128.01);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 26.77, 21.38) --
+	( 26.77,133.51);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.70] at ( 25.82, 22.70) {0};
+\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 21.82, 18.62) {0};
 
-\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.70] at ( 25.82, 50.28) {300};
+\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 21.82, 48.68) {300};
 
-\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.70] at ( 25.82, 77.86) {600};
+\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 21.82, 78.73) {600};
 
-\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.70] at ( 25.82,105.44) {900};
+\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 21.82,108.79) {900};
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{gray}{0.20}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 28.02, 25.11) --
-	( 30.77, 25.11);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 24.02, 21.38) --
+	( 26.77, 21.38);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 28.02, 52.69) --
-	( 30.77, 52.69);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 24.02, 51.43) --
+	( 26.77, 51.43);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 28.02, 80.27) --
-	( 30.77, 80.27);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 24.02, 81.49) --
+	( 26.77, 81.49);
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 28.02,107.85) --
-	( 30.77,107.85);
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 24.02,111.54) --
+	( 26.77,111.54);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,rotate= 90.00,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 11.02, 76.56) {\bfseries Compile Time};
+\node[text=drawColor,rotate= 90.00,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (  5.52, 77.44) {\bfseries Compile Time};
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{51,160,44}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 79.83,130.43) rectangle ( 88.01,138.61);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 87.54,135.93) rectangle ( 95.72,144.11);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 \definecolor{fillColor}{RGB}{251,154,153}
 
-\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (134.48,130.43) rectangle (142.66,138.61);
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (147.14,135.93) rectangle (155.32,144.11);
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.70] at ( 93.93,132.11) {\bfseries Diospyros};
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.80] at (101.65,137.26) {\bfseries Diospyros};
 \end{scope}
 \begin{scope}
-\path[clip] (  0.00,  0.00) rectangle (216.81,144.54);
+\path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.70] at (148.58,132.11) {\bfseries Isaria};
+\node[text=drawColor,anchor=base west,inner sep=0pt, outer sep=0pt, scale=  0.80] at (161.24,137.26) {\bfseries Isaria};
 \end{scope}
 \end{tikzpicture}

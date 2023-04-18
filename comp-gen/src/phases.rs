@@ -46,6 +46,7 @@ pub enum Phase<
     Loop {
         phases: Vec<Phase<L, N, C>>,
         loops: usize,
+        timeout: Option<usize>,
     },
 }
 
@@ -61,6 +62,7 @@ where
         Phase::Loop {
             phases: vec![],
             loops: 1,
+            timeout: None,
         }
     }
 }
@@ -140,8 +142,13 @@ impl<
         &mut self,
         phases: Vec<Phase<L, N, C>>,
         loops: usize,
+        timeout: Option<usize>,
     ) -> &mut Self {
-        let loop_phase = Phase::Loop { phases, loops };
+        let loop_phase = Phase::Loop {
+            phases,
+            loops,
+            timeout,
+        };
         self.phases.push(loop_phase);
         self
     }
@@ -149,6 +156,7 @@ impl<
     pub fn build_loop<F: FnOnce(&mut PhaseBuilder<L, N, C>)>(
         &mut self,
         loops: usize,
+        timeout: Option<usize>,
         f: F,
     ) -> &mut Self {
         let mut pb = PhaseBuilder::default();
@@ -156,6 +164,7 @@ impl<
         let loop_phase = Phase::Loop {
             phases: pb.phases,
             loops,
+            timeout,
         };
         self.phases.push(loop_phase);
         self
@@ -168,6 +177,7 @@ impl<
             Phase::Loop {
                 phases: self.phases,
                 loops: 1,
+                timeout: None,
             }
         }
     }

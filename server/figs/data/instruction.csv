@@ -1,5 +1,5 @@
 ,date,benchmark,param,exp,rules,cycles,cost,dir
-0,Apr16-1516,qr-decomp,3,42,mulsgn_muls,1192,161992964.56,completed/qr-decomp_3/42
-1,Apr16-1516,qr-decomp,3,45,mulsgn,1198,161993024.56,completed/qr-decomp_3/45
+0,Apr16-1516,qr-decomp,3,42,sqrtsgn_muls,1091,161992964.56,completed/qr-decomp_3/42
+1,Apr16-1516,qr-decomp,3,45,sqrtsgn,1087,161993024.56,completed/qr-decomp_3/45
 2,Apr16-1516,qr-decomp,3,44,base,1198,161993024.56,completed/qr-decomp_3/44
 3,Apr16-1516,qr-decomp,3,43,muls,1192,161992964.56,completed/qr-decomp_3/43

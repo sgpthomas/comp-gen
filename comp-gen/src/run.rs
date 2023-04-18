@@ -115,6 +115,7 @@ where
                     phase.iter_limit.unwrap_or(self.total_iter_limit),
                 )
                 .with_time_limit(timeout);
+        debug!("Time left: {:?}", time_left);
         debug!("Using timeout: {:?}", timeout);
 
         runner = if self.debug {
@@ -198,10 +199,21 @@ where
             Phase::Single(single) => {
                 eqsat = self.equality_saturate(single, eqsat)
             }
-            Phase::Loop { phases, loops } => {
+            Phase::Loop {
+                phases,
+                loops,
+                timeout,
+            } => {
                 for i in 0..*loops {
                     info!("loop {i}");
                     let old_cost = eqsat.cost.clone();
+                    // if this loop has a timeout, set time_left to be the loop timeout
+                    if let Some(to) = timeout {
+                        debug!("Loop has timeout as {to}s; with {:?} total time remaining.", eqsat.time_left);
+                        eqsat.time_left = eqsat
+                            .time_left
+                            .min(Duration::from_secs(*to as u64));
+                    }
                     for p in phases {
                         eqsat = self.run_phase(p, eqsat);
                     }

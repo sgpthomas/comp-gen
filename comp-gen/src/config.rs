@@ -48,6 +48,7 @@ pub enum PhaseConfiguration {
     Phases {
         phases: Vec<PhaseConfiguration>,
         loops: Option<usize>,
+        timeout: Option<usize>,
     },
 }
 
@@ -94,7 +95,11 @@ where
                     );
                 }
             }
-            PhaseConfiguration::Phases { phases, loops } => {
+            PhaseConfiguration::Phases {
+                phases,
+                loops,
+                timeout,
+            } => {
                 pb.add_loop(
                     phases
                         .into_iter()
@@ -108,6 +113,7 @@ where
                         })
                         .collect::<Vec<_>>(),
                     loops.unwrap_or(1),
+                    timeout,
                 );
             }
         }
