@@ -293,7 +293,7 @@ def update(name, time, commit, diff):
     if commit:
         new_time = exps["date"].unique()
         print(f"Pin this time: {new_time}")
-        df >> to_csv(out)
+        df >> to_csv(out, index_label="index")
 
 
 if __name__ == "__main__":

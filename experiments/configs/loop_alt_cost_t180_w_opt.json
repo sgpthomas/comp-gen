@@ -4,7 +4,7 @@
   "timeout": 360,
   "dry_run": false,
   "dump_rules": true,
-  "debug": true,
+  "debug": false,
   "reuse_egraphs": true,
   "cd_filter": null,
   "require_all_vars": false,
@@ -41,7 +41,7 @@
           }
         ],
         "loops": 20,
-        "timeout": 180,
+        "timeout": 180
       },
       {
         "name": "opt",

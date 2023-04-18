@@ -198,10 +198,7 @@ CLOSED: [2023-03-29 Wed 10:03]
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+header: :width 650 :height 300
-
-#+header: :width 6.85 :height 2.85
-#+begin_src R :results graphics output file :file cycles-performance.tikz
+#+begin_src R :results none
 data <- full_join(
   read_csv("data/diospyros.csv"),
   read_csv("data/est_cycles.csv")
@@ -225,6 +222,11 @@ faces <- data %>%
   )
 
 data <- data %>%
+  ## filter(benchmark == "q-prod" | benchmark == "2d-conv") %>%
+  filter(params != "3x5_3x3") %>%
+  filter(params != "3x3_2x2") %>%
+  filter(params != "2x3_3x3") %>%
+  filter(params != "2x2_2x2") %>%
   select(benchmark, params, kernel, cycles) %>%
   group_by(benchmark) %>%
   pivot_wider(
@@ -232,22 +234,35 @@ data <- data %>%
     values_from=cycles
   ) %>%
   mutate(
-    benchmark=recode(benchmark,
-                     "qr-decomp"="QrD",
-                     "2d-conv"="2DConv",
-                     "mat-mul"="Matrix Mul",
-                     "q-prod"="QP"
-                     ),
+    benchmark=recode(
+      benchmark,
+      "qr-decomp"="QrD",
+      "2d-conv"="2DConv",
+      "mat-mul"="Matrix Mul",
+      "q-prod"="QP"
+    ),
     key = str_c(benchmark, params),
-    name = str_replace_all(str_replace_all(params, "x", "$\\\\times$"), "_", "\n"),
+    name = params %>% str_replace_all(
+                           c(
+                             "2x2"="2$^2$",
+                             "3x3"="3$^2$",
+                             "4x4"="4$^2$",
+                             "8x8"="8$^2$",
+                             "10x10"="10$^2$",
+                             "16x16"="16$^2$",
+                             "18x18"="18$^2$",
+                             "20x20"="20$^2$",
+                             "x"="$\\\\times$",
+                             "_"="\n"
+                           )),
     norm = naive.fixed,
     compgen = norm / compgen,
     dios = norm / dios,
     nature = norm / nature,
-    naive = norm / naive,
     naive.fixed = norm / naive.fixed,
     naive.clang = norm / naive.clang,
   ) %>%
+  ## replace(is.na(.), 0) %>%
   pivot_longer(
     cols = c("naive.fixed", "naive.clang", "nature", "dios", "compgen"),
     names_to = "kernel",
@@ -256,22 +271,28 @@ data <- data %>%
   select(name, kernel, benchmark, params, key, cycles)
 
 names <- (data %>% filter(kernel == "dios"))$name
+#+end_src
 
+#+header: :width 650 :height 300
+
+#+header: :width 6.85 :height 2.85
+#+begin_src R :results graphics output file :file cycles-performance.tikz
 p <- data %>%
-  group_by(key) %>%
+  group_by(benchmark) %>%
   ggplot(aes(
     ## x=factor(name, levels=unique(name)),
     ## y=cycles,
-    xmin=as.numeric(factor(key, levels=unique(key))) - 0.35,
-    xmax=as.numeric(factor(key, levels=unique(key))) + 0.35,
+    xmin=as.numeric(factor(key, levels=unique(key))) - 0.40,
+    xmax=as.numeric(factor(key, levels=unique(key))) + 0.40,
     ymin=0,
     ymax=cycles,
-    fill=factor(kernel, levels=unique(kernel))
+    fill=factor(kernel, levels=unique(kernel)),
   )) +
   facet_grid(
     ~benchmark,
     switch="x",
-    scales = "free_x", space="free_x"
+    scales="free_x",
+    space="free_x",
   ) +
   geom_rect(
     position="dodge",
@@ -292,7 +313,7 @@ p <- data %>%
     palette = "Paired",
     labels=c(
       "Naive",
-      "Naive (vectorized)",
+      "Naive (auto-vectorized)",
       "Nature",
       "Diospyros",
       "Isaria"
@@ -303,24 +324,25 @@ p <- data %>%
     axis.title.x = element_blank(),
     axis.title.y = element_text(size=8, face="bold"),
 
-    axis.text.x = element_text(size=5, color="black"),
-    axis.text.y = element_text(size=8, color="black"),
+    axis.text.x = element_text(size=8, color="black"),
+    axis.text.y = element_text(size=8, color="black", margin=margin(0, 0, 0, 0)),
 
     legend.position = "top",
     legend.background = element_blank(),
-    legend.text = element_text(size=7, face="bold"),
+    legend.text = element_text(size=8, face="bold"),
     legend.title = element_blank(),
     legend.key.size = unit(0.75, "lines"),
     legend.box.spacing = unit(0, "lines"), 
     legend.margin = margin(0, 0, 2, 0),
 
     panel.background = element_blank(),
-    panel.spacing.x = unit(1, "lines"),
-
-    plot.margin = margin(0, 0, 0, 0),
+    panel.spacing.x = unit(0.4, "lines"),
 
     strip.placement = "outside",
-    strip.background = element_blank()
+    strip.background = element_blank(),
+    strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 0, 0)),
+
+    plot.margin = margin(0, 0, 0, 0)
   )
 
 pb <- ggplot_build(p)
@@ -337,7 +359,7 @@ pg <- gtable_add_grob(
   pg,
   segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
                gp=gpar(col=c("gray", "black", "gray", "gray", "gray", "gray", "gray"),
-                       lwd=c(0.9, 1, 0.9, 0.9, 0.9, 0.9, 0.9))),
+                       lwd=c(0.9, 1.0, 0.1, 0.9, 0.1, 0.9, 0.1))),
   t=7, b=9,
   l=5, r=11,
   z=0
@@ -400,6 +422,9 @@ data <- data %>%
   ##  %>%
   ## filter(greedy == "True") %>%
   ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
+  filter(params != "3x5_3x3") %>%
+  filter(params != "3x3_2x2") %>%
+  filter(params != "2x3_3x3") %>%
   select(benchmark, params, kernel, compile_time) %>%
   pivot_wider(
     names_from=kernel,
@@ -472,7 +497,7 @@ p <- data %>%
     panel.spacing.x = unit(0.2, "lines"),
 
     strip.placement = "outside",
-    strip.text.x = element_text(size=8, face="bold"),
+    strip.text.x = element_text(size=8, face="bold", margin=margin(0, 0, 0, 0)),
     strip.background = element_blank(),
 
     plot.margin = margin(0, 0, 0, 0)
@@ -864,7 +889,7 @@ data %>%
     position="dodge",
     color="black"
   ) +
-  geom_hline(yintercept=1, linetype="solid", color="black") +
+  geom_hline(yintercept=1, linetype="solid", color="black", linewidth=0.5) +
   scale_x_continuous(
     label=unique(data$name),
     breaks=1:length(unique(data$name))
@@ -933,7 +958,9 @@ print(xtable(
   caption=str_c(
     "Cycle estimates for QR-Decomp for all",
     " combinations of including MAC and MULS instructions."
-  )), include.rownames=FALSE)
+  ),
+  label="tab:instruction"
+), include.rownames=FALSE)
 #+end_src
 
 #+RESULTS:
@@ -1157,7 +1184,7 @@ export compgen_bin="cargo run --release --manifest-path=$(realpath ../dios-lang/
 export dios_bin=$(realpath ../../diospyros/dios)
 export dios_example_bin=$(realpath ../../diospyros/dios-example-gen)
 
-DIR="jobs/Apr17-1729-synthesis-60000-0"
+DIR="jobs/Apr18-0818-qr-decomp_3-0"
 cd $DIR
 ./run.sh
 

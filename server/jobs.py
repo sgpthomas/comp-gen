@@ -760,6 +760,89 @@ def overview_example():
     )
 
 
+def optimization_effect():
+    """
+    What is the overall effect of the optimization phase?
+
+    Test this by running a pass with compilation loop timeout of 180, and 180
+    seconds for optimization.
+    """
+
+    print("Creating overall performance jobs")
+
+    mat_mul_sizes = [
+        [2, 2, 2, 2],
+        [2, 3, 3, 3],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [8, 8, 8, 8],
+        [10, 10, 10, 10],
+        [16, 16, 16, 16],
+        # [18, 18, 18, 18],
+        [20, 20, 20, 20],
+    ]
+    conv_2d_sizes = [
+        # [3, 3, 2, 2],
+        # [3, 3, 3, 3],
+        # [3, 5, 3, 3],
+        # [4, 4, 3, 3],
+        [8, 8, 3, 3],
+        [10, 10, 2, 2],
+        [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
+        [16, 16, 3, 3],
+        # [16, 16, 4, 4],
+        # [18, 18, 2, 2],
+        # [18, 18, 3, 3],
+        # [18, 18, 4, 4],
+    ]
+    # q_prod_params = [0]
+    qr_decomp_sizes = [
+        3,
+        # 4
+    ]
+    ruleset = rulesets["ruleset_timeout86400"]
+    cs = [
+        configs["loop_alt_cost_t180_w_opt"],
+        # configs["loop_alt_cost_t1800"]
+    ]
+
+    # create all the jobs
+    for size, c in itertools.product(mat_mul_sizes, cs):
+        mat_mul(
+            Path("jobs"),
+            *size,
+            ruleset,
+            c,
+            "alternative",
+            key="optimization",
+            timeout=json.load(c.open("r"))["timeout"] * 3,
+        )
+
+    for size, c in itertools.product(conv_2d_sizes, cs):
+        make_2d_conv(
+            Path("jobs"),
+            *size,
+            ruleset,
+            c,
+            "alternative",
+            key="optimization",
+            timeout=json.load(c.open("r"))["timeout"] * 3,
+        )
+
+    for size, c in itertools.product(qr_decomp_sizes, cs):
+        qr_decomp(
+            Path("jobs"),
+            size,
+            ruleset,
+            c,
+            "alternative",
+            key="performance",
+            timeout=json.load(c.open("r"))["timeout"] * 5,
+        )
+
+
 def main():
     # overall_performance()
     # pruning_experiments()
@@ -768,9 +851,10 @@ def main():
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
-    add_instruction_ruleset()
+    # add_instruction_ruleset()
     # test_instruction_ruleset()
     # overview_example()
+    optimization_effect()
 
 
 if __name__ == "__main__":
