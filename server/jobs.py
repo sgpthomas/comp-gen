@@ -487,7 +487,7 @@ def pruning_experiments():
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 10,
+            timeout=timeout * 5,
         )
         # no pruning config
         make_2d_conv(
@@ -498,7 +498,7 @@ def pruning_experiments():
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 10,
+            timeout=timeout * 5,
         )
 
 
@@ -855,14 +855,14 @@ def optimization_effect():
 
 def main():
     # overall_performance()
-    # pruning_experiments()
+    pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
     # ruleset_synthesis()
     # scheduler()
     # add_instruction_ruleset()
-    test_instruction_ruleset()
+    # test_instruction_ruleset()
     # overview_example()
     # optimization_effect()
 

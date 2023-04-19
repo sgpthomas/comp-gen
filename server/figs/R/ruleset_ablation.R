@@ -50,6 +50,10 @@ ruleset_ablation <- function() {
       ymin=0, ymax=cycles,
       fill=factor(ruleset)
     )) +
+    geom_hline(
+        yintercept = 1,
+        color = "black",
+    ) +
     geom_rect(
       position="dodge",
       color="black",
@@ -60,9 +64,9 @@ ruleset_ablation <- function() {
       breaks=1:length(unique(data$name))
     ) +
     scale_y_continuous(
-      labels=c("1$\\times$", "2$\\times$", "4$\\times$", "8$\\times$", "16$\\times$"),
-      breaks=c(1, 2, 4, 8, 16),
-      limits=c(1, 16),
+      labels=c("0.25$\\times$", "1$\\times$", "4$\\times$", "16$\\times$"),
+      breaks=c(0.25, 1, 4, 16),
+      limits=c(0.1, 16),
       expand=c(0, 0),
       trans="log2"
     ) +

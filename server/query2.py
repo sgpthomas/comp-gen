@@ -300,6 +300,30 @@ def pruning(row):
     })
 
 
+@query(
+    key="pruning",
+    sort_keys=["benchmark", "params", "pruning"]
+)
+def pruning_temp(row):
+    if all([soft_timeout(row.exp_dir) == 360,
+            pruning_ruleset(row.exp_dir)]):
+        return pd.DataFrame(data={
+            "date": [row.date],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "pruning": [pruning_ruleset(row.exp_dir)],
+            "cycles": [cycles(row.exp_dir)],
+            "cost": [egraph_cost(row.exp_dir)],
+            "soft_timeout": [soft_timeout(row.exp_dir)],
+            "killed": [killed(row.exp_dir)],
+            "compile_time": [compile_time(row.exp_dir)],
+            "memory_used": [max_ram(row.exp_dir)]
+        })
+    else:
+        return pd.DataFrame()
+
+
 @query(key="optimization", pinned_date="Apr18-1100", sort_keys=["benchmark", "params", "optimization"])
 def optimization(row):
     x = row.exp_dir

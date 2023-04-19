@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.12.4 on 2023-04-18 20:08:59
+% Created by tikzDevice version 0.12.4 on 2023-04-19 00:26:26
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
@@ -43,6 +43,9 @@
 
 \path[draw=drawColor,line width= 0.5pt,line join=round] ( 35.22,112.53) --
 	(238.49,112.53);
+\definecolor{drawColor}{RGB}{0,0,0}
+
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 35.22, 68.97) -- (238.49, 68.97);
 \definecolor{fillColor}{RGB}{238,238,238}
 
 \path[fill=fillColor] ( 44.46, 30.48) rectangle ( 47.88, 68.73);
@@ -1194,8 +1197,6 @@
 \path[draw=drawColor,line width= 0.3pt,line cap=rect] (222.41, 30.48) rectangle (225.83,131.51);
 
 \path[draw=drawColor,line width= 0.3pt,line cap=rect] (225.83, 30.48) rectangle (229.25, 35.07);
-
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 35.22, 68.97) -- (238.49, 68.97);
 \end{scope}
 \begin{scope}
 \path[clip] (  0.00,  0.00) rectangle (238.49,144.54);

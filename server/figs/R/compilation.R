@@ -64,8 +64,8 @@ compilation <- function() {
       labels=c("Diospyros", "Isaria")
     ) +
     scale_y_continuous(
-      breaks=c(0, 300, 600, 900),
-      labels=c("0s", "300s", "600s", "900s"),
+      breaks=c(0, 180, 300, 600, 900),
+      labels=c("0s", "180s", "300s", "600s", "900s"),
       expand=c(0, 0)
     ) +
     labs(y="Compile Time", fill="Compiler") +

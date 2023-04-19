@@ -115,7 +115,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update ruleset_ablation --commit
+./query2.py update pruning_temp
 #+end_src
 
 * Tables

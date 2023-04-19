@@ -1,7 +1,7 @@
 {
   "total_node_limit": 2000000000,
   "total_iter_limit": 4000,
-  "timeout": 1800,
+  "timeout": 360,
   "dry_run": false,
   "dump_rules": true,
   "debug": false,

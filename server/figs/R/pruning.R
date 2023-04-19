@@ -33,6 +33,10 @@ pruning <- function() {
       fill=name,
       pattern=killed
     )) +
+    geom_hline(
+      yintercept=1,
+      color="black"
+    ) +
     geom_rect_pattern(
       position="dodge",
       color="black",
@@ -40,10 +44,6 @@ pruning <- function() {
       ## pattern_spacing=0.05,
       ## pattern_density=0.35,
       linewidth=0.3
-    ) +
-    geom_hline(
-      yintercept=1,
-      color="black"
     ) +
     scale_fill_manual(
       values=c("#eeeeee", "#fb9a99"),

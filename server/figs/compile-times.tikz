@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.12.4 on 2023-04-18 20:16:05
+% Created by tikzDevice version 0.12.4 on 2023-04-19 00:27:24
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
@@ -365,6 +365,8 @@
 
 \node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 24.98, 13.82) {0s};
 
+\node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 24.98, 32.63) {180s};
+
 \node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 24.98, 45.16) {300s};
 
 \node[text=drawColor,anchor=base east,inner sep=0pt, outer sep=0pt, scale=  0.80] at ( 24.98, 76.50) {600s};
@@ -377,6 +379,9 @@
 
 \path[draw=drawColor,line width= 0.6pt,line join=round] ( 27.18, 16.58) --
 	( 29.93, 16.58);
+
+\path[draw=drawColor,line width= 0.6pt,line join=round] ( 27.18, 35.38) --
+	( 29.93, 35.38);
 
 \path[draw=drawColor,line width= 0.6pt,line join=round] ( 27.18, 47.92) --
 	( 29.93, 47.92);
