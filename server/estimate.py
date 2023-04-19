@@ -74,7 +74,7 @@ def estimate_kernel(
             return
 
         # if a kernel file doesn't exist, try pulling one out of the log file
-        if not (exp_path / results / "kernel.c").exists():
+        if force or not (exp_path / results / "kernel.c").exists():
 
             # if res.rkt doesn't exists, try pulling one from the log
             if not (exp_path / results / "res.rkt").exists():
@@ -94,7 +94,7 @@ def estimate_kernel(
                 "../../diospyros/dios", "-w", "4",
                 "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
                 str(exp_path / results),
-            ], timeout=60 * 30)
+            ], timeout=60 * 60)
 
             if not (exp_path / results / "kernel.c").exists():
                 print("Failed to produce kernel.c!")
@@ -134,7 +134,7 @@ def estimate_kernel(
                 " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
                 shell=True,
                 cwd=exp_path / results,
-                timeout=60 * 10
+                timeout=60 * 60
             )
 
             print("Done")

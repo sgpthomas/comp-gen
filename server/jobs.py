@@ -8,6 +8,7 @@ import os
 import shutil
 import itertools
 from typing import Callable
+import subprocess
 
 
 def mat_mul(
@@ -459,11 +460,20 @@ def pruning_experiments():
     print("Creating pruning experiments")
 
     params = [
+        [3, 3, 2, 2],
         [3, 3, 3, 3],
+        [3, 5, 3, 3],
         [4, 4, 3, 3],
         [8, 8, 3, 3],
+        [10, 10, 2, 2],
         [10, 10, 3, 3],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
         [16, 16, 3, 3],
+        [16, 16, 4, 4],
+        [18, 18, 2, 2],
+        [18, 18, 3, 3],
+        [18, 18, 4, 4],
     ]
     timeout = 360
 
@@ -569,12 +579,15 @@ def ruleset_ablation():
         [3, 5, 3, 3],
         [4, 4, 3, 3],
         [8, 8, 3, 3],
-        # [10, 10, 2, 2],
+        [10, 10, 2, 2],
         [10, 10, 3, 3],
-        # [10, 10, 4, 4],
-        # [16, 16, 2, 2],
+        [10, 10, 4, 4],
+        [16, 16, 2, 2],
         [16, 16, 3, 3],
-        # [16, 16, 4, 4],
+        [16, 16, 4, 4],
+        [18, 18, 2, 2],
+        [18, 18, 3, 3],
+        [18, 18, 4, 4],
     ]
 
     config = configs["loop_alt_cost_t1800"]
@@ -586,13 +599,8 @@ def ruleset_ablation():
     rules = dict_from_dir(
         Path("completed") / "synthesis", pat="**/ruleset.json", key=read_time
     )
-    rs = (
-        list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
-        + [rulesets["ruleset_timeout43200"]]
-        + [rulesets["ruleset_timeout86400"]]
-        # + [rulesets["expanding_vecmac"]]
-        # + [rulesets["original_dios_rules"]]
-    )
+    rs = list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
+
     exps = itertools.product(conv_2d_sizes, rs)
     for (size, r) in exps:
         make_2d_conv(
@@ -679,7 +687,7 @@ def test_instruction_ruleset():
 
     rulesets_dir = Path("instruction-rulesets")
     base_path = rulesets["ruleset_timeout86400"]
-    mulsgn_path = Path("completed") / "synthesis" / "17" / "ruleset.json"
+
     muls_path = Path("completed") / "synthesis" / "10" / "ruleset.json"
     base_ruleset = json.load(base_path.open("r"))
     muls_ruleset = json.load(muls_path.open("r"))
@@ -702,6 +710,8 @@ def test_instruction_ruleset():
         return list(
             filter(lambda r: all([op in r["lhs"] + r["rhs"] for op in ops]), ruleset)
         )
+
+    subprocess.run("rm instruction-rulesets/*", shell=True)
 
     json.dump(
         {"params": {}, "eqs": base_eqs},
@@ -737,16 +747,16 @@ def test_instruction_ruleset():
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
-    # for (n, r) in rulesets.items():
-    qr_decomp(
-        Path("jobs"),
-        3,
-        rulesets["sqrtsgn_muls"],
-        configs["loop_alt_cost_t360"],
-        "alternative",
-        key="instruction",
-        timeout=7200,
-    )
+    for (n, r) in rulesets.items():
+        qr_decomp(
+            Path("jobs"),
+            3,
+            r,
+            configs["loop_alt_cost_t360"],
+            "alternative",
+            key="instruction",
+            timeout=7200,
+        )
 
 
 def overview_example():
@@ -852,9 +862,9 @@ def main():
     # ruleset_synthesis()
     # scheduler()
     # add_instruction_ruleset()
-    # test_instruction_ruleset()
+    test_instruction_ruleset()
     # overview_example()
-    optimization_effect()
+    # optimization_effect()
 
 
 if __name__ == "__main__":

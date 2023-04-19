@@ -455,7 +455,7 @@ def ruleset_ablation():
 
             # get timeout used for ruleset
             print(exp_path, config["date"])
-            timeout = timeout = Path(config["metadata"]["rules.json"]).stem
+            timeout = Path(config["metadata"]["rules.json"]).stem
             try:
                 rules = json.load((exp_path / "rules.json").open("r"))
                 if "abs_timeout" in rules["params"]:
@@ -568,8 +568,8 @@ def main():
     # play()
     # fix()
     # noeqsat()
-    # ruleset_ablation()
-    instruction()
+    ruleset_ablation()
+    # instruction()
 
 
 if __name__ == "__main__":

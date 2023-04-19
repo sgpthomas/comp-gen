@@ -90,7 +90,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key instruction
+./estimate.py many latest --key ruleset_ablation
 #+end_src
 
 #+begin_src async-shell :name sync
@@ -115,7 +115,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py ls optimization -t latest
+./query2.py update ruleset_ablation --commit
 #+end_src
 
 * Tables
@@ -147,9 +147,11 @@ echo "\\\newcommand{\\\sloctotal}{$((compgen + harness))}"
 :header-args:R: :session cycest :colnames yes
 :END:
 
-Import the R libraries that we will use.
+Set working directory, import the R libraries that we will use, and import plotting code.
 
-#+begin_src R :results none
+#+begin_src R :results none :var CWD=(sgt/dir "server" "figs")
+setwd(CWD)
+
 library(tidyverse)
 library(extrafont)
 library(ggpattern)
@@ -159,214 +161,16 @@ library(gtable)
 library(grid)
 #+end_src
 
-** Performance graphs
-
-*** Label Formatting Function
-
-#+begin_src R
-shrink <- function(input) {
-  parts <- str_split(input, "x", simplify=T)
-  if (parts[1] == parts[2]) {
-    str_c(parts[1], "$^2$", collapse="")
-  } else {
-    input
-  }
-}
-
-format <- function(input) {
-  str_flatten(map(str_split(input, "_", simplify=T), shrink), collapse="\n")
-}
-
-format_vec <- function(input) {
-  str_replace_all(input, "_", "\n")
-}
-
-format_vec(c("10x10_2x2", "12x12_3x3"))
-#+end_src
-
-#+RESULTS:
-|     x |
-|-------|
-| 10x10 |
-|   2x2 |
-| 12x12 |
-|   3x3 |
-
-*** DONE Cycle count
+** DONE Cycle count
 CLOSED: [2023-03-29 Wed 10:03]
 :LOGBOOK:
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
 :END:
 
-#+begin_src R :results none
-data <- full_join(
-  read_csv("data/diospyros.csv"),
-  read_csv("data/est_cycles.csv")
-)
-
-to_face <- function(sat) {
-  map_chr(sat, function(x) {
-    if (x == "yes") {
-      "black"
-    } else {
-      "red"
-    }  
-  })
-}
-
-faces <- data %>%
-  filter(kernel == "dios") %>%
-  select(saturated) %>%
-  mutate(
-    bold=to_face(saturated)
-  )
-
-data <- data %>%
-  ## filter(benchmark == "q-prod" | benchmark == "2d-conv") %>%
-  filter(params != "3x5_3x3") %>%
-  filter(params != "3x3_2x2") %>%
-  filter(params != "2x3_3x3") %>%
-  filter(params != "2x2_2x2") %>%
-  select(benchmark, params, kernel, cycles) %>%
-  group_by(benchmark) %>%
-  pivot_wider(
-    names_from=kernel,
-    values_from=cycles
-  ) %>%
-  mutate(
-    benchmark=recode(
-      benchmark,
-      "qr-decomp"="QrD",
-      "2d-conv"="2DConv",
-      "mat-mul"="Matrix Mul",
-      "q-prod"="QP"
-    ),
-    key = str_c(benchmark, params),
-    name = params %>% str_replace_all(
-                           c(
-                             "2x2"="2$^2$",
-                             "3x3"="3$^2$",
-                             "4x4"="4$^2$",
-                             "8x8"="8$^2$",
-                             "10x10"="10$^2$",
-                             "16x16"="16$^2$",
-                             "18x18"="18$^2$",
-                             "20x20"="20$^2$",
-                             "x"="$\\\\times$",
-                             "_"="\n"
-                           )),
-    norm = naive.fixed,
-    compgen = norm / compgen,
-    dios = norm / dios,
-    nature = norm / nature,
-    naive.fixed = norm / naive.fixed,
-    naive.clang = norm / naive.clang,
-  ) %>%
-  ## replace(is.na(.), 0) %>%
-  pivot_longer(
-    cols = c("naive.fixed", "naive.clang", "nature", "dios", "compgen"),
-    names_to = "kernel",
-    values_to = "cycles"
-  ) %>%
-  select(name, kernel, benchmark, params, key, cycles)
-
-names <- (data %>% filter(kernel == "dios"))$name
-#+end_src
-
-#+header: :width 650 :height 300
-
 #+header: :width 6.85 :height 2.85
 #+begin_src R :results graphics output file :file cycles-performance.tikz
-p <- data %>%
-  group_by(benchmark) %>%
-  ggplot(aes(
-    ## x=factor(name, levels=unique(name)),
-    ## y=cycles,
-    xmin=as.numeric(factor(key, levels=unique(key))) - 0.40,
-    xmax=as.numeric(factor(key, levels=unique(key))) + 0.40,
-    ymin=0,
-    ymax=cycles,
-    fill=factor(kernel, levels=unique(kernel)),
-  )) +
-  facet_grid(
-    ~benchmark,
-    switch="x",
-    scales="free_x",
-    space="free_x",
-  ) +
-  geom_rect(
-    position="dodge",
-    color="black",
-    linewidth=0.3
-  ) +
-  labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
-  scale_x_continuous(
-    label=names,
-    breaks=1:length(names)
-  ) +
-  scale_y_continuous(
-    trans="log2",
-    breaks=c(1, 4, 16),
-    labels=c("1$\\times$", "4$\\times$", "16$\\times$"),
-  ) +
-  scale_fill_brewer(
-    palette = "Paired",
-    labels=c(
-      "Naive",
-      "Naive (auto-vectorized)",
-      "Nature",
-      "Diospyros",
-      "Isaria"
-    )
-  ) +
-  theme_classic() +
-  theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_text(size=8, face="bold"),
-
-    axis.text.x = element_text(size=8, color="black"),
-    axis.text.y = element_text(size=8, color="black", margin=margin(0, 0, 0, 0)),
-
-    legend.position = "top",
-    legend.background = element_blank(),
-    legend.text = element_text(size=8, face="bold"),
-    legend.title = element_blank(),
-    legend.key.size = unit(0.75, "lines"),
-    legend.box.spacing = unit(0, "lines"), 
-    legend.margin = margin(0, 0, 2, 0),
-
-    panel.background = element_blank(),
-    panel.spacing.x = unit(0.4, "lines"),
-
-    strip.placement = "outside",
-    strip.background = element_blank(),
-    strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 0, 0)),
-
-    plot.margin = margin(0, 0, 0, 0)
-  )
-
-pb <- ggplot_build(p)
-pg <- ggplot_gtable(pb)
-
-data2npc <- function(x, panel = 1L, axis = "x") {
-  range <- pb$layout$panel_params[[panel]][[paste0(axis,".range")]]
-  scales::rescale(c(range, x), c(0,1))[-c(1,2)]
-}
-
-major_grid <- sapply(c(-1, 0, 1, 2, 3, 4, 5), data2npc, axis="y")
-
-pg <- gtable_add_grob(
-  pg,
-  segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
-               gp=gpar(col=c("gray", "black", "gray", "gray", "gray", "gray", "gray"),
-                       lwd=c(0.9, 1.0, 0.1, 0.9, 0.1, 0.9, 0.1))),
-  t=7, b=9,
-  l=5, r=11,
-  z=0
-)
-
-grid.newpage()
-grid.draw(pg)
+source("R/cycles.R")
+cycles()
 #+end_src
 
 #+RESULTS:
@@ -400,7 +204,7 @@ data %>% filter(kernel == "nature" | kernel == "compgen") %>%
 |------------------+----|
 | 3.27463214032345 | 21 |
 
-*** DONE Compilation time
+** DONE Compilation time
 CLOSED: [2023-04-16 Sun 10:04]
 :LOGBOOK:
 - State "DONE"       from "NEXT"       [2023-04-16 Sun 10:04]
@@ -410,526 +214,94 @@ CLOSED: [2023-04-16 Sun 10:04]
 
 #+header: :width 3.3 :height 2 :file compile-times.tikz
 #+begin_src R :results graphics file
-data <- full_join(
-  read_csv("data/diospyros.csv") %>% mutate(compile_time=eqsat_time),
-  read_csv("data/est_cycles.csv")
-)
-
-# fix the order of params cat var
-## data$params <- factor(data$params, levels=unique(data$params))
-
-data <- data %>%
-  ##  %>%
-  ## filter(greedy == "True") %>%
-  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
-  filter(params != "3x5_3x3") %>%
-  filter(params != "3x3_2x2") %>%
-  filter(params != "2x3_3x3") %>%
-  select(benchmark, params, kernel, compile_time) %>%
-  pivot_wider(
-    names_from=kernel,
-    values_from=compile_time
-  ) %>%
-  group_by(benchmark) %>%
-  mutate(
-    benchmark=recode(benchmark,
-                     "2d-conv"="2DConv",
-                     "mat-mul"="Matrix Mul",
-                     "qr-decomp"="QrD",
-                     "q-prod"="Q"),
-    ## name=str_replace_all(params, "_", "\n")
-    ## name=if_else(str_detect(params, "x"), row_number(), params),
-    name=row_number()
-  ) %>%
-  print(n=100) %>%
-  pivot_longer(
-    cols = c("dios", "compgen"),
-    names_to = "kernel",
-    values_to = "compile_time"
-  )
-
-p <- data %>%
-  ggplot(aes(
-    x=factor(name, levels=unique(name)),
-    y=compile_time,
-    fill=factor(kernel, levels=unique(kernel))
-  )) +
-  facet_grid(
-    ~benchmark,
-    switch="x",
-    scales = "free_x", space="free_x"
-  ) +
-  geom_col(
-    position="dodge",
-    color="black",
-    width=0.75,
-    linewidth=0.3
-  ) +
-  ## geom_hline(
-  ##   yintercept=180,
-  ## ) +
-  ## coord_cartesian(ylim = c(0, 1000)) +
-  ## scale_y_log10() +
-  scale_fill_manual(
-    values=c("#33a02c", "#fb9a99"),
-    labels=c("Diospyros", "Isaria")
-  ) +
-  scale_y_continuous(expand=c(0, 0)) +
-  labs(y="Compile Time", fill="Compiler") +
-  theme_classic() +
-  theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_text(size=8, face="bold"),
-
-    ## axis.text.x = element_text(size=5, color="black"),
-    axis.text.x = element_blank(),
-    axis.text.y = element_text(size=8, color="black"),
-
-    legend.position = "top",
-    legend.background = element_blank(),
-    legend.text = element_text(size=8, face="bold"),
-    legend.title = element_blank(),
-    legend.key.size = unit(0.75, "lines"),
-    legend.box.spacing = unit(0, "lines"), 
-    legend.margin = margin(0, 0, 2, 0),
-
-    panel.background = element_blank(),
-    panel.spacing.x = unit(0.2, "lines"),
-
-    strip.placement = "outside",
-    strip.text.x = element_text(size=8, face="bold", margin=margin(0, 0, 0, 0)),
-    strip.background = element_blank(),
-
-    plot.margin = margin(0, 0, 0, 0)
-  )
-
-pb <- ggplot_build(p)
-pg <- ggplot_gtable(pb)
-
-data2npc <- function(x, panel = 1L, axis = "x") {
-  range <- pb$layout$panel_params[[panel]][[paste0(axis,".range")]]
-  scales::rescale(c(range, x), c(0,1))[-c(1,2)]
-}
-
-major_grid <- sapply(c(0, 150, 180, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
-
-pg <- gtable_add_grob(
-  pg,
-  segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
-               gp=gpar(col=c("gray", "gray", "black", "gray",
-                             "gray", "gray", "gray", "gray", "gray"),
-                       lwd=c(0.9, 0.1, 1, 0.9, 0.1, 0.9, 0.1, 0.9, 0.1))),
-  t=7, b=9,
-  l=5, r=11,
-  z=0
-)
-
-grid.newpage()
-grid.draw(pg)
+source("R/compilation.R")
+compilation()
 #+end_src
 
 #+RESULTS:
 [[file:compile-times.tikz]]
 
-*** Memory Usage
-
-#+header: :width 13 :height 5
-#+begin_src R :results graphics file :file memory-performance.svg
-data <- full_join(
-  read_csv("data/stock_cycles.csv"),
-  read_csv("data/est_cycles.csv")
-  ## comment
-)
-
-data$params <- factor(data$params, levels=unique(data$params))
-
-data <- data %>%
-  ##  %>%
-  ## filter(greedy == "True") %>%
-  filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
-  filter(kernel == "dios" | kernel == "compgen") %>%
-  select(benchmark, params, kernel, max_ram_used) %>%
-  group_by(benchmark) %>%
-  pivot_wider(
-    names_from=kernel,
-    values_from=max_ram_used
-  ) %>%
-  ## mutate(
-  ##   compgen = compgen / dios,
-  ##   dios = dios / dios,
-  ## ) %>%
-  pivot_longer(
-    cols = c("dios", "compgen"),
-    names_to = "kernel",
-    values_to = "memory"
-  ) %>%
-  print()
-
-data %>%
-  ggplot(aes(
-    x=params,
-    y=memory,
-    fill=kernel
-  )) +
-  facet_wrap(~benchmark, strip.position = "bottom", scales = "free_x") +
-  geom_bar(position="dodge", stat="identity", color="black") +
-  ## ylim(0, 1.5) +
-  ## scale_fill_discrete(labels=c("Compgen", "Stock Dios")) +
-  labs(y="Max Memory Used (GiB)", fill="Compiler") +
-  ## scale_y_log10() +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1),
-    axis.title.x = element_blank(),
-    legend.position = c(0.15, 0.9),
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold")
-  ) +
-  scale_fill_brewer(palette = "Set2")
-#+end_src
-
-#+RESULTS:
-[[file:memory-performance.svg]]
-
-*** Equality Saturation Ablation
-
-Actually use 11 as the width
-#+header: :width 9 :height 4
-#+begin_src R :results graphics file :file noeqsat.svg
-data <- full_join(full_join(
-  read_csv("data/stock_cycles.csv"),
-  read_csv("data/est_cycles.csv")
-), read_csv("data/noeqsat.csv"))
-
-data <- data %>%
-  filter(benchmark == "2d-conv") %>%
-  print(n=100) %>%
-  select(benchmark, params, kernel, cycles) %>%
-  group_by(benchmark) %>%
-  pivot_wider(
-    names_from=kernel,
-    values_from=cycles
-  ) %>%
-  mutate(
-    name = str_c(str_replace_all(params, "_", "\n")),
-    norm = noeqsat,
-    compgen = norm / compgen,
-    dios = norm / dios,
-    nature = norm / nature,
-    noeqsat = norm / noeqsat,
-    naive = norm / naive,
-    naive.fixed = norm / naive.fixed,
-    naive.clang = norm / naive.clang
-  ) %>%
-  pivot_longer(
-    cols = c("dios", "compgen", "noeqsat"),
-    names_to = "kernel",
-    values_to = "cycles"
-  ) %>%
-  select(name, kernel, cycles) %>%
-  print(n=60)
-
-data %>%
-  ggplot(aes(
-    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
-    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0,
-    ymax=cycles,
-    fill=factor(kernel, levels=unique(kernel))
-  )) +
-  geom_rect(
-    position="dodge",
-    color="black",
-  ) +
-  ## geom_hline(yintercept=1, linetype="solid", color="black") +
-  labs(x="2d-conv", y="Speed up over No Equality Saturation", fill="Compiler") +
-  scale_x_continuous(
-    label=unique(data$name),
-    breaks=1:length(unique(data$name))
-  ) +
-  scale_y_continuous(
-    trans="log2",
-  ) +
-  scale_fill_brewer(
-    palette = "Paired",
-    ## labels=c(
-    ##   "Diospyros",
-    ##   "Compgen"
-    ## )
-  ) +
-  theme_minimal() +
-  theme(
-    ## axis.title.x = element_blank(),
-    ## legend.position = c(0.80, 0.77),
-    legend.position = "top",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold"),
-    panel.spacing.x = unit(0, "lines")
-  )
-#+end_src
-
-#+RESULTS:
-[[file:noeqsat.svg]]
-
-*** Compilation timeout graph
-
-#+header: :width 13 :height 4
-#+begin_src R :results graphics file :file compilation_timeout_ablation.svg
-data <- full_join(full_join(
-  read_csv("data/stock_cycles.csv") %>% mutate(across(max_ram_used, as.character)),
-  read_csv("data/est_cycles.csv") %>% mutate(kernel=str_c(kernel, ".", timeout))
-), read_csv("data/noeqsat.csv"))
-
-to_face <- function(sat) {
-  map_chr(sat, function(x) {
-    if (x == "yes") {
-      "black"
-    } else {
-      "red"
-    }  
-  })
-}
-
-faces <- data %>%
-  filter(kernel == "dios") %>%
-  select(saturated) %>%
-  mutate(
-    bold=to_face(saturated)
-  ) %>%
-  print(n=20)
-
-data <- data %>%
-  print(n=142) %>%
-  ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
-  select(benchmark, params, kernel, cycles) %>%
-  group_by(benchmark) %>%
-  pivot_wider(
-    names_from=kernel,
-    values_from=cycles
-  ) %>%
-  mutate(
-    name = str_c(str_replace_all(params, "_", "\n"), "\n", benchmark),
-    norm = noeqsat,
-    compgen.180 = norm / compgen.180,
-    compgen.1800 = norm / compgen.1800,
-    dios = norm / dios,
-    nature = norm / nature,
-    noeqsat = norm / noeqsat,
-  ) %>%
-  pivot_longer(
-    cols = c("noeqsat", "dios", "compgen.180", "compgen.1800"),
-    names_to = "kernel",
-    values_to = "cycles"
-  ) %>%
-  select(name, kernel, cycles) %>%
-  print(n=60)
-
-data %>%
-  ggplot(aes(
-    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
-    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0,
-    ymax=cycles,
-    fill=factor(kernel, levels=unique(kernel))
-  )) +
-  geom_rect(
-    position="dodge",
-    color="black",
-    ) +
-  geom_hline(yintercept=1, linetype="solid", color="black") +
-  labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
-  scale_x_continuous(
-    label=unique(data$name),
-    breaks=1:length(unique(data$name))
-  ) +
-  scale_y_continuous(
-    trans="log2"
-  ) +
-  scale_fill_brewer(
-    palette = "Paired",
-    ## labels=c(
-    ##   "Naive",
-    ##   "Naive (vectorized)",
-    ##   "Nature",
-    ##   "Diospyros",
-    ##   "Compgen"
-    ## )
-  ) +
-  theme_minimal() +
-  theme(
-    axis.title.x = element_blank(),
-    ## axis.text.x = element_text(color=faces$bold),
-    ## legend.position = c(0.80, 0.77),
-    legend.position = "top",
-    legend.background = element_rect(fill = "white"),
-    text = element_text(size=12, face="bold"),
-    panel.spacing.x = unit(0, "lines")
-  )
-#+end_src
-
-#+RESULTS:
-[[file:compilation_timeout_ablation.svg]]
-
-** TODO Pruning
+** DONE Pruning
+CLOSED: [2023-04-18 Tue 12:19]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2023-04-18 Tue 12:19]
+:END:
 
 #+header: :width 300 :height 200
 
-#+header: :width 3 :height 2
-#+begin_src R :results graphics file :file pruning.tikz
-data <- read_csv("data/pruning.csv")
-killed_height <- 4500
-data %>%
-  mutate(
-    pattern=killed,
-    cycles=if_else(killed, killed_height, cycles),
-    params=str_replace_all(params, "_", "\n")
-  ) %>%
-  print(n=10) %>%
-  ggplot(aes(
-    x=factor(params, levels=unique(params)),
-    y=cycles,
-    fill=pruning,
-    pattern=pattern
-  )) +
-  geom_col_pattern(
-    position="dodge",
-    width=0.5,
-    color="black",
-    pattern_color="black",
-    pattern_spacing=0.05,
-    pattern_density=0.35,
-  ) +
-  ## geom_hline(
-  ##   yintercept=killed_height,
-  ##   color="red"
-  ## ) +
-  scale_fill_manual(
-    values=c("#eeeeee", "#fb9a99"),
-    labels=c("No Pruning", "Pruning")
-  ) +
-  scale_pattern_manual(
-    values=c("none", "stripe"),
-  ) +
-  scale_y_continuous(expand=c(0, 0)) +
-  labs(
-    x="2DConv Params",
-    y="Estimated Cycles",
-    fill="Pruning"
-  ) +
-  guides(pattern="none", fill=guide_legend(override.aes = list(pattern="none"))) +
-  theme_classic() +
-  theme(
-    axis.title.x = element_text(size=8, face="bold"),
-    axis.title.y = element_text(size=8, face="bold"),
-
-    axis.text.x = element_text(size=8, color="black"),
-    axis.text.y = element_text(size=8, color="black"),
-
-    legend.position = "top",
-    legend.background = element_blank(),
-    legend.text = element_text(size=7, face="bold"),
-    legend.title = element_blank(),
-    legend.key.size = unit(0.75, "lines"),
-    legend.box.spacing = unit(0, "lines"), 
-    legend.margin = margin(0, 0, 4, 0),
-
-    panel.grid.major.y = element_line(color="grey", linewidth=0.9),
-    panel.grid.minor.y = element_line(color="grey", linewidth=0.1)
-  )
+#+header: :width 3.3 :height 2 :file pruning.tikz
+#+begin_src R :results graphics file
+source("R/pruning.R")
+pruning()
 #+end_src
 
 #+RESULTS:
 [[file:pruning.tikz]]
 
-** Ruleset ablation
+#+begin_src R :results output file :file pruning-table.tex
+data <- read_csv("data/pruning.csv", col_names=T, show_col_types=F, progress=F)
+data <- data %>% select(params, pruning, cycles, compile_time, memory_used) %>%
+  mutate(memory_used=as.numeric(recode(memory_used, "killed"="-1"))) %>%
+  mutate_if(is.numeric, round, 2) %>%
+  mutate(
+    params=params %>% str_replace_all(c("_"=" ")),
+    pruning=recode(as.character(pruning), "TRUE"="Yes", "FALSE"="No"),
+    memory_used=recode(as.character(memory_used), "-1"="killed"),
+  )
+
+print(
+  xtable(data),
+  include.rownames=F,
+  sanitize.colnames.function = function(x) {
+    x %>% str_replace_all(c(
+            "params"="\\\\textbf{2DConv}",
+            "pruning"="\\\\textbf{Pruning?}",
+            "cycles"="\\\\textbf{Cycles}",
+            "compile_time"="\\\\textbf{Time (s)}",
+            "memory_used"="\\\\textbf{RAM (gb)}"
+          ))
+  },
+  sanitize.text.function = function(x) {
+    x
+    ## x %>% str_replace_all(c(
+    ##         "2x2"="2$^2$",
+    ##         "3x3"="3$^2$",
+    ##         "4x4"="4$^2$",
+    ##         "8x8"="8$^2$",
+    ##         "10x10"="10$^2$",
+    ##         "16x16"="16$^2$",
+    ##         "18x18"="16$^2$"
+    ##       ))
+  },
+  hline.after = rep(seq(0, by=2, len=14))
+)
+#+end_src
+
+#+RESULTS:
+[[file:pruning-table.tex]]
+
+** DONE Ruleset ablation
+CLOSED: [2023-04-18 Tue 14:34]
+:LOGBOOK:
+- State "DONE"       from              [2023-04-18 Tue 14:34]
+:END:
 
 #+header: :width 11 :height 4
 
 #+header: :width 3.3 :height 2 :file ruleset-ablation.tikz
 #+begin_src R :results graphics file
-data <- read_csv("data/ruleset_ablation.csv") %>% select(-index)
-noeqsat <- read_csv("data/noeqsat.csv") %>%
-  mutate(ruleset=0, noeqsat=cycles) %>%
-  select(-c(kernel, correct, cycles, ruleset)) %>%
-  filter(benchmark == "2d-conv")
-
-data <- left_join(
-  data,
-  noeqsat,
-  by=c("benchmark", "params"),
-)
-
-data <- data %>%
-  select(benchmark, params, exp, ruleset, cycles, cost, noeqsat) %>%
-  mutate(
-    name=str_c(str_replace_all(params, "_", "\n")),
-  ) %>%
-  group_by(params) %>%
-  filter(ruleset > 0) %>%
-  filter(ruleset != 43200) %>%
-  filter(ruleset != 86400) %>%
-  print(n=10) %>%
-  mutate(
-    # calculate speedup against the second item in every group
-    across(cycles:cost, ~ .[1] / .)
-    ## cycles=noeqsat / cycles
-    ## across(cycles:cost, ~ .[3] / .)
-  ) %>% print(n=10)
-
-data %>%
-  ggplot(aes(
-    ## x=names,
-    ## y=cycles,
-    xmin=as.numeric(factor(name, levels=unique(name))) - 0.35,
-    xmax=as.numeric(factor(name, levels=unique(name))) + 0.35,
-    ymin=0, ymax=cycles,
-    fill=factor(ruleset)
-  )) +
-  geom_rect(
-    position="dodge",
-    color="black"
-  ) +
-  geom_hline(yintercept=1, linetype="solid", color="black", linewidth=0.5) +
-  scale_x_continuous(
-    label=unique(data$name),
-    breaks=1:length(unique(data$name))
-  ) +
-  scale_y_continuous(
-    labels=c("1$\\times$", "2$\\times$"),
-    breaks=c(1, 2),
-    expand=c(0, 0)
-  ) +
-  scale_fill_brewer(
-    palette = "YlOrBr",
-  ) +
-  labs(fill="Timeout", y="Speedup over Timeout=60", x="2DConv Params") +
-  theme_classic() +
-  theme(
-    axis.title.x = element_text(size=8, face="bold"),
-    axis.title.y = element_text(size=8, face="bold"),
-
-    axis.text.x = element_text(size=8, color="black"),
-    axis.text.y = element_text(size=8, color="black"),
-
-    legend.position = "top",
-    legend.background = element_blank(),
-    legend.text = element_text(size=7),
-    legend.title = element_text(size=7, face="bold"),
-    legend.key.size = unit(0.75, "lines"),
-    legend.box.spacing = unit(0, "lines"), 
-    legend.margin = margin(0, 0, 2, 0),
-
-    panel.grid.major.y = element_line(color="grey", linewidth=0.9),
-    panel.grid.minor.y = element_line(color="grey", linewidth=0.1),
-
-    plot.margin = margin(0, 0, 0, 0)
-  )
+source("R/ruleset_ablation.R")
+ruleset_ablation()
 #+end_src
 
 #+RESULTS:
 [[file:ruleset-ablation.tikz]]
 
-** Instruction Ablation
+** DONE Instruction Ablation
+CLOSED: [2023-04-18 Tue 14:34]
+:LOGBOOK:
+- State "DONE"       from              [2023-04-18 Tue 14:34]
+:END:
 
 #+header: :results output file :file instruction.tex
 #+begin_src R 
@@ -966,39 +338,29 @@ print(xtable(
 #+RESULTS:
 [[file:instruction.tex]]
 
-** TODO Greedy Cost Works
+** Misc
 
-The data here is wrong I think. Fix the data
-
-#+begin_src R :results graphics file :file greedy_cost.svg
-data <- read.csv("data/greedy_cost_works.csv")
-
-# fix the order of the df in place
-data$params <- factor(data$params, levels=rev(unique(data$params)))
+#+begin_src R :results graphics file :file iter_cost.svg
+data <- read.csv("data/2d-conv-3x3_3x3_iter.csv")
 
 data %>%
-  filter(benchmark == "2d-conv") %>%
-  ggplot(aes(fill=costfn, x=params, y=egraph_cost)) +
-  geom_bar(position="dodge", stat="identity", color="black") +
-  ## geom_text(
-  ##   aes(label=round(egraph_cost)),
-  ##   color="black",
-  ##   size=3.5,
-  ##   position=position_dodge(0.9)) +
-  labs(x="Params", y="EGraph Cost", fill="Cost Function") +
-  coord_flip() + theme_minimal() +
+  group_by(pruning) %>%
+  mutate(cost = cost / max(cost)) %>%
+  ggplot(aes(x=index, y=cost, group=pruning, color=pruning)) +
+  geom_line() + geom_point() +
+  theme_minimal() +
+  labs(x="Iteration", y="Cost / max(Cost)", color="Cost Function") +
   theme(
     legend.position = c(0.80, 0.90),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )
-  ## theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1))
 #+end_src
 
 #+RESULTS:
-[[file:greedy_cost.svg]]
+[[file:iter_cost.svg]]
 
-** Backoff scheduler doesn't work
+*** Backoff scheduler doesn't work
 
 #+begin_src R :results graphics file :file scheduler-backoff.svg
 data <- read.csv("~/Research/comp-gen/server/completed/2d-conv_3x3_3x3/20/data.csv")
@@ -1064,28 +426,37 @@ data %>%
 
 #+RESULTS:
 [[file:scheduler-backoff-cost.svg]]
+*** TODO Greedy Cost Works
 
-** Misc
+The data here is wrong I think. Fix the data
 
-#+begin_src R :results graphics file :file iter_cost.svg
-data <- read.csv("data/2d-conv-3x3_3x3_iter.csv")
+#+begin_src R :results graphics file :file greedy_cost.svg
+data <- read.csv("data/greedy_cost_works.csv")
+
+# fix the order of the df in place
+data$params <- factor(data$params, levels=rev(unique(data$params)))
 
 data %>%
-  group_by(pruning) %>%
-  mutate(cost = cost / max(cost)) %>%
-  ggplot(aes(x=index, y=cost, group=pruning, color=pruning)) +
-  geom_line() + geom_point() +
-  theme_minimal() +
-  labs(x="Iteration", y="Cost / max(Cost)", color="Cost Function") +
+  filter(benchmark == "2d-conv") %>%
+  ggplot(aes(fill=costfn, x=params, y=egraph_cost)) +
+  geom_bar(position="dodge", stat="identity", color="black") +
+  ## geom_text(
+  ##   aes(label=round(egraph_cost)),
+  ##   color="black",
+  ##   size=3.5,
+  ##   position=position_dodge(0.9)) +
+  labs(x="Params", y="EGraph Cost", fill="Cost Function") +
+  coord_flip() + theme_minimal() +
   theme(
     legend.position = c(0.80, 0.90),
     legend.background = element_rect(fill = "white"),
     text = element_text(size=16, face="bold")
   )
+  ## theme(axis.text.x = element_text(angle = 45, vjust = 0.9, hjust=1))
 #+end_src
 
 #+RESULTS:
-[[file:iter_cost.svg]]
+[[file:greedy_cost.svg]]
 
 * Overview Example
 
@@ -1136,6 +507,11 @@ inotifywait --monitor --format "%f" \
         echo "Exporting $f to $DEST/$(basename $f .tikz).tex"
         cp "$f" "$DEST/$(basename $f .tikz).tex"
     fi
+
+    if [ "${f#*.}" = "tex" ]; then
+        echo "Exporting $f to $DEST/$(basename $f .tex).tex"
+        cp "$f" "$DEST/$(basename $f .tex).tex"
+    fi
 done
 #+end_src
 
@@ -1184,11 +560,12 @@ export compgen_bin="cargo run --release --manifest-path=$(realpath ../dios-lang/
 export dios_bin=$(realpath ../../diospyros/dios)
 export dios_example_bin=$(realpath ../../diospyros/dios-example-gen)
 
-DIR="jobs/Apr18-0818-qr-decomp_3-0"
+DIR="completed/qr-decomp_3/78"
 cd $DIR
-./run.sh
+./run.sh 2>stderr.log
+cd ../..
 
-# cd ../..
+# make -C ../../diospyros dios
 # ./estimate.py single $DIR --debug --force
 # ./correlate.py $DIR/results/kernel.s $DIR/results/kernel.c
 #+end_src
