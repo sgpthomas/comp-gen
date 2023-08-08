@@ -53,6 +53,7 @@ ruleset_ablation <- function() {
     geom_hline(
         yintercept = 1,
         color = "black",
+        linewidth=0.35
     ) +
     geom_rect(
       position="dodge",
@@ -73,7 +74,7 @@ ruleset_ablation <- function() {
     scale_fill_brewer(
       palette = "YlOrBr",
       ) +
-    labs(fill="Timeout", y="Speedup over Naive (fixed size)", x="2DConv Params") +
+    labs(fill="Timeout", y="Speedup over Clang", x="2DConv") +
     theme_classic() +
     theme(
       axis.title.x = element_text(size=8, face="bold"),

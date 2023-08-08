@@ -222,6 +222,10 @@ def filter_log(log):
                 lambda m: {"cost": float(m.group(1))},
             ),
             First(
+                r"Time: (\d+.\d+)",
+                lambda m: {"time": float(m.group(1))},
+            ),
+            First(
                 r"Iterations: (\d+)",
                 lambda m: {"iterations": int(m.group(1))}
             ),

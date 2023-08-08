@@ -60,12 +60,15 @@ compilation <- function() {
     ## coord_cartesian(ylim = c(0, 1000)) +
     ## scale_y_log10() +
     scale_fill_manual(
-      values=c("#33a02c", "#fb9a99"),
+      values=c(
+        rgb(67,162,202,maxColorValue = 255),
+        rgb(8,104,172,maxColorValue = 255)
+      ),
       labels=c("Diospyros", "Isaria")
     ) +
     scale_y_continuous(
-      breaks=c(0, 180, 300, 600, 900),
-      labels=c("0s", "180s", "300s", "600s", "900s"),
+      breaks=c(0, 300, 600, 900),
+      labels=c("0s", "300s", "600s", "900s"),
       expand=c(0, 0)
     ) +
     labs(y="Compile Time", fill="Compiler") +
@@ -104,14 +107,14 @@ compilation <- function() {
     scales::rescale(c(range, x), c(0,1))[-c(1,2)]
   }
 
-  major_grid <- sapply(c(0, 150, 180, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
+  major_grid <- sapply(c(0, 150, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
 
   pg <- gtable_add_grob(
     pg,
     segmentsGrob(x0=0, x1=2, y0=major_grid, y1=major_grid,
-                 gp=gpar(col=c("gray", "gray", "black", "gray",
+                 gp=gpar(col=c("gray", "gray", "gray",
                                "gray", "gray", "gray", "gray", "gray"),
-                         lwd=c(0.9, 0.1, 1, 0.9, 0.1, 0.9, 0.1, 0.9, 0.1))),
+                         lwd=c(0.9, 0.1, 0.9, 0.1, 0.9, 0.1, 0.9, 0.1))),
     t=7, b=9,
     l=5, r=11,
     z=0

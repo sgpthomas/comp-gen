@@ -764,7 +764,7 @@ def overview_example():
         Path("jobs"),
         *[2, 2, 2, 2],
         rulesets["ruleset_timeout86400"],
-        configs["all-simple"],
+        configs["all-backoff"],
         "alternative",
         key="overview",
     )
@@ -798,13 +798,13 @@ def optimization_effect():
         [4, 4, 3, 3],
         [8, 8, 3, 3],
         [10, 10, 2, 2],
-        [10, 10, 3, 3],
+        # [10, 10, 3, 3],
         [10, 10, 4, 4],
         [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        # [16, 16, 4, 4],
-        [18, 18, 2, 2],
-        # [18, 18, 3, 3],
+        # [16, 16, 3, 3],
+        [16, 16, 4, 4],
+        # [18, 18, 2, 2],
+        [18, 18, 3, 3],
         # [18, 18, 4, 4],
     ]
     # q_prod_params = [0]
@@ -855,7 +855,7 @@ def optimization_effect():
 
 def main():
     # overall_performance()
-    pruning_experiments()
+    # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
     # ruleset_ablation()
@@ -864,7 +864,7 @@ def main():
     # add_instruction_ruleset()
     # test_instruction_ruleset()
     # overview_example()
-    # optimization_effect()
+    optimization_effect()
 
 
 if __name__ == "__main__":

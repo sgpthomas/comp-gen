@@ -8,21 +8,17 @@ pruning <- function() {
     pivot_wider(names_from=pruning, values_from=c(cycles, compile_time)) %>%
     mutate(
       cycles=replace_na(cycles_FALSE / cycles_TRUE, Inf),
-      time=replace_na(compile_time_FALSE / compile_time_TRUE, Inf),
+      time=if_else(is.infinite(cycles), Inf, compile_time_FALSE / compile_time_TRUE),
       ## cycles=if_else(killed, killed_height, cycles),
       params=rewrite_params(params)
     ) %>%
-    print(n=10) %>%
     select(params, cycles, time) %>%
+    
     pivot_longer(
       cols = -c(params),
       names_to="name",
       values_to="speedup"
-    ) %>%
-    mutate(
-      killed=speedup == Inf
-    ) %>%
-    print(n=10)
+    )
 
   data %>%
     ggplot(aes(
@@ -31,23 +27,26 @@ pruning <- function() {
       ymin=0,
       ymax=speedup,
       fill=name,
-      pattern=killed
+      pattern=is.infinite(speedup)
     )) +
     geom_hline(
       yintercept=1,
-      color="black"
+      color="black",
+      linewidth=0.35
     ) +
     geom_rect_pattern(
       position="dodge",
       color="black",
-      ## pattern_color="black",
-      ## pattern_spacing=0.05,
-      ## pattern_density=0.35,
+      pattern_fill="black",
+      pattern_linetype=0,
+      pattern_alpha=0.35,
+      pattern_spacing=0.05,
+      pattern_density=0.30,
       linewidth=0.3
     ) +
     scale_fill_manual(
-      values=c("#eeeeee", "#fb9a99"),
-      labels=c("Cycle Count", "Compile Time")
+      values=c("#a8ddb5", "#43a2ca"),
+      labels=c("Kernel Performance", "Compile Time")
     ) +
     scale_pattern_manual(
       values=c("none", "stripe")
@@ -63,7 +62,7 @@ pruning <- function() {
       ## expand=c(0, 0)
     ) +
     labs(
-      x="2DConv Params",
+      x="2DConv",
       y="Speedup",
       fill="Pruning"
     ) +
@@ -87,6 +86,6 @@ pruning <- function() {
       panel.grid.major.y = element_line(color="grey", linewidth=0.4),
       panel.grid.minor.y = element_line(color="grey", linewidth=0.1),
 
-      plot.margin = margin(0, 0, 0, 0)
+      plot.margin = margin(1, 0, 1, 0)
       )
 }

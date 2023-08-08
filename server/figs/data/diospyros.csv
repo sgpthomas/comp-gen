@@ -1,4 +1,4 @@
-,kernel,benchmark,params,cycles,total_time,eqsat_time,max_ram_used,saturated
+index,kernel,benchmark,params,cycles,total_time,eqsat_time,max_ram_used,saturated
 0,dios,2d-conv,3x3_2x2,58,9.142474889755249,0.348,0.177651712,yes
 1,naive,2d-conv,3x3_2x2,1483,9.142474889755249,0.348,0.177651712,yes
 2,naive.clang,2d-conv,3x3_2x2,500,9.142474889755249,0.348,0.177651712,yes

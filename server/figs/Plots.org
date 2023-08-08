@@ -16,7 +16,7 @@ tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180
 Copy the results back here, so that we can analyze them.
 
 #+begin_src async-shell :dir (sgt/dir "server") :var IP=(ec2/get-ip "exp") :results none :name dios
-rsync -avh ubuntu@$IP:~/diospyros/results-t180/ completed/diospyros/1
+rsync -avh ubuntu@$IP:~/diospyros/results-t1000/ completed/diospyros/2
 #+end_src
 
 #+header: :dir (ec2/tramp "exp" "custom-diospyros")
@@ -51,8 +51,7 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        --force \
-        -o ~/Research/comp-gen/server/completed/diospyros/1
+        -o ~/Research/comp-gen/server/completed/diospyros/2
 #+end_src
 
 ** Syncing diospyros-results between machines
@@ -87,7 +86,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 (header args for doing cycle estimation from non-thelio computers)
 
 #+header: :dir (sgt/dir "server")
-#+begin_src async-shell :name estimation
+#+begin_src async-shell :nameestimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
 ./estimate.py many latest --key ruleset_ablation
@@ -103,7 +102,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ 
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
-./process.py all completed/
+./process.py all completed/ --force
 #+end_src
 
 Run query to generate aggregated data files
@@ -115,31 +114,8 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-./query2.py update pruning_temp
-#+end_src
-
-* Tables
-
-Generate the SLoC table for the evaluation section
-
-#+begin_src async-shell :dir (sgt/dir) :results none :ansi t
-# compgen library
-cd comp-gen
-compgen=$(tokei src -o json | jq .Total.code)
-cd ..
-
-cd dios-lang
-spec=$(tokei src -o json | \
-           jq ".Rust.reports[] | select(.name == \"src/synthesis.rs\") | .stats.code")
-cost=$(tokei src -o json | \
-           jq ".Rust.reports[] | select(.name == \"src/cost.rs\") | .stats.code")
-harness=$(tokei src -o json | jq .Total.code)
-
-echo "\\\newcommand{\\\sloccompgen}{$compgen}"
-echo "\\\newcommand{\\\slocspec}{$spec}"
-echo "\\\newcommand{\\\sloccost}{$cost}"
-echo "\\\newcommand{\\\slocharness}{$((harness - spec - cost))}"
-echo "\\\newcommand{\\\sloctotal}{$((compgen + harness))}"
+# ./query2.py update optimization
+./query2.py update est_cycles
 #+end_src
 
 * Pictures!!
@@ -313,8 +289,8 @@ data <- read_csv(
 ) %>%
   filter(benchmark == "qr-decomp") %>%
   mutate(
-    muls=if_else(str_detect(rules, "muls"), "MULS", "No MULS"),
-    sqrtsgn=if_else(str_detect(rules, "sqrtsgn"), "SqrtSgn", "No SqrtSgn"),
+    muls=if_else(str_detect(rules, "muls"), "VecMulSub", "No VecMulSub"),
+    sqrtsgn=if_else(str_detect(rules, "sqrtsgn"), "VecSqrtSgn", "No VecSqrtSgn"),
     speedup=(1198.0 / cycles) * 100,
     show=if_else(speedup >= 100,
                  str_c("+", round(speedup-100, 1), "%"),
@@ -457,6 +433,154 @@ data %>%
 
 #+RESULTS:
 [[file:greedy_cost.svg]]
+
+* Tables
+:PROPERTIES:
+:header-args:R: :session cycest :colnames yes
+:END:
+
+Generate the SLoC table for the evaluation section
+
+#+begin_src async-shell :dir (sgt/dir) :results none :ansi t
+# compgen library
+cd comp-gen
+compgen=$(tokei src -o json | jq .Total.code)
+cd ..
+
+cd dios-lang
+spec=$(tokei src -o json | \
+           jq ".Rust.reports[] | select(.name == \"src/synthesis.rs\") | .stats.code")
+cost=$(tokei src -o json | \
+           jq ".Rust.reports[] | select(.name == \"src/cost.rs\") | .stats.code")
+harness=$(tokei src -o json | jq .Total.code)
+
+echo "\\\newcommand{\\\sloccompgen}{$compgen}"
+echo "\\\newcommand{\\\slocspec}{$spec}"
+echo "\\\newcommand{\\\sloccost}{$cost}"
+echo "\\\newcommand{\\\slocharness}{$((harness - spec - cost))}"
+echo "\\\newcommand{\\\sloctotal}{$((compgen + harness))}"
+#+end_src
+
+Compute numbers in the paper
+
+#+begin_src R :results none
+data <- full_join(
+  full_join(
+    read_csv("data/est_cycles.csv", col_names=T, show_col_types=F),
+    read_csv("data/long.csv", col_names=T, show_col_types=F)
+  ),
+  read_csv("data/diospyros.csv", col_names=T, show_col_types=F)
+  %>% mutate(timeout=180),
+)
+
+data %>%
+  select(kernel, benchmark, params, timeout, cycles) %>%
+  filter(kernel == "compgen" | kernel == "nature" | kernel == "naive.clang") %>%
+  pivot_wider(names_from=c(kernel, timeout), values_from=cycles) %>%
+  print(n=100) %>%
+  mutate(
+    nature_su_180 = nature_180 / compgen_180,
+    nature_mean_180 = exp(mean(log(nature_su_180), na.rm=T)),
+    nature_su_1800 = nature_180 / compgen_1800,
+    nature_mean_1800 = exp(mean(log(nature_su_1800), na.rm=T)),
+
+    naive.clang_su_180 = naive.clang_180 / compgen_180,
+    naive.clang_mean_180 = exp(mean(log(naive.clang_su_180), na.rm=T)),
+    naive.clang_su_1800 = naive.clang_180 / compgen_1800,
+    naive.clang_mean_1800 = exp(mean(log(naive.clang_su_1800), na.rm=T)),
+
+    self_su = compgen_180 / compgen_1800,
+    self_geomean_su = exp(mean(log(self_su), na.rm=T)),
+  ) %>%
+  summarise(
+    nature_geomean_180=max(nature_mean_180),
+    nature_min_180=min(nature_su_180, na.rm=T),
+    nature_median_180=median(nature_su_180, na.rm=T),
+    nature_max_180=max(nature_su_180, na.rm=T),
+    nature_geomean_1800=max(nature_mean_1800),
+    nature_min_1800=min(nature_su_1800, na.rm=T),
+    nature_max_1800=max(nature_su_1800, na.rm=T),
+
+    clang_geomean_180=max(naive.clang_mean_180),
+    clang_min_180=min(naive.clang_su_180, na.rm=T),
+    clang_max_180=max(naive.clang_su_180, na.rm=T),
+    clang_geomean_1800=max(naive.clang_mean_1800),
+    clang_min_1800=min(naive.clang_su_1800, na.rm=T),
+    clang_max_1800=max(naive.clang_su_1800, na.rm=T),
+
+    self_su=max(self_geomean_su),
+  ) %>% pivot_longer(everything())
+
+## cycles <- data %>%
+##   select(kernel, benchmark, params, cycles) %>%
+##   pivot_wider(names_from=kernel, values_from=cycles) %>%
+##   select(benchmark, params, compgen, nature, naive.clang) %>%
+##   mutate(
+##     nature_su = nature / compgen,
+##     clang_su = naive.clang / compgen
+##   )
+
+## # nature
+## vals <- (cycles %>% filter(!is.na(nature_su)))$nature_su
+## print(vals)
+## nature_su <- exp(mean(log(vals)))
+## print("nature")
+## print(round(nature_su, 2))
+
+## # clang
+## vals <- (cycles %>% filter(!is.na(clang_su)))$clang_su
+## clang_su <- exp(mean(log(vals)))
+## print("clang")
+## print(round(clang_su, 2))
+
+## # diospyros cycles
+## print("cycles")
+## data %>%
+##   select(kernel, benchmark, params, cycles) %>%
+##   pivot_wider(names_from=kernel, values_from=cycles) %>%
+##   select(benchmark, params, compgen, dios) %>%
+##   filter(params != "8x8_8x8") %>%
+##   filter(params != "10x10_10x10") %>%
+##   mutate(
+##     x = dios / compgen
+##   ) %>%
+##   print(n=26) %>%
+##   summarize(mean = round(exp(mean(log(x))), 2),
+##             median = median(x))
+
+# diospyros time
+print("time")
+data %>%
+  filter(timeout==180) %>%
+  mutate(
+    time=if_else(is.na(compile_time), eqsat_time, compile_time)
+  ) %>%
+  select(kernel, benchmark, params, time) %>%
+  pivot_wider(names_from=kernel, values_from=time) %>%
+  select(benchmark, params, compgen, dios) %>%
+  filter(compgen != 0) %>%
+  mutate(
+    x = compgen / dios
+  ) %>% summarize(mean = exp(mean(log(x))), median = median(x))
+#+end_src
+
+Ruleset ablation numbers
+
+#+begin_src R :results none
+data <- read_csv("data/ruleset_ablation.csv")
+
+data %>%
+  select(benchmark, params, ruleset, cycles) %>%
+  pivot_wider(names_from=ruleset, values_from=cycles) %>%
+  mutate(
+    speedup=`60` / `60000`
+  ) %>%
+  print(n=100) %>%
+  summarize(
+    max = max(speedup),
+    mean = exp(mean(log(speedup)))
+  )
+#+end_src
 
 * Overview Example
 

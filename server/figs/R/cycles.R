@@ -86,7 +86,7 @@ cycles <- function() {
       color="black",
       linewidth=0.3
     ) +
-    labs(y="Speed up over Naive (fixed size)", fill="Compiler") +
+    labs(y="Speed up over Clang", fill="Compiler") +
     scale_x_continuous(
       label=names,
       breaks=1:length(names)
@@ -96,11 +96,16 @@ cycles <- function() {
       breaks=c(1, 4, 16),
       labels=c("1$\\times$", "4$\\times$", "16$\\times$"),
       ) +
-    scale_fill_brewer(
-      palette = "Paired",
+    scale_fill_manual(
+      values=c(
+        rgb(240,249,232,maxColorValue = 255),
+        rgb(186,228,188,maxColorValue = 255),
+        rgb(67,162,202,maxColorValue = 255),
+        rgb(8,104,172,maxColorValue = 255)
+      ),
       labels=c(
         ## "Naive",
-        "Naive (auto-vectorized)",
+        "Clang (auto-vectorized)",
         "Nature",
         "Diospyros",
         "Isaria"

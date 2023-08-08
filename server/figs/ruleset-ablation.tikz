@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.12.4 on 2023-04-19 00:43:28
+% Created by tikzDevice version 0.12.4 on 2023-04-20 12:28:15
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
@@ -42,7 +42,7 @@
 	(238.49,133.51);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\path[draw=drawColor,line width= 0.6pt,line join=round] ( 35.22, 77.22) -- (238.49, 77.22);
+\path[draw=drawColor,line width= 0.4pt,line join=round] ( 35.22, 77.22) -- (238.49, 77.22);
 \definecolor{fillColor}{RGB}{255,255,212}
 
 \path[draw=drawColor,line width= 0.3pt,fill=fillColor] ( 44.46, 30.48) rectangle ( 46.82,116.77);
@@ -361,13 +361,13 @@
 \path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (136.85,  1.56) {\bfseries 2DConv Params};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (136.85,  1.56) {\bfseries 2DConv};
 \end{scope}
 \begin{scope}
 \path[clip] (  0.00,  0.00) rectangle (238.49,144.54);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,rotate= 90.00,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (  5.52, 81.99) {\bfseries Speedup over Naive (fixed size)};
+\node[text=drawColor,rotate= 90.00,anchor=base,inner sep=0pt, outer sep=0pt, scale=  0.80] at (  5.52, 81.99) {\bfseries Speedup over Clang};
 \end{scope}
 \begin{scope}
 \path[clip] (  0.00,  0.00) rectangle (238.49,144.54);

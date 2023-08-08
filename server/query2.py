@@ -178,6 +178,14 @@ def pruning_ruleset(exp_path):
     return not ("noprune" in config["metadata"]["compile.json"])
 
 
+def number_iterations_timeout(exp_path):
+    (data_df(exp_path)
+     >> filter_by(X.name == "time")
+     >> filter_by(X.phase.str.contains("pre") | X.phase.str.contains("compile") | X.phase.str.contains("opt"))
+     >> display())
+    return 0
+
+
 def diospyros_cycles(egg_kernel_csv):
     exp_dir = Path(egg_kernel_csv.parents[0])
     benchmark = egg_kernel_csv.parents[1].stem
@@ -188,10 +196,11 @@ def diospyros_cycles(egg_kernel_csv):
 
     stats = json.load((exp_dir / "stats.json").open("r"))
     lines = (exp_dir / "compile-log.txt").open("r").readlines()
-    eqsat_time = list(filter(
+    eqsat_times = list(filter(
         lambda x: x != 0,
         map(lambda x: int(x.split(": ")[1]) if "Eqsat" in x else 0, lines)
     ))
+    eqsat_time = 0 if len(eqsat_times) == 0 else eqsat_times[0] / 1000.0
 
     try:
         return (pd.read_csv(egg_kernel_csv)
@@ -199,7 +208,7 @@ def diospyros_cycles(egg_kernel_csv):
                     benchmark=benchmark,
                     params=params,
                     total_time=stats["time"],
-                    eqsat_time=eqsat_time[0] / 1000.0,
+                    eqsat_time=eqsat_time,
                     max_ram_used=stats["memory"] / float(10 ** 9),
                     saturated=stats["saturated"])
                 >> replace({
@@ -241,14 +250,16 @@ def est_cycles(row):
         "extraction_time": [extraction_time(x)],
         "total_time": [total_time(x)],
         "max_ram_used": [max_ram(x)],
-        "pre_count": [phase_count(x, "pre")],
-        "compile_count": [phase_count(x, "compile")],
+        "pre_iterations": [phase_iterations(x, "pre")],
+        "compile_iterations": [phase_iterations(x, "compile")],
+        "n_timeout": [number_iterations_timeout(x)],
         "opt_iter": [phase_iterations(x, "opt")],
     })
 
 
 @query(key="diospyros", pinned_date="Apr16-1712")
 def diospyros(row):
+    print(row)
     return (pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
             >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)
             >> reset_index(drop=True, names=["index"]))
@@ -339,6 +350,26 @@ def optimization(row):
         "cost": [egraph_cost(x)],
         "dir": [row.exp_dir]
     })
+
+
+@query(key="performance", pinned_date="Apr11-1244")
+def long(row):
+    x = row.exp_dir
+    if soft_timeout(x) == 1800:
+        return pd.DataFrame(data={
+            "date": [row.date],
+            "kernel": ["compgen"],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "timeout": [soft_timeout(x)],
+            "compile_time": [compile_time(x)],
+            "cycles": [cycles(x)],
+            "cost": [egraph_cost(x)],
+            "dir": [row.exp_dir]
+        })
+    else:
+        return pd.DataFrame()
 
 
 @click.group()
