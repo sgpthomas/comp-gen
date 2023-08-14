@@ -1,0 +1,9 @@
+{
+  "env": {
+    "compgen_bin": "/root/comp-gen/dios-lang/target/release/dios-lang",
+    "dios_bin": "/root/diospyros/dios",
+    "dios_example_bin": "/root/diospyros/dios-example-gen"
+  },
+  "jobs_at_once": 2,
+  "diospyros": "/root/diospyros"
+}

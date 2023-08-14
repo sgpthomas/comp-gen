@@ -15,7 +15,5 @@ raco pkg install --batch --deps search-auto rosette threading
 make
 cd /
 
-
-
-
-
+# install some needed python dependencies for the experiment server
+pip3 install psutil

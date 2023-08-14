@@ -1,8 +1,9 @@
-from pathlib import Path
-import shutil
 import json
+import shutil
 import subprocess
 import time
+from pathlib import Path
+
 import psutil
 
 
@@ -33,6 +34,7 @@ class GlobalConfig:
         self.config_path = root / "config.json"
         self.jobs = root / "jobs"
         self.completed = root / "completed"
+        self.diospyros = root / ".." / ".." / "custom-diospyros"
 
         # make sure that the jobs and completed directory exist
         self.jobs.mkdir(exist_ok=True)
@@ -68,6 +70,7 @@ class GlobalConfig:
                 else:
                     self.env[key] = value
             self.jobs_at_once = data["jobs_at_once"]
+            self.diospyros = data["diospyros"]
 
     def commit(self):
         """Commit the current configuration to a file."""
@@ -94,6 +97,7 @@ class Job:
         else:
             self.timeout = 60 * 30
 
+    @staticmethod
     def valid(job_dir: Path):
         """Check if `job_dir` contains a valid job."""
 
@@ -114,18 +118,22 @@ class Job:
         stdout_log.touch()
         stderr_log.touch()
 
-        compgen_commit = subprocess.run("git rev-parse HEAD", shell=True, capture_output=True)
+        compgen_commit = subprocess.run(
+            "git rev-parse HEAD", shell=True, capture_output=True
+        )
         dios_commit = subprocess.run(
             "git rev-parse HEAD",
             shell=True,
             capture_output=True,
-            cwd="../../custom-diospyros"
+            cwd="../../custom-diospyros",
         )
         with (self.dir / "commit.txt").open("w") as f:
-            f.writelines([
-                f"comp-gen: {compgen_commit.stdout.strip()}\n",
-                f"diospyros: {dios_commit.stdout.strip()}\n",
-            ])
+            f.writelines(
+                [
+                    f"comp-gen: {compgen_commit.stdout.strip()}\n",
+                    f"diospyros: {dios_commit.stdout.strip()}\n",
+                ]
+            )
 
         # save start time
         self.start_time = time.time()
@@ -175,7 +183,7 @@ def memory_used_by(pid):
     mem = process.memory_info().rss
     for child in process.children(recursive=True):
         mem += child.memory_info().rss
-    return mem / float(10 ** 9)
+    return mem / float(10**9)
 
 
 def single_run(config, alive, update=False):
@@ -184,8 +192,8 @@ def single_run(config, alive, update=False):
         subprocess.run(
             "cargo build --release --manifest-path=../dios-lang/Cargo.toml", shell=True
         )
-        subprocess.run("git pull -r", shell=True, cwd="../../custom-diospyros")
-        subprocess.run("make dios dios-example-gen", shell=True, cwd="../../custom-diospyros")
+        subprocess.run("git pull -r", shell=True, cwd=config.diospyros)
+        subprocess.run("make dios dios-example-gen", shell=True, cwd=config.diospyros)
 
     print("Looking for jobs...")
 
