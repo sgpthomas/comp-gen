@@ -125,7 +125,7 @@ class Job:
             "git rev-parse HEAD",
             shell=True,
             capture_output=True,
-            cwd="../../custom-diospyros",
+            cwd=self.global_config.diospyros,
         )
         with (self.dir / "commit.txt").open("w") as f:
             f.writelines(
