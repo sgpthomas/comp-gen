@@ -47,8 +47,8 @@
         "cd": [-5.0, 5.0],
         "ca": [null, 9.0],
         "fresh_egraph": true,
-        "iter_limit": 200,
-        "scheduler": "backoff",
+        "iter_limit": 10,
+        "scheduler": "simple",
         "disabled": false
       }
     ]

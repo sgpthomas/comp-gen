@@ -143,27 +143,6 @@ fn compile(opts: CompileOpts) -> Res<()> {
         PathBuf::from(format!("{}-out", opts.input.as_str()))
     };
 
-    // test
-    // let lhs_expr: egg::RecExpr<lang::VecLang> =
-    //     "(Vec (+ ?b0 ?a0) (+ ?b1 ?a1) (+ ?b2 ?a2) (+ ?b3 ?a3))"
-    //         .parse()
-    //         .unwrap();
-    // let rhs_expr: egg::RecExpr<lang::VecLang> =
-    //     "(VecAdd (Vec ?b0 ?b1 ?b2 ?b3) (Vec ?a0 ?a1 ?a2 ?a3))"
-    //         .parse()
-    //         .unwrap();
-    // let lhs = egg::CostFunction::cost_rec(
-    //     &mut cost::VecCostFn::accurate(),
-    //     &lhs_expr,
-    // );
-    // info!("==========================");
-    // let rhs = egg::CostFunction::cost_rec(
-    //     &mut cost::VecCostFn::accurate(),
-    //     &rhs_expr,
-    // );
-    // panic!("{lhs} => {rhs}");
-    // test
-
     // generate the example with dios_example_gen
     process::Command::new(opts.dios_example_bin)
         .arg("-w")
@@ -214,8 +193,6 @@ fn compile(opts: CompileOpts) -> Res<()> {
         .add_rules(
             handwritten::build_litvec_rule(opts.vector_width).into_iter(),
         )
-        // .with_filter(|cm| cm.cd > 0.0)
-        // .add_cutoff_phase("test", |cd, _ca| cd > 0.0)
         .output_rule_distribution("rule_distribution.csv", |x| x);
 
     // load configuration
@@ -225,12 +202,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
 
     // compiler.with_explanations();
     let (cost, prog, mut _eg) = compiler.compile(prog);
-    // let mut expl = eg.explain_existance(&prog);
-    // log::debug!("you exist bc:\n{}", expl.get_string());
-    // log::debug!("you exist bc:\n{}", expl.get_flat_string());
     info!("cost: {cost}");
-    // eg.dot().to_png("test.png").expect("failed to create image");
-    // info!("{}", prog.pretty(80));
 
     // write to spec.rkt
     let path = output_dir.join("res.rkt");

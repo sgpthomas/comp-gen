@@ -73,7 +73,8 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py both --name exp
+# ./sync.py both --name exp
+./sync.py both --name isaria --dir "~"
 #+end_src
 
 * Data processing

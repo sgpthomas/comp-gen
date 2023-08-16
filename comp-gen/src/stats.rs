@@ -83,19 +83,6 @@ where
     }
 
     pub fn report(&self) {
-        // let search_time: f64 =
-        //     runner.iterations.iter().map(|i| i.search_time).sum();
-        // let apply_time: f64 =
-        //     runner.iterations.iter().map(|i| i.apply_time).sum();
-        // let rebuild_time: f64 =
-        //     runner.iterations.iter().map(|i| i.rebuild_time).sum();
-        // let total_time: f64 =
-        //     runner.iterations.iter().map(|i| i.total_time).sum();
-
-        // let rebuilds: usize =
-        //     runner.iterations.iter().map(|i| i.n_rebuilds).sum();
-
-        // let eg = &runner.egraph;
         info!("  Runner report");
         info!("  =============");
         info!("    Phase: '{}' with {} rules", self.phase_name, self.rules);
@@ -109,26 +96,5 @@ where
             self.egraph_total_classes,
             self.egraph_total_size
         );
-        // eprintln!(
-        //     "    Rebuilds: {}, {:.2} per iter",
-        //     rebuilds,
-        //     (rebuilds as f64) / (iters as f64)
-        // );
-        // eprintln!("    Total time: {}", total_time);
-        // eprintln!(
-        //     "      Search:  ({:.2}) {}",
-        //     search_time / total_time,
-        //     search_time
-        // );
-        // eprintln!(
-        //     "      Apply:   ({:.2}) {}",
-        //     apply_time / total_time,
-        //     apply_time
-        // );
-        // eprintln!(
-        //     "      Rebuild: ({:.2}) {}",
-        //     rebuild_time / total_time,
-        //     rebuild_time
-        // );
     }
 }

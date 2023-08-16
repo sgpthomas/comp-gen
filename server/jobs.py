@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
+import itertools
 import json
-from datetime import datetime
-from server import unique_name
-from pathlib import Path
 import os
 import shutil
-import itertools
-from typing import Callable
 import subprocess
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
+
+from server import unique_name
 
 
 def mat_mul(
@@ -602,7 +603,7 @@ def ruleset_ablation():
     rs = list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
 
     exps = itertools.product(conv_2d_sizes, rs)
-    for (size, r) in exps:
+    for size, r in exps:
         make_2d_conv(
             Path("jobs"), *size, r, config, "alternative", key="ruleset_ablation"
         )
@@ -631,7 +632,7 @@ def ruleset_synthesis():
         # (4, 120),
     ]
     exps = itertools.product(timeouts, eqsat_settings)
-    for (t, eqsat) in exps:
+    for t, eqsat in exps:
         make_synthesis(Path("jobs"), t, eqsat_iter=eqsat[0], eqsat_timeout=eqsat[1])
 
 
@@ -671,7 +672,11 @@ def add_instruction_ruleset():
     binops = ["/", "+", "*", "-"]
     # baseline + muls + mulsgn
     make_synthesis(
-        Path("jobs"), 60000, binops=binops + ["sqrtsgn"], triops=["mac", "muls"], timeout=6000000
+        Path("jobs"),
+        60000,
+        binops=binops + ["sqrtsgn"],
+        triops=["mac", "muls"],
+        timeout=6000000,
     )
     # baseline + muls
     # make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
@@ -696,13 +701,13 @@ def test_instruction_ruleset():
         {
             "lhs": "(* (sqrt ?a) (sgn (neg ?b)))",
             "rhs": "(sqrtsgn ?a ?b)",
-            "bidirectional": True
+            "bidirectional": True,
         },
         {
             "lhs": "(Vec (sqrtsgn ?a ?b))",
             "rhs": "(VecSqrtSgn (Vec ?a) (Vec ?b))",
-            "bidirectional": True
-        }
+            "bidirectional": True,
+        },
     ]
     base_eqs = base_ruleset["eqs"]
 
@@ -737,9 +742,7 @@ def test_instruction_ruleset():
     json.dump(
         {
             "params": {},
-            "eqs": base_eqs
-            + includes(muls_ruleset["eqs"], ["VecMULS"])
-            + extra
+            "eqs": base_eqs + includes(muls_ruleset["eqs"], ["VecMULS"]) + extra,
         },
         (rulesets_dir / "sqrtsgn_muls.json").open("w"),
         indent=2,
@@ -747,7 +750,7 @@ def test_instruction_ruleset():
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
-    for (n, r) in rulesets.items():
+    for n, r in rulesets.items():
         qr_decomp(
             Path("jobs"),
             3,
@@ -853,6 +856,56 @@ def optimization_effect():
         )
 
 
+def large_kernels():
+    print("Creating large kernel jobs")
+
+    mat_mul_sizes = [
+        [25, 25, 25, 25],
+        [30, 30, 30, 30],
+        [40, 40, 40, 40],
+    ]
+    conv_2d_sizes = [
+        [20, 20, 5, 5],
+        [30, 30, 5, 5],
+        [40, 40, 5, 5],
+    ]
+    ruleset = rulesets["ruleset_timeout86400"]
+    cs = [
+        configs["loop_alt_cost_t1800"],
+    ]
+
+    # create all the jobs
+    for size, c in itertools.product(mat_mul_sizes, cs):
+        mat_mul(
+            Path("jobs"),
+            *size,
+            ruleset,
+            c,
+            "alternative",
+            key="large",
+            timeout=json.load(c.open("r"))["timeout"] * 7,
+        )
+
+    for size, c in itertools.product(conv_2d_sizes, cs):
+        make_2d_conv(
+            Path("jobs"),
+            *size,
+            ruleset,
+            c,
+            "alternative",
+            key="large",
+            timeout=json.load(c.open("r"))["timeout"] * 7,
+        )
+
+
+def alpha_beta_ablation():
+    print("Creating alpha beta jobs")
+
+    conv_2d_sizes = [[16, 16, 4, 4]]
+    ruleset = rulesets["ruleset_timeout86400"]
+    cs = [configs["loop_alt_cost_t180"]]
+
+
 def main():
     # overall_performance()
     # pruning_experiments()
@@ -864,7 +917,9 @@ def main():
     # add_instruction_ruleset()
     # test_instruction_ruleset()
     # overview_example()
-    optimization_effect()
+    # optimization_effect()
+    # large_kernels()
+    alpha_beta_ablation()
 
 
 if __name__ == "__main__":

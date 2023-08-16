@@ -1,17 +1,43 @@
-* Artifact Evaluation ASPLOS'24 AEC Spring
+#+title: Artifact Evaluation ASPLOS'24 AEC Spring
 
 Website: https://sites.google.com/view/asplos24aec/home
 HotCRP: https://asplos24aec-spring.hotcrp.com/
 
-** Building a container with =buildah=
+* Building a container with =buildah=
 :PROPERTIES:
 :header-args:async-shell: :name buildah :results none
 :END:
+
+To build, you need =buildah= and a =fedora= machine. To keep the image as small as possible, we start the image from just a base file system and use the host package manager to install packages in the image.
 
 #+begin_src async-shell
 buildah unshare ./aec/fedora-build-image.sh
 #+end_src
 
-** Installation
+* Installation
 
-other words
+** Containerized Installation (recommended for AEC)
+
+The easiest way to run experiments is to use [[https://www.docker.com/][docker]] or [[https://podman.io/][podman]]. I personally prefer =podman= because it's easier to install and get running and has better support for rootless containers. The commands use =podman=, however, you can substitute them for =docker= and they should work exactly the same.
+
+*** Starting the experiment server
+
+You can run experiments by submitting jobs to the experiment server. But first, we need to setup the server. The following command will pull an image from the =ghcr.io= container registry and start the server.
+
+#+begin_src async-shell
+mkdir -p completed jobs
+podman run --rm -it \
+       -v ./completed:/root/comp-gen/server/completed \
+       -v ./jobs:/root/comp-gen/server/jobs \
+       ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
+**** Flags explanation
+
+- =--rm= will remove the container after the command executes
+- =-it= starts the container in interactive mode and allocates a tty for the process so that we can pass stdin to the server
+- =-v host-path:container-path= maps a directory on the host to a directory in the container. We use to pass files back and forth from the container.
+
+** Manual Installation
+
+You can read the =aec/fedora-build-image.sh= script to see a complete set of instructions for fedora. It should be similar for other Linux distributions.

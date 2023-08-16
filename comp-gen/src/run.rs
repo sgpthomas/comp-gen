@@ -242,6 +242,7 @@ where
         prog: egg::RecExpr<L>,
     ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
         log::debug!("Phase config: {:#?}", self.phases);
+        self.generate_rule_histogram();
 
         // initialize eqsat to the default egraph and the
         // program that we were given
