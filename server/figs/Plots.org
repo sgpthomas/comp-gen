@@ -77,6 +77,12 @@ Sync jobs.
 ./sync.py both --name isaria --dir "~"
 #+end_src
 
+Check on server log
+
+#+begin_src async-shell :dir (ec2/tramp "isaria" "~") :results none :name sync
+podman logs --tail 10 --latest --follow
+#+end_src
+
 * Data processing
 :PROPERTIES:
 :header-args:async-shell: :dir (sgt/dir "server") :results none
@@ -103,7 +109,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ 
 Process all the log files and generate data csvs.
 
 #+begin_src async-shell :name processed
-./process.py all completed/ --force
+./process.py all completed/
 #+end_src
 
 Run query to generate aggregated data files
@@ -116,7 +122,7 @@ Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
 # ./query2.py update optimization
-./query2.py update est_cycles
+./query2.py update large
 #+end_src
 
 * Pictures!!
@@ -136,6 +142,7 @@ library(tikzDevice)
 library(xtable)
 library(gtable)
 library(grid)
+library(ggbreak)
 #+end_src
 
 ** DONE Cycle count
@@ -434,6 +441,50 @@ data %>%
 
 #+RESULTS:
 [[file:greedy_cost.svg]]
+
+** Rule Distribution
+
+#+begin_src R :results graphics file :file rule_distribution.svg
+source("R/rule_distribution.R")
+rule_distribution()
+#+end_src
+
+#+RESULTS:
+[[file:rule_distribution.svg]]
+
+#+begin_src R :results graphics file :file play.svg
+L <- 300
+H <- 1500
+W <- 100
+
+## f <- function(x) x
+## g <- function(x) x - H + L + W
+## m <- function(x) (((g(H) - f(L)) / (H - L)) * (x - L)) + f(L)
+## minv <- function(x) (((H - L) / (g(H) - f(L))) * (x - L)) + f(L)
+
+tibble(x = -2020:2020) %>%
+  mutate(
+    ## fx = f(x),
+    ## gx = g(x),
+    ## mx = m(x),
+    ## minvx = minv(x),
+    px    = piecewise(L, H, W)(x),
+    pxinv = piecewise(L, H, W, inv=T)(x)
+  ) %>%
+  ## print(n=100) %>%
+  ggplot(aes(x = x)) +
+  ylim(-2050, 2050) + xlim(-2050, 2050) +
+  ## geom_line(aes(y = fx), color="red") +
+  ## geom_line(aes(y = mx), color="blue") +
+  ## geom_line(aes(y = minvx), color="blue") +
+  ## geom_line(aes(y = gx), color="green") +
+  geom_line(aes(y = px), color="black", size=2) +
+  geom_line(aes(y = pxinv), color="blue", size=2) +
+  theme_minimal()
+#+end_src 
+
+#+RESULTS:
+[[file:play.svg]]
 
 * Tables
 :PROPERTIES:

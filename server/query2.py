@@ -1,13 +1,15 @@
 #!/usr/bin/env python3.11
 
-import click
 import json
-import pandas as pd
-from pathlib import Path
-from dfply import filter_by, X, select, mutate
-from utils import sort_values, sorter, reset_index, display, agg, replace, iloc, to_csv
 from datetime import datetime
+from pathlib import Path
 
+import click
+import pandas as pd
+from dfply import X, filter_by, mutate, select
+
+from utils import (agg, display, iloc, replace, reset_index, sort_values,
+                   sorter, to_csv)
 
 QUERIES = {}
 
@@ -18,7 +20,7 @@ def query(key=None, pinned_date=None, sort_keys=None):
             "key": key,
             "pinned_date": pinned_date,
             "func": func,
-            "sort_keys": sort_keys if sort_keys is not None else []
+            "sort_keys": sort_keys if sort_keys is not None else [],
         }
 
     return inner
@@ -38,18 +40,23 @@ def all_experiments(base="completed", query_key=None, query_time=None):
         else:
             name = config["name"]
             params = "0"
-        res.append(pd.DataFrame(data={
-            "date": [date],
-            "key": [key],
-            "benchmark": [name],
-            "params": [params],
-            "exp_dir": [exp_dir],
-            "datetime": [datetime.strptime(date, "%b%d-%H%M")]
-        }))
-    exps = pd.concat(res) >> sort_values(
-        by=["date", "key", "benchmark", "params"],
-        key=sorter
-    ) >> reset_index(drop=True)
+        res.append(
+            pd.DataFrame(
+                data={
+                    "date": [date],
+                    "key": [key],
+                    "benchmark": [name],
+                    "params": [params],
+                    "exp_dir": [exp_dir],
+                    "datetime": [datetime.strptime(date, "%b%d-%H%M")],
+                }
+            )
+        )
+    exps = (
+        pd.concat(res)
+        >> sort_values(by=["date", "key", "benchmark", "params"], key=sorter)
+        >> reset_index(drop=True)
+    )
 
     if query_key is not None:
         exps >>= filter_by(X.key == query_key)
@@ -108,17 +115,21 @@ def timed_out(exp_path):
 
 
 def total_time(exp_path):
-    df = memory_df(exp_path) >> filter_by(X.ram_used != "timeout", X.ram_used != "killed")
+    df = memory_df(exp_path) >> filter_by(
+        X.ram_used != "timeout", X.ram_used != "killed"
+    )
     if len(df.index) == 1:
         return df["timestamp"].values[0]
     elif len(df.index) > 1:
-        return df["timestamp"] >> agg(["max", "min"]) >> agg(lambda x: x["max"] - x["min"])
+        return (
+            df["timestamp"] >> agg(["max", "min"]) >> agg(lambda x: x["max"] - x["min"])
+        )
     else:
         return -1
 
 
 def extraction_time(exp_path):
-    extraction_df = (data_df(exp_path) >> filter_by(X.name == "extraction"))
+    extraction_df = data_df(exp_path) >> filter_by(X.name == "extraction")
     return extraction_df["value"].astype("float").sum()
 
 
@@ -159,17 +170,25 @@ def ruleset_timeout(exp_path):
 
 
 def phase_count(exp_path, phase):
-    return (data_df(exp_path)
-            >> filter_by(X.phase.str.contains(phase))
-            >> filter_by(X.iteration == "report")
-            >> filter_by(X.name == "iterations"))["value"].count()
+    return (
+        data_df(exp_path)
+        >> filter_by(X.phase.str.contains(phase))
+        >> filter_by(X.iteration == "report")
+        >> filter_by(X.name == "iterations")
+    )["value"].count()
 
 
 def phase_iterations(exp_path, phase):
-    return (data_df(exp_path)
+    return (
+        (
+            data_df(exp_path)
             >> filter_by(X.phase.str.contains(phase))
             >> filter_by(X.iteration == "report")
-            >> filter_by(X.name == "iterations"))["value"].astype('int').sum()
+            >> filter_by(X.name == "iterations")
+        )["value"]
+        .astype("int")
+        .sum()
+    )
 
 
 def pruning_ruleset(exp_path):
@@ -179,10 +198,16 @@ def pruning_ruleset(exp_path):
 
 
 def number_iterations_timeout(exp_path):
-    (data_df(exp_path)
-     >> filter_by(X.name == "time")
-     >> filter_by(X.phase.str.contains("pre") | X.phase.str.contains("compile") | X.phase.str.contains("opt"))
-     >> display())
+    (
+        data_df(exp_path)
+        >> filter_by(X.name == "time")
+        >> filter_by(
+            X.phase.str.contains("pre")
+            | X.phase.str.contains("compile")
+            | X.phase.str.contains("opt")
+        )
+        >> display()
+    )
     return 0
 
 
@@ -196,30 +221,37 @@ def diospyros_cycles(egg_kernel_csv):
 
     stats = json.load((exp_dir / "stats.json").open("r"))
     lines = (exp_dir / "compile-log.txt").open("r").readlines()
-    eqsat_times = list(filter(
-        lambda x: x != 0,
-        map(lambda x: int(x.split(": ")[1]) if "Eqsat" in x else 0, lines)
-    ))
+    eqsat_times = list(
+        filter(
+            lambda x: x != 0,
+            map(lambda x: int(x.split(": ")[1]) if "Eqsat" in x else 0, lines),
+        )
+    )
     eqsat_time = 0 if len(eqsat_times) == 0 else eqsat_times[0] / 1000.0
 
     try:
-        return (pd.read_csv(egg_kernel_csv)
-                >> mutate(
-                    benchmark=benchmark,
-                    params=params,
-                    total_time=stats["time"],
-                    eqsat_time=eqsat_time,
-                    max_ram_used=stats["memory"] / float(10 ** 9),
-                    saturated=stats["saturated"])
-                >> replace({
+        return (
+            pd.read_csv(egg_kernel_csv)
+            >> mutate(
+                benchmark=benchmark,
+                params=params,
+                total_time=stats["time"],
+                eqsat_time=eqsat_time,
+                max_ram_used=stats["memory"] / float(10**9),
+                saturated=stats["saturated"],
+            )
+            >> replace(
+                {
                     "Diospyros": "dios",
                     "Naive": "naive",
                     "Naive hard size vec": "naive.clang",
                     "Naive hard size": "naive.fixed",
                     "Nature": "nature",
-                    "Eigen": "eigen"
-                })
-                >> select([
+                    "Eigen": "eigen",
+                }
+            )
+            >> select(
+                [
                     "kernel",
                     "benchmark",
                     "params",
@@ -227,8 +259,10 @@ def diospyros_cycles(egg_kernel_csv):
                     "total_time",
                     "eqsat_time",
                     "max_ram_used",
-                    "saturated"
-                ]))
+                    "saturated",
+                ]
+            )
+        )
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
 
@@ -236,89 +270,80 @@ def diospyros_cycles(egg_kernel_csv):
 @query(key="performance", pinned_date="Apr15-1612")
 def est_cycles(row):
     x = row.exp_dir
-    return pd.DataFrame(data={
-        "kernel": ["compgen"],
-        "benchmark": [row.benchmark],
-        "params": [row.params],
-        "exp": [row.exp_dir.name],
-        "ruleset": [ruleset(x)],
-        "timeout": [soft_timeout(x)],
-        "hard_timeout": [hard_timeout(x)],
-        "cycles": [cycles(x)],
-        "cost": [egraph_cost(x)],
-        "compile_time": [compile_time(x)],
-        "extraction_time": [extraction_time(x)],
-        "total_time": [total_time(x)],
-        "max_ram_used": [max_ram(x)],
-        "pre_iterations": [phase_iterations(x, "pre")],
-        "compile_iterations": [phase_iterations(x, "compile")],
-        "n_timeout": [number_iterations_timeout(x)],
-        "opt_iter": [phase_iterations(x, "opt")],
-    })
+    return pd.DataFrame(
+        data={
+            "kernel": ["compgen"],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "ruleset": [ruleset(x)],
+            "timeout": [soft_timeout(x)],
+            "hard_timeout": [hard_timeout(x)],
+            "cycles": [cycles(x)],
+            "cost": [egraph_cost(x)],
+            "compile_time": [compile_time(x)],
+            "extraction_time": [extraction_time(x)],
+            "total_time": [total_time(x)],
+            "max_ram_used": [max_ram(x)],
+            "pre_iterations": [phase_iterations(x, "pre")],
+            "compile_iterations": [phase_iterations(x, "compile")],
+            "n_timeout": [number_iterations_timeout(x)],
+            "opt_iter": [phase_iterations(x, "opt")],
+        }
+    )
 
 
 @query(key="diospyros", pinned_date="Apr16-1712")
 def diospyros(row):
     print(row)
-    return (pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
-            >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)
-            >> reset_index(drop=True, names=["index"]))
+    return (
+        pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
+        >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)
+        >> reset_index(drop=True, names=["index"])
+    )
 
 
 @query(key="instruction", pinned_date="Apr18-1245")
 def instruction(row):
-    return pd.DataFrame(data={
-        "date": [row.date],
-        "benchmark": [row.benchmark],
-        "params": [row.params],
-        "exp": [row.exp_dir.name],
-        "rules": [ruleset(row.exp_dir)],
-        "cycles": [cycles(row.exp_dir)],
-        "cost": [egraph_cost(row.exp_dir)],
-        "dir": [row.exp_dir]
-    })
+    return pd.DataFrame(
+        data={
+            "date": [row.date],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "rules": [ruleset(row.exp_dir)],
+            "cycles": [cycles(row.exp_dir)],
+            "cost": [egraph_cost(row.exp_dir)],
+            "dir": [row.exp_dir],
+        }
+    )
 
 
 @query(key="ruleset_ablation", pinned_date="Apr18-1238")
 def ruleset_ablation(row):
-    return pd.DataFrame(data={
-        "date": [row.date],
-        "benchmark": [row.benchmark],
-        "params": [row.params],
-        "exp": [row.exp_dir.name],
-        "ruleset": [ruleset_timeout(row.exp_dir)],
-        "cost": [egraph_cost(row.exp_dir)],
-        "cycles": [cycles(row.exp_dir)],
-        "timed_out": [timed_out(row.exp_dir)],
-        "dir": [row.exp_dir]
-    })
-
-
-@query(key="pruning", pinned_date="Apr18-1240", sort_keys=["benchmark", "params", "pruning"])
-def pruning(row):
-    return pd.DataFrame(data={
-        "date": [row.date],
-        "benchmark": [row.benchmark],
-        "params": [row.params],
-        "exp": [row.exp_dir.name],
-        "pruning": [pruning_ruleset(row.exp_dir)],
-        "cycles": [cycles(row.exp_dir)],
-        "cost": [egraph_cost(row.exp_dir)],
-        "soft_timeout": [soft_timeout(row.exp_dir)],
-        "killed": [killed(row.exp_dir)],
-        "compile_time": [compile_time(row.exp_dir)],
-        "memory_used": [max_ram(row.exp_dir)]
-    })
+    return pd.DataFrame(
+        data={
+            "date": [row.date],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "ruleset": [ruleset_timeout(row.exp_dir)],
+            "cost": [egraph_cost(row.exp_dir)],
+            "cycles": [cycles(row.exp_dir)],
+            "timed_out": [timed_out(row.exp_dir)],
+            "dir": [row.exp_dir],
+        }
+    )
 
 
 @query(
     key="pruning",
-    sort_keys=["benchmark", "params", "pruning"]
+    pinned_date="Apr18-1240",
+    sort_keys=["benchmark", "params", "pruning"],
 )
-def pruning_temp(row):
-    if all([soft_timeout(row.exp_dir) == 360,
-            pruning_ruleset(row.exp_dir)]):
-        return pd.DataFrame(data={
+def pruning(row):
+    return pd.DataFrame(
+        data={
             "date": [row.date],
             "benchmark": [row.benchmark],
             "params": [row.params],
@@ -329,36 +354,84 @@ def pruning_temp(row):
             "soft_timeout": [soft_timeout(row.exp_dir)],
             "killed": [killed(row.exp_dir)],
             "compile_time": [compile_time(row.exp_dir)],
-            "memory_used": [max_ram(row.exp_dir)]
-        })
+            "memory_used": [max_ram(row.exp_dir)],
+        }
+    )
+
+
+@query(key="pruning", sort_keys=["benchmark", "params", "pruning"])
+def pruning_temp(row):
+    if all([soft_timeout(row.exp_dir) == 360, pruning_ruleset(row.exp_dir)]):
+        return pd.DataFrame(
+            data={
+                "date": [row.date],
+                "benchmark": [row.benchmark],
+                "params": [row.params],
+                "exp": [row.exp_dir.name],
+                "pruning": [pruning_ruleset(row.exp_dir)],
+                "cycles": [cycles(row.exp_dir)],
+                "cost": [egraph_cost(row.exp_dir)],
+                "soft_timeout": [soft_timeout(row.exp_dir)],
+                "killed": [killed(row.exp_dir)],
+                "compile_time": [compile_time(row.exp_dir)],
+                "memory_used": [max_ram(row.exp_dir)],
+            }
+        )
     else:
         return pd.DataFrame()
 
 
-@query(key="optimization", pinned_date="Apr18-1100", sort_keys=["benchmark", "params", "optimization"])
+@query(
+    key="optimization",
+    pinned_date="Apr18-1100",
+    sort_keys=["benchmark", "params", "optimization"],
+)
 def optimization(row):
     x = row.exp_dir
-    return pd.DataFrame(data={
-        "kernel": ["compgen"],
-        "benchmark": [row.benchmark],
-        "params": [row.params],
-        "exp": [row.exp_dir.name],
-        "optimization": ["w_opt" in compile_json(x)],
-        "timeout": [soft_timeout(x)],
-        "hard_timeout": [hard_timeout(x)],
-        "cycles": [cycles(x)],
-        "cost": [egraph_cost(x)],
-        "dir": [row.exp_dir]
-    })
+    return pd.DataFrame(
+        data={
+            "kernel": ["compgen"],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "optimization": ["w_opt" in compile_json(x)],
+            "timeout": [soft_timeout(x)],
+            "hard_timeout": [hard_timeout(x)],
+            "cycles": [cycles(x)],
+            "cost": [egraph_cost(x)],
+            "dir": [row.exp_dir],
+        }
+    )
 
 
 @query(key="performance", pinned_date="Apr11-1244")
 def long(row):
     x = row.exp_dir
     if soft_timeout(x) == 1800:
-        return pd.DataFrame(data={
+        return pd.DataFrame(
+            data={
+                "date": [row.date],
+                "kernel": ["compgen"],
+                "benchmark": [row.benchmark],
+                "params": [row.params],
+                "exp": [row.exp_dir.name],
+                "timeout": [soft_timeout(x)],
+                "compile_time": [compile_time(x)],
+                "cycles": [cycles(x)],
+                "cost": [egraph_cost(x)],
+                "dir": [row.exp_dir],
+            }
+        )
+    else:
+        return pd.DataFrame()
+
+
+@query(key="large", pinned_date="Aug16-1034")
+def large(row):
+    x = row.exp_dir
+    return pd.DataFrame(
+        data={
             "date": [row.date],
-            "kernel": ["compgen"],
             "benchmark": [row.benchmark],
             "params": [row.params],
             "exp": [row.exp_dir.name],
@@ -366,10 +439,11 @@ def long(row):
             "compile_time": [compile_time(x)],
             "cycles": [cycles(x)],
             "cost": [egraph_cost(x)],
-            "dir": [row.exp_dir]
-        })
-    else:
-        return pd.DataFrame()
+            "killed": [killed(row.exp_dir)],
+            "compile_time": [compile_time(row.exp_dir)],
+            "memory_used": [max_ram(row.exp_dir)],
+        }
+    )
 
 
 @click.group()
@@ -391,17 +465,19 @@ def ls(key, time, metric):
             "key": [row.key],
             "benchmark": [row.benchmark],
             "params": [row.params],
-            "exp_dir": [row.exp_dir]
+            "exp_dir": [row.exp_dir],
         }
         for m in metric:
-
-            val = None
             if m == "soft_timeout":
-                val = soft_timeout(row.exp_dir)
-            else:
-                raise Exception
+                data[m] = soft_timeout(row.exp_dir)
+            if m == "cost":
+                data[m] = egraph_cost(row.exp_dir)
+            # if m == "soft_timeout":
+            #     val =
+            # else:
+            #     raise Exception
 
-            data[m] = val
+            # data[m] = val
 
         res.append(pd.DataFrame(data=data))
 
@@ -427,10 +503,12 @@ def update(name, time, commit, diff):
     res = []
     for _, row in exps.iterrows():
         res.append(config["func"](row))
-    df = (pd.concat(res)
-          >> sort_values(by=config["sort_keys"], key=sorter)
-          >> reset_index(drop=True)
-          >> display())
+    df = (
+        pd.concat(res)
+        >> sort_values(by=config["sort_keys"], key=sorter)
+        >> reset_index(drop=True)
+        >> display()
+    )
 
     out = Path("figs") / "data" / f"{name}.csv"
 

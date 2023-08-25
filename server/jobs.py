@@ -901,9 +901,19 @@ def large_kernels():
 def alpha_beta_ablation():
     print("Creating alpha beta jobs")
 
-    conv_2d_sizes = [[16, 16, 4, 4]]
+    conv_2d_size = [16, 16, 4, 4]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = [configs["loop_alt_cost_t180"]]
+    cs = dict_from_dir(Path("../experiments/configs/ablation"))
+    for c in cs.values():
+        make_2d_conv(
+            Path("jobs"),
+            *conv_2d_size,
+            ruleset,
+            c,
+            "alternative",
+            key="alpha-beta",
+            timeout=json.load(c.open("r"))["timeout"] * 5,
+        )
 
 
 def main():
