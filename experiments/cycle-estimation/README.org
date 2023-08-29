@@ -25,7 +25,7 @@ That's it! Now running =xt-clang= and corresponding compilers should just "work"
 
 Here is the command to start the license server:
 
-#+begin_src async-shell :dir ~/Research/xtensa :results silent
+#+begin_src async-shell :dir ~/Research/xtensa :results silent :name lmgrd
 LM_LICENSE_FILE=licenses/LICENSE ./x64_lsb/lmgrd
 #+end_src
 

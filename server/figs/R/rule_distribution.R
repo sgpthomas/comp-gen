@@ -43,8 +43,8 @@ rule_distribution <- function() {
     geom_jitter(
       position = position_jitter(
         seed=10,
-        width=1,
-        height=1
+        width=0.5,
+        height=0.5
       ),
       size=4,
       alpha=0.5

@@ -211,6 +211,15 @@ def number_iterations_timeout(exp_path):
     return 0
 
 
+def extract_alpha_beta(exp_path):
+    compile_config = json.load((exp_path / "config.json").open("r"))["metadata"][
+        "compile.json"
+    ]
+    stem = Path(compile_config).stem
+    _, alpha, beta = stem.split("_")
+    return float(alpha[1:]), float(beta[1:])
+
+
 def diospyros_cycles(egg_kernel_csv):
     exp_dir = Path(egg_kernel_csv.parents[0])
     benchmark = egg_kernel_csv.parents[1].stem
@@ -438,6 +447,28 @@ def large(row):
             "timeout": [soft_timeout(x)],
             "compile_time": [compile_time(x)],
             "cycles": [cycles(x)],
+            "cost": [egraph_cost(x)],
+            "killed": [killed(row.exp_dir)],
+            "compile_time": [compile_time(row.exp_dir)],
+            "memory_used": [max_ram(row.exp_dir)],
+        }
+    )
+
+
+@query(key="alpha-beta", pinned_date="Aug17-0828")
+def alpha_beta(row):
+    x = row.exp_dir
+    return pd.DataFrame(
+        data={
+            "date": [row.date],
+            "benchmark": [row.benchmark],
+            "params": [row.params],
+            "exp": [row.exp_dir.name],
+            "timeout": [soft_timeout(x)],
+            "compile_time": [compile_time(x)],
+            "cycles": [cycles(x)],
+            "alpha": [extract_alpha_beta(x)[0]],
+            "beta": [extract_alpha_beta(x)[1]],
             "cost": [egraph_cost(x)],
             "killed": [killed(row.exp_dir)],
             "compile_time": [compile_time(row.exp_dir)],

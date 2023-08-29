@@ -93,10 +93,10 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 (header args for doing cycle estimation from non-thelio computers)
 
 #+header: :dir (sgt/dir "server")
-#+begin_src async-shell :nameestimation
+#+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key ruleset_ablation
+./estimate.py many latest --key alpha-beta
 #+end_src
 
 #+begin_src async-shell :name sync
@@ -122,7 +122,8 @@ Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
 # ./query2.py update optimization
-./query2.py update large
+# ./query2.py update large
+./query2.py update alpha_beta --commit
 #+end_src
 
 * Pictures!!
@@ -142,7 +143,6 @@ library(tikzDevice)
 library(xtable)
 library(gtable)
 library(grid)
-library(ggbreak)
 #+end_src
 
 ** DONE Cycle count
@@ -451,6 +451,18 @@ rule_distribution()
 
 #+RESULTS:
 [[file:rule_distribution.svg]]
+
+#+begin_src R :results graphics file :file alpha_beta.svg
+data <- read_csv("data/alpha_beta.csv")
+
+data %>%
+  ggplot(aes(x = as.factor(beta), y = as.factor(alpha), fill = cycles)) +
+  geom_tile(linewidth=1000)
+
+#+end_src
+
+#+RESULTS:
+[[file:alpha_beta.svg]]
 
 #+begin_src R :results graphics file :file play.svg
 L <- 300

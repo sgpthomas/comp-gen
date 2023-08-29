@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
-import click
-from pathlib import Path
 import json
 import shutil
 import subprocess
-import pandas as pd
 from datetime import datetime
-import process as p
+from pathlib import Path
+
+import click
+import pandas as pd
 from dfply import mutate
-from query import reset_index, to_csv, select
+
+import process as p
 from correlate import correlate
+from query import reset_index, select, to_csv
 
 
 def param_strings(benchmark, params):
@@ -22,7 +24,7 @@ def param_strings(benchmark, params):
             f"-DI_ROWS='{i_rows}'",
             f"-DI_COLS={i_cols}",
             f"-DF_ROWS={f_rows}",
-            f"-DF_COLS={f_cols}"
+            f"-DF_COLS={f_cols}",
         ]
     elif benchmark == "q-prod":
         return []
@@ -37,21 +39,19 @@ def param_strings(benchmark, params):
             f"-DB_COLS='{b_cols}'",
         ]
     elif benchmark == "qr-decomp":
-        return [
-            f"-DSIZE='{params}'"
-        ]
+        return [f"-DSIZE='{params}'"]
     else:
         raise Exception(f"Don't know how to generate param string for {benchmark}")
 
 
 def estimate_kernel(
-        exp_dir,
-        force=False,
-        results="results",
-        override="",
-        benchmark_name=None,
-        params=None,
-        debug=False
+    exp_dir,
+    force=False,
+    results="results",
+    override="",
+    benchmark_name=None,
+    params=None,
+    debug=False,
 ):
     try:
         exp_path = Path(exp_dir)
@@ -75,11 +75,15 @@ def estimate_kernel(
 
         # if a kernel file doesn't exist, try pulling one out of the log file
         if force or not (exp_path / results / "kernel.c").exists():
-
             # if res.rkt doesn't exists, try pulling one from the log
             if not (exp_path / results / "res.rkt").exists():
                 stderr_log = exp_dir / "stderr.log"
-                progs = list(filter(lambda l: "Best program: " in l, stderr_log.open("r").readlines()))
+                progs = list(
+                    filter(
+                        lambda l: "Best program: " in l,
+                        stderr_log.open("r").readlines(),
+                    )
+                )
                 if len(progs) == 0:
                     print("No kernel found.")
                     return
@@ -90,11 +94,19 @@ def estimate_kernel(
                     res.write(prog)
 
             # we have a res.rkt now, compile it
-            subprocess.run([
-                "../../diospyros/dios", "-w", "4",
-                "--egg", "--suppress-git", "-o", str(exp_path / results / "kernel.c"),
-                str(exp_path / results),
-            ], timeout=60 * 60)
+            subprocess.run(
+                [
+                    "../../diospyros/dios",
+                    "-w",
+                    "4",
+                    "--egg",
+                    "--suppress-git",
+                    "-o",
+                    str(exp_path / results / "kernel.c"),
+                    str(exp_path / results),
+                ],
+                timeout=60 * 60,
+            )
 
             if not (exp_path / results / "kernel.c").exists():
                 print("Failed to produce kernel.c!")
@@ -107,17 +119,23 @@ def estimate_kernel(
         cmd = [
             "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++",
             # "~/Research/xtensa/RI-2018.0-linux/XtensaTools/bin/xt-xc++",
-            "-std=c++11", "-mlongcalls",
-            "-O3", "-LNO:simd", "-fvectorize",
+            "-std=c++11",
+            "-mlongcalls",
+            "-O3",
+            "-LNO:simd",
+            "-fvectorize",
             "-mtext-section-literals",
             "-DXCHAL_HAVE_FUSIONG_SP_VFPU=1",
-            "-DOUTFILE='\"cycles.csv\"'"
+            "-DOUTFILE='\"cycles.csv\"'",
         ]
         cmd += param_strings(benchmark_name, params)
         cmd += [
-            "-I", "/usr/include/eigen3",
-            "-I", "~/Research/xtensa/fusiong3_library/include",
-            "-I", "~/Research/xtensa/fusiong3_library/include_private",
+            "-I",
+            "/usr/include/eigen3",
+            "-I",
+            "~/Research/xtensa/fusiong3_library/include",
+            "-I",
+            "~/Research/xtensa/fusiong3_library/include_private",
             "kernel.c",
         ]
 
@@ -128,13 +146,17 @@ def estimate_kernel(
             # run once to generate .s files, and then again to generate object file
 
             if debug:
-                subprocess.run(" ".join(cmd + ["-S"]), shell=True,
-                               cwd=exp_path / results, timeout=60 * 5)
+                subprocess.run(
+                    " ".join(cmd + ["-S"]),
+                    shell=True,
+                    cwd=exp_path / results,
+                    timeout=60 * 5,
+                )
             subprocess.run(
                 " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
                 shell=True,
                 cwd=exp_path / results,
-                timeout=60 * 60
+                timeout=60 * 60,
             )
 
             print("Done")
@@ -145,18 +167,24 @@ def estimate_kernel(
         if debug:
             xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
         xt_run_cmd += ["kernel.o"]
-        subprocess.run(" ".join(xt_run_cmd), shell=True, cwd=exp_path / results, capture_output=False)
+        subprocess.run(
+            " ".join(xt_run_cmd),
+            shell=True,
+            cwd=exp_path / results,
+            capture_output=False,
+        )
         print("Done")
 
         df = pd.read_csv(exp_path / results / "cycles.csv")
 
         if override != "":
-            df = (df.replace(to_replace="compgen", value=override)
-                  >> to_csv(exp_path / results / "cycles.csv"))
+            df = df.replace(to_replace="compgen", value=override) >> to_csv(
+                exp_path / results / "cycles.csv"
+            )
 
         print(df)
         return df
-    except subprocess.TimeoutExpired:
+    except (subprocess.TimeoutExpired, FileNotFoundError):
         print("Timeout!!")
         cycles_csv = exp_path / results / "cycles.csv"
         cycles_csv.touch()
@@ -183,7 +211,7 @@ def single(exp_dir, force, results, name, params, debug):
         force=force,
         benchmark_name=name,
         params=params,
-        debug=debug
+        debug=debug,
     )
 
 
@@ -194,7 +222,6 @@ def single(exp_dir, force, results, name, params, debug):
 @click.option("--override-name", default="")
 @click.option("--debug", is_flag=True)
 def many(date, force, key, override_name, debug):
-
     experiments = {}
 
     # gather all experiments with "performance" key
@@ -202,11 +229,13 @@ def many(date, force, key, override_name, debug):
         exp_dir = Path(config_path.parents[0])
         config = json.load(config_path.open("r"))
 
-        if all([
+        if all(
+            [
                 "key" in config and config["key"] == key,
                 # force => cycles.csv doesn't exist
-                force or (not (exp_dir / "results" / "cycles.csv").exists())
-        ]):
+                force or (not (exp_dir / "results" / "cycles.csv").exists()),
+            ]
+        ):
             exp_date = config["date"]
             if exp_date in experiments:
                 experiments[exp_date].append(exp_dir)
@@ -216,14 +245,12 @@ def many(date, force, key, override_name, debug):
     # handle the case when date is the string "latest"
     if date == "latest":
         options = sorted(
-            experiments.keys(),
-            key=lambda x: datetime.strptime(x, "%b%d-%H%M")
+            experiments.keys(), key=lambda x: datetime.strptime(x, "%b%d-%H%M")
         )
         date = options[-1]
     elif date == "list":
         options = sorted(
-            experiments.keys(),
-            key=lambda x: datetime.strptime(x, "%b%d-%H%M")
+            experiments.keys(), key=lambda x: datetime.strptime(x, "%b%d-%H%M")
         )
         for k in options:
             print(f"{k}")
@@ -259,18 +286,14 @@ def log(exp_dir, results):
                 start=p.matches(r"Iteration (\d+)", lambda m: int(m.group(1))),
                 combine=p.dict_combine,
                 data=p.Combine(
+                    p.First(r"Best program: (\(.*\))", lambda m: {"prog": m.group(1)}),
                     p.First(
-                        r"Best program: (\(.*\))",
-                        lambda m: {"prog": m.group(1)}
+                        r"Best cost so far: (\d+.\d+)", lambda m: {"cost": m.group(1)}
                     ),
-                    p.First(
-                        r"Best cost so far: (\d+.\d+)",
-                        lambda m: {"cost": m.group(1)}
-                    ),
-                    combine=p.dict_combine
-                )
+                    combine=p.dict_combine,
+                ),
             )
-        )
+        ),
     )
 
     # setup new results directory to do estimating in
@@ -296,7 +319,6 @@ def log(exp_dir, results):
     n = 0
     for phase_name, iters in prog_filter.run(stderr_log).items():
         for iter_n, data in iters[0].items():
-
             if "prog" not in data:
                 continue
 
@@ -305,11 +327,18 @@ def log(exp_dir, results):
                 f.write(data["prog"])
                 f.write("\n")
             shutil.copy(iter_results / "res.rkt", iter_results / f"res-{n}.rkt")
-            subprocess.run([
-                "../../diospyros/dios", "-w", "4",
-                "--egg", "--suppress-git", "-o", str(iter_results / "kernel.c"),
-                str(iter_results)
-            ])
+            subprocess.run(
+                [
+                    "../../diospyros/dios",
+                    "-w",
+                    "4",
+                    "--egg",
+                    "--suppress-git",
+                    "-o",
+                    str(iter_results / "kernel.c"),
+                    str(iter_results),
+                ]
+            )
             res.append(
                 estimate_kernel(
                     exp_dir,
@@ -317,12 +346,9 @@ def log(exp_dir, results):
                     results="iter_results",
                     benchmark_name=benchmark_name,
                     params=params,
-                    debug=True
+                    debug=True,
                 )
-                >> mutate(
-                    phase=phase_name,
-                    iteration=iter_n,
-                    cost=data["cost"])
+                >> mutate(phase=phase_name, iteration=iter_n, cost=data["cost"])
                 >> select(["kernel", "cycles", "cost", "correct", "phase", "iteration"])
             )
             shutil.copy(iter_results / "kernel.s", iter_results / f"kernel-{n}.s")
@@ -331,9 +357,11 @@ def log(exp_dir, results):
             correlate(iter_results / f"kernel-{n}.s", iter_results / f"kernel-{n}.c")
             n += 1
             print("Done")
-    df = (pd.concat(res)
-          >> reset_index(drop=True)
-          >> to_csv(exp_dir / "iter_estimation.csv"))
+    df = (
+        pd.concat(res)
+        >> reset_index(drop=True)
+        >> to_csv(exp_dir / "iter_estimation.csv")
+    )
     print(df)
 
 
