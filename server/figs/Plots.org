@@ -80,7 +80,7 @@ Sync jobs.
 Check on server log
 
 #+begin_src async-shell :dir (ec2/tramp "isaria" "~") :results none :name sync
-podman logs --tail 10 --latest --follow
+podman logs --tail 10 --latest
 #+end_src
 
 * Data processing
@@ -444,18 +444,18 @@ data %>%
 
 ** Rule Distribution
 
-
 #+header: :width 8 :height 4
 
 #+header: :width 3.3 :height 2
 #+begin_src R :results graphics file :file rule_distribution.tikz
 source("R/rule_distribution.R")
-rule_distribution()
+alpha_v <- 15
+beta_v <- 12
+rule_distribution(alpha=alpha_v, beta=beta_v)
 #+end_src
 
 #+RESULTS:
 [[file:rule_distribution.tikz]]
-
 
 #+header: :width 8 :height 4
 
@@ -464,31 +464,38 @@ rule_distribution()
 data <- read_csv("data/alpha_beta.csv")
 
 data %>%
-  ggplot(aes(x = as.factor(beta), y = as.factor(alpha), fill = cycles)) +
+  ggplot(aes(x = as.factor(beta * 2), y = as.factor(alpha), fill = cycles)) +
   geom_tile(
     color="black"
+  ) +
+  geom_tile(
+    aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
+    color="salmon", lwd=0.4
+  ) +
+  geom_tile(
+    aes(color=killed)
   ) +
   labs(
     title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
     x="$\\beta$ (aggregate cost)",
     y="$\\alpha$ (cost differential)"
   ) +
-  scale_fill_gradient(
-    ## low = "yellow",
-    ## high = "red",
-    na.value = NA
+  scale_fill_gradient(na.value = NA) +
+  scale_color_manual(values = c("black", "red")) +
+  guides(
+    fill = guide_colorbar(
+      barwidth=0.3,
+      barheight=8,
+      ticks=F
+    ),
+    color = F
   ) +
-  guides(fill = guide_colorbar(
-           barwidth=0.3,
-           barheight=8,
-           ticks=F
-         )) +
   theme(
-    axis.title.x = element_text(size=8, face="bold"),
-    axis.title.y = element_text(size=8, face="bold"),
+    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.y = element_text(size=7, face="bold"),
     
-    axis.text.x = element_text(size=8, color="black"),
-    axis.text.y = element_text(size=8, color="black"),
+    axis.text.x = element_text(size=6, color="black"),
+    axis.text.y = element_text(size=7, color="black"),
 
     legend.position = "right",
     legend.background = element_blank(),
@@ -496,6 +503,7 @@ data %>%
     legend.title = element_blank(),
     legend.key.size = unit(0.75, "lines"),
     legend.box.spacing = unit(0, "lines"), 
+    legend.spacing.x = unit(0.2, "lines"),
     legend.margin = margin(0, 0, 5, 2),
 
     panel.background = element_blank(),
@@ -511,40 +519,6 @@ data %>%
 
 #+RESULTS:
 [[file:alpha_beta.tikz]]
-
-#+begin_src R :results graphics file :file play.svg
-L <- 300
-H <- 1500
-W <- 100
-
-## f <- function(x) x
-## g <- function(x) x - H + L + W
-## m <- function(x) (((g(H) - f(L)) / (H - L)) * (x - L)) + f(L)
-## minv <- function(x) (((H - L) / (g(H) - f(L))) * (x - L)) + f(L)
-
-tibble(x = -2020:2020) %>%
-  mutate(
-    ## fx = f(x),
-    ## gx = g(x),
-    ## mx = m(x),
-    ## minvx = minv(x),
-    px    = piecewise(L, H, W)(x),
-    pxinv = piecewise(L, H, W, inv=T)(x)
-  ) %>%
-  ## print(n=100) %>%
-  ggplot(aes(x = x)) +
-  ylim(-2050, 2050) + xlim(-2050, 2050) +
-  ## geom_line(aes(y = fx), color="red") +
-  ## geom_line(aes(y = mx), color="blue") +
-  ## geom_line(aes(y = minvx), color="blue") +
-  ## geom_line(aes(y = gx), color="green") +
-  geom_line(aes(y = px), color="black", size=2) +
-  geom_line(aes(y = pxinv), color="blue", size=2) +
-  theme_minimal()
-#+end_src 
-
-#+RESULTS:
-[[file:play.svg]]
 
 * Tables
 :PROPERTIES:
@@ -747,6 +721,11 @@ inotifywait --monitor --format "%f" \
     if [ "${f#*.}" = "tex" ]; then
         echo "Exporting $f to $DEST/$(basename $f .tex).tex"
         cp "$f" "$DEST/$(basename $f .tex).tex"
+    fi
+
+    if [ "${f#*.}" = "png" ]; then
+        echo "Exporting $f to $DEST/$(basename $f .png).png"
+        cp "$f" "$DEST/../$(basename $f .png).png"
     fi
 done
 #+end_src

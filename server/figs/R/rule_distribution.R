@@ -20,19 +20,16 @@ piecewise <- function(L, H, W, gm=1, inv=F) {
   }
 }
 
-rule_distribution <- function() {
+rule_distribution <- function(alpha=12, beta=10) {
   data <- read.csv("../completed/mat-mul_30x30_30x30/1/rule_distribution.csv")
-
-  alpha <- 12
-  beta <- 10
 
   f <- function(avg, diff) {
     ifelse(alpha <= diff,
-           "Compile",
-           ifelse(beta < avg,
-                  "Pre-compile",
-                  ifelse(avg <= beta,
-                                "Opt",
+           "Compilation",
+           ifelse(beta <= avg,
+                  "Expansion",
+                  ifelse(avg < beta,
+                                "Optimization",
                                 "<none>")))
   }
 
@@ -42,7 +39,7 @@ rule_distribution <- function() {
     ggplot(aes(
       x = average * 2,
       y = differential,
-      color = factor(f(average * 2, differential), levels=c("Pre-compile", "Compile", "Opt"))
+      color = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization"))
     )) +
     geom_jitter(
       position = position_jitter(
@@ -53,8 +50,26 @@ rule_distribution <- function() {
       size=3,
       alpha=0.6,
     ) +
-    geom_hline(yintercept=alpha) + annotate("text", x=45, y=alpha+2000, label=str_c("$\\alpha=$", alpha), size=3) +
-    geom_vline(xintercept=beta) + annotate("text", x=beta+6, y=4037.5, label=str_c("$\\beta=$", beta), size=3) +
+    geom_hline(
+      yintercept=min(alpha, 4041),
+      linetype="dashed",
+      linewidth=1,
+      color="salmon"
+    ) +
+    annotate(
+      "text",
+      x=ifelse(between(beta, 30, 50), 10, 45),
+      y=min(alpha, 4033)+ifelse(between(alpha, 10, 4020), 2000, 5),
+      label=str_c("$\\alpha=$", alpha),
+      size=3
+    ) +
+    geom_vline(
+      xintercept=beta,
+      linetype="dashed",
+      linewidth=1,
+      color="salmon"
+    ) +
+    annotate("text", x=beta+6, y=4037.5, label=str_c("$\\beta=$", beta), size=3) +
     scale_x_continuous(
       breaks=c(seq(0, 60, by=10), 4040, 4050),
       limits=c(0, 4050),
@@ -65,7 +80,7 @@ rule_distribution <- function() {
         )
     ) +
     scale_y_continuous(
-      breaks=c(seq(-10, 10, by=5), seq(-4045, -4035, by=5), seq(4035, 4045, by=5)),
+      breaks=c(seq(-10, 10, by=5), seq(-4045, -4035, by=5), seq(4035, 4050, by=5)),
       limits=c(-15, 4041),
       trans=scales::trans_new(
         "custom",

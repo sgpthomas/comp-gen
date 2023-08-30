@@ -906,7 +906,7 @@ def alpha_beta_ablation():
     cs = dict_from_dir(Path("../experiments/configs/ablation"))
     for c in cs.values():
         beta = float(c.stem.split("_")[2][1:])
-        if beta in [6, 2020, 2021]:
+        if beta in [2022]:
             make_2d_conv(
                 Path("jobs"),
                 *conv_2d_size,
