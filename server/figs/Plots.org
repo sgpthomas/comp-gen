@@ -444,25 +444,73 @@ data %>%
 
 ** Rule Distribution
 
-#+begin_src R :results graphics file :file rule_distribution.svg
+
+#+header: :width 8 :height 4
+
+#+header: :width 3.3 :height 2
+#+begin_src R :results graphics file :file rule_distribution.tikz
 source("R/rule_distribution.R")
 rule_distribution()
 #+end_src
 
 #+RESULTS:
-[[file:rule_distribution.svg]]
+[[file:rule_distribution.tikz]]
 
-#+begin_src R :results graphics file :file alpha_beta.svg
+
+#+header: :width 8 :height 4
+
+#+header: :width 3.3 :height 2
+#+begin_src R :results graphics file :file alpha_beta.tikz
 data <- read_csv("data/alpha_beta.csv")
 
 data %>%
   ggplot(aes(x = as.factor(beta), y = as.factor(alpha), fill = cycles)) +
-  geom_tile(linewidth=1000)
+  geom_tile(
+    color="black"
+  ) +
+  labs(
+    title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
+    x="$\\beta$ (aggregate cost)",
+    y="$\\alpha$ (cost differential)"
+  ) +
+  scale_fill_gradient(
+    ## low = "yellow",
+    ## high = "red",
+    na.value = NA
+  ) +
+  guides(fill = guide_colorbar(
+           barwidth=0.3,
+           barheight=8,
+           ticks=F
+         )) +
+  theme(
+    axis.title.x = element_text(size=8, face="bold"),
+    axis.title.y = element_text(size=8, face="bold"),
+    
+    axis.text.x = element_text(size=8, color="black"),
+    axis.text.y = element_text(size=8, color="black"),
 
+    legend.position = "right",
+    legend.background = element_blank(),
+    legend.text = element_text(size=7),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.margin = margin(0, 0, 5, 2),
+
+    panel.background = element_blank(),
+    panel.spacing.x = unit(0.4, "lines"),
+
+    strip.background = element_blank(),
+    ## strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 4, 0)),
+
+    plot.title = element_text(size=8, face="bold", hjust=0.5),
+    plot.margin = margin(1, 0, 1, 0)
+  )
 #+end_src
 
 #+RESULTS:
-[[file:alpha_beta.svg]]
+[[file:alpha_beta.tikz]]
 
 #+begin_src R :results graphics file :file play.svg
 L <- 300

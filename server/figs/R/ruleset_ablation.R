@@ -72,8 +72,8 @@ ruleset_ablation <- function() {
       trans="log2"
     ) +
     scale_fill_brewer(
-      palette = "YlOrBr",
-      ) +
+      palette = "YlOrBr"
+    ) +
     labs(fill="Timeout", y="Speedup over Clang", x="2DConv") +
     theme_classic() +
     theme(

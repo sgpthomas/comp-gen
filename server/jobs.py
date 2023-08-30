@@ -905,15 +905,17 @@ def alpha_beta_ablation():
     ruleset = rulesets["ruleset_timeout86400"]
     cs = dict_from_dir(Path("../experiments/configs/ablation"))
     for c in cs.values():
-        make_2d_conv(
-            Path("jobs"),
-            *conv_2d_size,
-            ruleset,
-            c,
-            "alternative",
-            key="alpha-beta",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
-        )
+        beta = float(c.stem.split("_")[2][1:])
+        if beta in [6, 2020, 2021]:
+            make_2d_conv(
+                Path("jobs"),
+                *conv_2d_size,
+                ruleset,
+                c,
+                "alternative",
+                key="alpha-beta",
+                timeout=json.load(c.open("r"))["timeout"] * 5,
+            )
 
 
 def main():

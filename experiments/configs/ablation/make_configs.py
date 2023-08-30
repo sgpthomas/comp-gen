@@ -61,7 +61,7 @@ def make_config(alpha, beta, timeout=180):
 
 
 # if __name__ == "__main__":
-for beta in [0, 1, 2, 3, 4, 5, 10, 15, 20, 30]:
+for beta in [0, 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 2020, 2021]:
     for alpha in [
         -5000,
         -4039,
