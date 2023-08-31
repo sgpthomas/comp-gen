@@ -19,7 +19,7 @@ def make_config(alpha, beta, timeout=180):
                     "phases": [
                         {
                             "name": "pre-compile",
-                            "cd": [None, None],
+                            "cd": [None, alpha],
                             "ca": [beta, None],
                             "node_limit": 500000,
                             "timeout": 30,
@@ -48,7 +48,7 @@ def make_config(alpha, beta, timeout=180):
                 },
                 {
                     "name": "opt",
-                    "cd": [None, None],
+                    "cd": [None, alpha],
                     "ca": [None, beta],
                     "fresh_egraph": True,
                     "iter_limit": 10,
@@ -61,10 +61,11 @@ def make_config(alpha, beta, timeout=180):
 
 
 # if __name__ == "__main__":
-for beta in [0, 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 2020, 2021, 2022]:
+for beta in [0, 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 2020, 2025]:
     for alpha in [
-        -5000,
-        -4039,
+        -4045,
+        -4040,
+        -4035,
         -15,
         -10,
         -5,
@@ -75,8 +76,9 @@ for beta in [0, 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 2020, 2021, 2022]:
         5,
         10,
         15,
-        4039,
-        5000,
+        4035,
+        4040,
+        4045,
     ]:
         with open(f"config_a{alpha}_b{beta}.json", "w+") as f:
             json.dump(make_config(float(alpha), float(beta)), f, indent=2)

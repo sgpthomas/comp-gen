@@ -455,7 +455,7 @@ def large(row):
     )
 
 
-@query(key="alpha-beta")
+@query(key="alpha-beta", pinned_date="Aug31-1025")
 def alpha_beta(row):
     x = row.exp_dir
     return pd.DataFrame(

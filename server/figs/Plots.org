@@ -65,7 +65,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 
 Create jobs.
 
-#+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
+#+begin_src async-shell :dir (sgt/dir "server/") :results none :name sync
 ./jobs.py
 ls jobs
 #+end_src
@@ -73,14 +73,13 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-# ./sync.py both --name exp
 ./sync.py both --name isaria --dir "~"
 #+end_src
 
 Check on server log
 
 #+begin_src async-shell :dir (ec2/tramp "isaria" "~") :results none :name sync
-podman logs --tail 10 --latest
+podman logs --tail 50 --latest
 #+end_src
 
 * Data processing
@@ -92,7 +91,7 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 
 (header args for doing cycle estimation from non-thelio computers)
 
-#+header: :dir (sgt/dir "server")
+#+header: :dir (sgt/dir "server/")
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
@@ -468,10 +467,10 @@ data %>%
   geom_tile(
     color="black"
   ) +
-  geom_tile(
-    aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
-    color="salmon", lwd=0.4
-  ) +
+  ## geom_tile(
+  ##   aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
+  ##   color="salmon", lwd=0.4
+  ## ) +
   geom_tile(
     aes(color=killed)
   ) +
@@ -488,7 +487,7 @@ data %>%
       barheight=8,
       ticks=F
     ),
-    color = F
+    color = "none"
   ) +
   theme(
     axis.title.x = element_text(size=7, face="bold"),
