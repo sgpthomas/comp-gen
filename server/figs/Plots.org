@@ -121,8 +121,8 @@ Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
 # ./query2.py update optimization
-# ./query2.py update large
-./query2.py update alpha_beta --commit
+./query2.py update large
+# ./query2.py update alpha_beta --commit
 #+end_src
 
 * Pictures!!
@@ -463,24 +463,31 @@ rule_distribution(alpha=alpha_v, beta=beta_v)
 data <- read_csv("data/alpha_beta.csv")
 
 data %>%
-  ggplot(aes(x = as.factor(beta * 2), y = as.factor(alpha), fill = cycles)) +
+  ggplot() +
   geom_tile(
+    aes(x = as.factor(beta * 2), y = as.factor(alpha), fill = cycles),
     color="black"
   ) +
-  ## geom_tile(
-  ##   aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
-  ##   color="salmon", lwd=0.4
-  ## ) +
   geom_tile(
-    aes(color=killed)
+    aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
+    fill = NA,
+    color="salmon", lwd=0.7
   ) +
+  ## geom_text(
+  ##   aes(
+  ##     x = as.factor(beta_v),
+  ##     y = as.factor(alpha_v),
+  ##     label = (data %>% filter(alpha==alpha_v) %>% filter(beta==beta_v / 2))$exp
+  ##   ),
+  ##   color = "white",
+  ##   size = 2
+  ## ) +
   labs(
     title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
     x="$\\beta$ (aggregate cost)",
     y="$\\alpha$ (cost differential)"
   ) +
   scale_fill_gradient(na.value = NA) +
-  scale_color_manual(values = c("black", "red")) +
   guides(
     fill = guide_colorbar(
       barwidth=0.3,
@@ -518,6 +525,11 @@ data %>%
 
 #+RESULTS:
 [[file:alpha_beta.tikz]]
+
+#+begin_src async-shell :results none :name latex :dir (sgt/dir ".." "comp-gen-paper")
+sleep 1
+make single
+#+end_src
 
 * Tables
 :PROPERTIES:
@@ -685,33 +697,8 @@ time ./run.sh
 
 #+begin_src async-shell :results none
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
-# for f in $(echo compile-times.svg); do
-#     echo "Exporting $f to $DEST/${f%.*}.pdf"
-#     inkscape $f --export-filename="$DEST/${f%.*}.pdf"
-# done
 
-# function g() {
-#     while read -d \0 event; do
-#         echo ${event}
-#         cp $event "$DEST/$(basename $event .tikz).tex"
-#         # if [ "${event#*.}" = "tikz" ]; then
-#         #     echo "Exporting $event to $DEST/$(basename $event .tikz).tex"
-#         # fi
-#     done
-# }
-
-# while true; do
-#     for f in $(echo *.tikz *.tex); do
-#         echo "Exporting $f to $DEST/${f%.*}.tex"
-#         cp $f "$DEST/${f%.*}.tex"
-#         make -C $DEST/.. single
-#     done
-#     sleep 2
-# done
-
-inotifywait --monitor --format "%f" \
---event modify,create ./ \
-| while read f; do
+fswatch . | while read f; do
     if [ "${f#*.}" = "tikz" ]; then
         echo "Exporting $f to $DEST/$(basename $f .tikz).tex"
         cp "$f" "$DEST/$(basename $f .tikz).tex"

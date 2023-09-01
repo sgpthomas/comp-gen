@@ -64,6 +64,11 @@ def all_experiments(base="completed", query_key=None, query_time=None):
     if query_time == "latest":
         max_time = exps["datetime"].max()
         exps >>= filter_by(X.datetime == max_time)
+    elif isinstance(query_time, list):
+        matches = []
+        for qt in query_time:
+            matches.append(exps >> filter_by(X.date.str.contains(qt)))
+        exps = pd.concat(matches)
     elif query_time is not None:
         exps >>= filter_by(X.date.str.contains(query_time))
 
@@ -435,7 +440,7 @@ def long(row):
         return pd.DataFrame()
 
 
-@query(key="large", pinned_date="Aug16-1034")
+@query(key="large")  # , pinned_date=["Aug31-1417", "Aug31-1651"]
 def large(row):
     x = row.exp_dir
     return pd.DataFrame(
@@ -551,6 +556,8 @@ def update(name, time, commit, diff):
         new_time = exps["date"].unique()
         print(f"Pin this time: {new_time}")
         df >> to_csv(out, index_label="index")
+
+    return df
 
 
 if __name__ == "__main__":

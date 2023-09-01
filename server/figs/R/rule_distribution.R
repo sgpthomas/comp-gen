@@ -20,18 +20,32 @@ piecewise <- function(L, H, W, gm=1, inv=F) {
   }
 }
 
-rule_distribution <- function(alpha=12, beta=10) {
+rule_distribution <- function(alpha_v=12, beta_v=10) {
   data <- read.csv("../completed/mat-mul_30x30_30x30/1/rule_distribution.csv")
 
+  ## function the determines which phase a rule falls into
   f <- function(avg, diff) {
-    ifelse(alpha <= diff,
-           "Compilation",
-           ifelse(beta <= avg,
-                  "Expansion",
-                  ifelse(avg < beta,
-                                "Optimization",
-                                "<none>")))
+    ## ifelse(alpha <= diff,
+    ##        "Compilation",
+    ##        ifelse(beta <= avg,
+    ##               "Expansion",
+    ##               ifelse(avg < beta,
+    ##                             "Optimization",
+    ##                             "<none>")))
+    ifelse((diff < alpha_v) & (beta_v <= avg),
+           "Expansion",
+           ifelse(alpha_v <= diff,
+                  "Compilation",
+                  ifelse((diff < alpha_v) & (avg < beta_v),
+                         "Optimization",
+                         "<none>")))
   }
+
+  xscale     <- piecewise(60, 4040, 10)
+  xscale_inv <- piecewise(60, 4040, 10, inv=T)
+
+  yscale     <- piecewise(13, 4035, 5)
+  yscale_inv <- piecewise(13, 4035, 5, inv=T)
 
   p <- data %>%
     pivot_wider(names_from=name, values_from=value) %>%
@@ -39,7 +53,8 @@ rule_distribution <- function(alpha=12, beta=10) {
     ggplot(aes(
       x = average * 2,
       y = differential,
-      color = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization"))
+      color = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization")),
+      shape = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization"))
     )) +
     geom_jitter(
       position = position_jitter(
@@ -51,43 +66,38 @@ rule_distribution <- function(alpha=12, beta=10) {
       alpha=0.6,
     ) +
     geom_hline(
-      yintercept=min(alpha, 4041),
+      yintercept=min(alpha_v, 4041),
       linetype="dashed",
       linewidth=1,
       color="salmon"
     ) +
     annotate(
       "text",
-      x=ifelse(between(beta, 30, 50), 10, 45),
-      y=min(alpha, 4033)+ifelse(between(alpha, 10, 4020), 2000, 5),
-      label=str_c("$\\alpha=$", alpha),
+      x=ifelse(between(beta_v, 30, 50), 10, 45),
+      y=min(alpha_v, 4033)+ifelse(between(alpha_v, 10, 4020), 2000, 5),
+      label=str_c("$\\alpha=$", alpha_v),
       size=3
     ) +
-    geom_vline(
-      xintercept=beta,
+    geom_segment(
+      x=xscale(beta_v), y=yscale(alpha_v),
+      xend=xscale(beta_v),
+      yend=-Inf,
       linetype="dashed",
       linewidth=1,
       color="salmon"
     ) +
-    annotate("text", x=beta+6, y=4037.5, label=str_c("$\\beta=$", beta), size=3) +
+    annotate("text", x=xscale(beta_v+6), y=yscale(-7.5), label=str_c("$\\beta=$", beta_v), size=3) +
     scale_x_continuous(
       breaks=c(seq(0, 60, by=10), 4040, 4050),
       limits=c(0, 4050),
-      trans=scales::trans_new(
-        "custom",
-        piecewise(60, 4040, 10, gm=1),
-        piecewise(60, 4040, 10, gm=1, inv=T),
-        )
+      trans=scales::trans_new("custom", xscale, xscale_inv)
     ) +
     scale_y_continuous(
       breaks=c(seq(-10, 10, by=5), seq(-4045, -4035, by=5), seq(4035, 4050, by=5)),
       limits=c(-15, 4041),
-      trans=scales::trans_new(
-        "custom",
-        piecewise(13, 4035, 5),
-        piecewise(13, 4035, 5, inv=T),
-        )
+      trans=scales::trans_new("custom", yscale, yscale_inv)
     ) +
+    labs(x="Aggregate Cost", y="Cost Differential", color="Phase", shape="Phase") +
     theme_classic() +
     theme(
       axis.title.x = element_text(size=8, face="bold"),
@@ -116,7 +126,6 @@ rule_distribution <- function(alpha=12, beta=10) {
 
       plot.margin = margin(0, 0, 3, 0)
     ) +
-  labs(x="Aggregate Cost", y="Cost Differential", color="Phase") +
   scale_color_brewer(
     palette = "Set2"
   )
