@@ -121,7 +121,7 @@ Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
 # ./query2.py update optimization
-./query2.py update large
+./query2.py update large --commit
 # ./query2.py update alpha_beta --commit
 #+end_src
 

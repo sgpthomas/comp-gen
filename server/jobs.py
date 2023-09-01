@@ -875,7 +875,7 @@ def large_kernels():
     ]
     ruleset = rulesets["ruleset_timeout86400"]
     cs = [
-        configs["loop_alt_cost_t1800"],
+        configs["loop_alt_cost_t18000"],
     ]
 
     # create all the jobs
