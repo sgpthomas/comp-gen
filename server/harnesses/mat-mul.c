@@ -49,21 +49,6 @@ void __attribute__((noinline)) naive_matrix_multiply(float * __restrict a,
   }
 }
 
- // Naive hard-coded size
- void __attribute__((noinline)) naive_matrix_multiply_hard_size(float * __restrict a,
-                                                                float * __restrict b,
-                                                                float * __restrict c) {
-   for (int y = 0; y < A_ROWS; y++) {
-     for (int x = 0; x < B_COLS; x++) {
-       c[B_COLS * y + x] = 0;
-       for (int k = 0; k < A_COLS; k++) {
-         c[B_COLS * y + x] += a[A_COLS * y + k] * b[B_COLS * k + x];
-       }
-     }
-   }
- }
-
-
 int main(int argc, char **argv) {
 
   FILE *file = fopen(OUTFILE, "w");

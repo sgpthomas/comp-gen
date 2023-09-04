@@ -1,0 +1,3 @@
+kernel,A_ROWS,A_COLS,B_ROWS,B_COLS,cycles,correct
+clang.vec,2,3,3,3,39,1
+isaria,2,3,3,3,38,1

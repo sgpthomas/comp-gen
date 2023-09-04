@@ -1,0 +1,65 @@
+* Looking at why clang autovec is so good on mat-mul
+
+This produces assembly for =autovec.c= which is the auto-vectorized form of the mat-mul 2x3x3x3 kernel.
+
+#+begin_src async-shell :results none :name autovec
+~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++ \
+    -std=c++11 \
+    -mlongcalls \
+    -O3 \
+    -LNO:simd \
+    -fvectorize \
+    -mtext-section-literals \
+    -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+    -DOUTFILE='cycles.csv' \
+    -DA_ROWS='2' -DA_COLS='3' \
+    -DB_ROWS='3' -DB_COLS='3' \
+    autovec.c -S
+#+end_src
+
+Here's the Isaria version.
+
+#+begin_src async-shell :results none :name autovec
+~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++ \
+    -std=c++11 \
+    -mlongcalls \
+    -O3 \
+    -LNO:simd \
+    -fvectorize \
+    -mtext-section-literals \
+    -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+    -DOUTFILE='cycles.csv' \
+    -DA_ROWS='2' -DA_COLS='3' \
+    -DB_ROWS='3' -DB_COLS='3' \
+    isaria.c -S
+#+end_src
+
+Let's also compile these kernels so that we can simulate and make sure that the cycle counts make sense.
+
+#+begin_src async-shell :results none :name autovec
+rm autovec.o
+
+~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-clang++ \
+    -std=c++11 \
+    -mlongcalls \
+    -O3 \
+    -LNO:simd \
+    -fvectorize \
+    -mtext-section-literals \
+    -DXCHAL_HAVE_FUSIONG_SP_VFPU=1 \
+    -DOUTFILE='"cycles.csv"' \
+    -DA_ROWS='2' -DA_COLS='3' \
+    -DB_ROWS='3' -DB_COLS='3' \
+    autovec.c isaria.c harness.c -o autovec.o
+
+~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run autovec.o
+cat cycles.csv
+#+end_src
+
+
+huhh?? I'm not getting the same numbers that I got before.
+
+#+begin_src async-shell :results none :name autovec :dir (sgt/dir "server/")
+./estimate.py single completed/mat-mul_2x3_3x3/29/ --name mat-mul --force
+#+end_src
+

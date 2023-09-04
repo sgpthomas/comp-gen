@@ -95,7 +95,8 @@ Testing my cycle-estimation script. At the moment, this will assume a completely
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key alpha-beta
+# ./estimate.py many latest --key alpha-beta
+./estimate.py single completed/mat-mul_2x3_3x3/30/ --debug
 #+end_src
 
 #+begin_src async-shell :name sync
@@ -121,8 +122,8 @@ Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
 # ./query2.py update optimization
-./query2.py update large --commit
-# ./query2.py update alpha_beta --commit
+# ./query2.py update large --commit
+./query2.py update est_cycles
 #+end_src
 
 * Pictures!!
