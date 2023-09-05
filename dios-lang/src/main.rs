@@ -208,7 +208,7 @@ fn compile(opts: CompileOpts) -> Res<()> {
     let path = output_dir.join("res.rkt");
     let mut spec_file = fs::File::create(&path)?;
     log::debug!("writing to {path:?}");
-    writeln!(spec_file, "{}", prog.pretty(80))?;
+    writeln!(spec_file, "{}", prog)?;
 
     // call ./dios -w <vec_width> --egg --suppress-git -o <dir>/kernel.c <dir>
     // this generates the kernel.c file
