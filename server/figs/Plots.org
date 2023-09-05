@@ -13,11 +13,10 @@ cd diospyros
 git checkout master
 git pull -r
 
-# make
+make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-# tmux new -d -s diospyros
-# tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
-# python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180
+tmux new -d -s diospyros
+tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
 #+end_src
 
 Copy the results back here, so that we can analyze them.
