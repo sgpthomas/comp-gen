@@ -4,16 +4,7 @@ compilation <- function() {
     read_csv("data/est_cycles.csv")
   )
 
-  # fix the order of params cat var
-  ## data$params <- factor(data$params, levels=unique(data$params))
-
   data <- data %>%
-    ##  %>%
-    ## filter(greedy == "True") %>%
-    ## filter(benchmark == "2d-conv" | benchmark == "mat-mul") %>%
-    ## filter(params != "3x5_3x3") %>%
-    ## filter(params != "3x3_2x2") %>%
-    ## filter(params != "2x3_3x3") %>%
     select(benchmark, params, kernel, compile_time) %>%
     pivot_wider(
       names_from=kernel,
@@ -26,8 +17,6 @@ compilation <- function() {
                        "mat-mul"="Matrix Mul",
                        "qr-decomp"="QrD",
                        "q-prod"="Q"),
-      ## name=str_replace_all(params, "_", "\n")
-      ## name=if_else(str_detect(params, "x"), row_number(), params),
       name=row_number()
     ) %>%
     print(n=100) %>%
@@ -54,11 +43,6 @@ compilation <- function() {
       width=0.75,
       linewidth=0.3
     ) +
-    ## geom_hline(
-    ##   yintercept=180,
-    ## ) +
-    ## coord_cartesian(ylim = c(0, 1000)) +
-    ## scale_y_log10() +
     scale_fill_manual(
       values=c(
         rgb(67,162,202,maxColorValue = 255),
@@ -77,7 +61,6 @@ compilation <- function() {
       axis.title.x = element_blank(),
       axis.title.y = element_text(size=8, face="bold"),
 
-      ## axis.text.x = element_text(size=5, color="black"),
       axis.text.x = element_blank(),
       axis.text.y = element_text(size=8, color="black"),
 

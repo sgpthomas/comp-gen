@@ -1,15 +1,22 @@
+#+startup: overview
+
 * Getting Diospyros Numbers
 
 Run Diospyros experiments on the server. We're using =master= instead of the ASPLOS tag because we want to use the latest version of Rosette.
 
-#+begin_src async-shell :dir (ec2/tramp "exp" "diospyros") :results none :name dios
-# git checkout master
-# git pull -r
+#+begin_src async-shell :dir (ec2/tramp "isaria") :results none :name dios
+if [ ! -d "diospyros" ]; then
+    git clone https://github.com/cucapra/diospyros.git
+fi
 
-make
+cd diospyros
+git checkout master
+git pull -r
+
+# make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
-tmux new -d -s diospyros
-tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
+# tmux new -d -s diospyros
+# tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180" ENTER
 # python3 evaluation/eval_benchmarks.py --timeout 180 --skiprun -o results-t180
 #+end_src
 
@@ -66,6 +73,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Create jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server/") :results none :name sync
+rm -r jobs/*
 ./jobs.py
 ls jobs
 #+end_src
@@ -79,7 +87,7 @@ Sync jobs.
 Check on server log
 
 #+begin_src async-shell :dir (ec2/tramp "isaria" "~") :results none :name sync
-podman logs --tail 50 --latest
+podman logs --tail 10 --latest --follow
 #+end_src
 
 * Data processing
@@ -87,16 +95,18 @@ podman logs --tail 50 --latest
 :header-args:async-shell: :dir (sgt/dir "server") :results none
 :END:
 
-Testing my cycle-estimation script. At the moment, this will assume a completely compile =kernel.c= file. At some point I'll want to make this work for an arbitrary egg input.
+Process all the log files and generate data csvs.
 
-(header args for doing cycle estimation from non-thelio computers)
+#+begin_src async-shell :name processed
+./process.py all completed/
+#+end_src
 
 #+header: :dir (sgt/dir "server/")
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-# ./estimate.py many latest --key alpha-beta
-./estimate.py single completed/mat-mul_2x3_3x3/30/ --debug
+./estimate.py many latest --key performance --force
+# ./estimate.py single completed/mat-mul_2x3_3x3/30/ --debug
 #+end_src
 
 #+begin_src async-shell :name sync
@@ -104,12 +114,6 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed/ 
 # rsync -avh \
 #       --exclude "*compile-log.txt" \
 #       completed/ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/completed
-#+end_src
-
-Process all the log files and generate data csvs.
-
-#+begin_src async-shell :name processed
-./process.py all completed/
 #+end_src
 
 Run query to generate aggregated data files
@@ -123,7 +127,7 @@ Rewriting my =query.py= script.
 #+begin_src async-shell :name query
 # ./query2.py update optimization
 # ./query2.py update large --commit
-./query2.py update est_cycles
+./query2.py update est_cycles --commit
 #+end_src
 
 * Pictures!!
@@ -145,7 +149,7 @@ library(gtable)
 library(grid)
 #+end_src
 
-** DONE Cycle count
+** DONE Cycle count (figure 3)
 CLOSED: [2023-03-29 Wed 10:03]
 :LOGBOOK:
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
@@ -188,7 +192,7 @@ data %>% filter(kernel == "nature" | kernel == "compgen") %>%
 |------------------+----|
 | 3.27463214032345 | 21 |
 
-** DONE Compilation time
+** DONE Compilation time (figure 4)
 CLOSED: [2023-04-16 Sun 10:04]
 :LOGBOOK:
 - State "DONE"       from "NEXT"       [2023-04-16 Sun 10:04]
@@ -205,7 +209,7 @@ compilation()
 #+RESULTS:
 [[file:compile-times.tikz]]
 
-** DONE Pruning
+** DONE Pruning (figure 5)
 CLOSED: [2023-04-18 Tue 12:19]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-04-18 Tue 12:19]
@@ -264,7 +268,7 @@ print(
 #+RESULTS:
 [[file:pruning-table.tex]]
 
-** DONE Ruleset ablation
+** DONE Ruleset ablation (figure 6)
 CLOSED: [2023-04-18 Tue 14:34]
 :LOGBOOK:
 - State "DONE"       from              [2023-04-18 Tue 14:34]
@@ -281,7 +285,7 @@ ruleset_ablation()
 #+RESULTS:
 [[file:ruleset-ablation.tikz]]
 
-** DONE Instruction Ablation
+** DONE Instruction Ablation (table 2)
 CLOSED: [2023-04-18 Tue 14:34]
 :LOGBOOK:
 - State "DONE"       from              [2023-04-18 Tue 14:34]
@@ -321,6 +325,100 @@ print(xtable(
 
 #+RESULTS:
 [[file:instruction.tex]]
+
+** DONE Rule Distribution (figs 7 & 8)
+CLOSED: [2023-09-05 Tue 11:16]
+:LOGBOOK:
+- State "DONE"       from              [2023-09-05 Tue 11:16]
+:END:
+
+#+header: :width 8 :height 4
+
+#+header: :width 3.3 :height 2
+#+begin_src R :results graphics file :file rule_distribution.tikz
+source("R/rule_distribution.R")
+alpha_v <- 15
+beta_v <- 12
+rule_distribution(alpha=alpha_v, beta=beta_v)
+#+end_src
+
+#+RESULTS:
+[[file:rule_distribution.tikz]]
+
+#+header: :width 8 :height 4
+
+#+header: :width 3.3 :height 2
+#+begin_src R :results graphics file :file alpha_beta.tikz
+data <- read_csv("data/alpha_beta.csv")
+
+data %>%
+  ggplot() +
+  geom_tile(
+    aes(x = as.factor(beta * 2), y = as.factor(alpha), fill = cycles),
+    color="black"
+  ) +
+  geom_tile(
+    aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
+    fill = NA,
+    color="salmon", lwd=0.7
+  ) +
+  ## geom_text(
+  ##   aes(
+  ##     x = as.factor(beta_v),
+  ##     y = as.factor(alpha_v),
+  ##     label = (data %>% filter(alpha==alpha_v) %>% filter(beta==beta_v / 2))$exp
+  ##   ),
+  ##   color = "white",
+  ##   size = 2
+  ## ) +
+  labs(
+    title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
+    x="$\\beta$ (aggregate cost)",
+    y="$\\alpha$ (cost differential)"
+  ) +
+  scale_fill_gradient(na.value = NA) +
+  guides(
+    fill = guide_colorbar(
+      barwidth=0.3,
+      barheight=8,
+      ticks=F
+    ),
+    color = "none"
+  ) +
+  theme(
+    axis.title.x = element_text(size=7, face="bold"),
+    axis.title.y = element_text(size=7, face="bold"),
+    
+    axis.text.x = element_text(size=6, color="black"),
+    axis.text.y = element_text(size=7, color="black"),
+
+    legend.position = "right",
+    legend.background = element_blank(),
+    legend.text = element_text(size=7),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.75, "lines"),
+    legend.box.spacing = unit(0, "lines"), 
+    legend.spacing.x = unit(0.2, "lines"),
+    legend.margin = margin(0, 0, 5, 2),
+
+    panel.background = element_blank(),
+    panel.spacing.x = unit(0.4, "lines"),
+
+    strip.background = element_blank(),
+    ## strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 4, 0)),
+
+    plot.title = element_text(size=8, face="bold", hjust=0.5),
+    plot.margin = margin(1, 0, 1, 0)
+  )
+#+end_src
+
+#+RESULTS:
+[[file:alpha_beta.tikz]]
+
+#+begin_src async-shell :results none :name latex :dir (sgt/dir ".." "comp-gen-paper")
+sleep 1
+make single
+#+end_src
 
 ** Misc
 
@@ -441,96 +539,6 @@ data %>%
 
 #+RESULTS:
 [[file:greedy_cost.svg]]
-
-** Rule Distribution
-
-#+header: :width 8 :height 4
-
-#+header: :width 3.3 :height 2
-#+begin_src R :results graphics file :file rule_distribution.tikz
-source("R/rule_distribution.R")
-alpha_v <- 15
-beta_v <- 12
-rule_distribution(alpha=alpha_v, beta=beta_v)
-#+end_src
-
-#+RESULTS:
-[[file:rule_distribution.tikz]]
-
-#+header: :width 8 :height 4
-
-#+header: :width 3.3 :height 2
-#+begin_src R :results graphics file :file alpha_beta.tikz
-data <- read_csv("data/alpha_beta.csv")
-
-data %>%
-  ggplot() +
-  geom_tile(
-    aes(x = as.factor(beta * 2), y = as.factor(alpha), fill = cycles),
-    color="black"
-  ) +
-  geom_tile(
-    aes(x = as.factor(beta_v), y = as.factor(alpha_v)),
-    fill = NA,
-    color="salmon", lwd=0.7
-  ) +
-  ## geom_text(
-  ##   aes(
-  ##     x = as.factor(beta_v),
-  ##     y = as.factor(alpha_v),
-  ##     label = (data %>% filter(alpha==alpha_v) %>% filter(beta==beta_v / 2))$exp
-  ##   ),
-  ##   color = "white",
-  ##   size = 2
-  ## ) +
-  labs(
-    title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
-    x="$\\beta$ (aggregate cost)",
-    y="$\\alpha$ (cost differential)"
-  ) +
-  scale_fill_gradient(na.value = NA) +
-  guides(
-    fill = guide_colorbar(
-      barwidth=0.3,
-      barheight=8,
-      ticks=F
-    ),
-    color = "none"
-  ) +
-  theme(
-    axis.title.x = element_text(size=7, face="bold"),
-    axis.title.y = element_text(size=7, face="bold"),
-    
-    axis.text.x = element_text(size=6, color="black"),
-    axis.text.y = element_text(size=7, color="black"),
-
-    legend.position = "right",
-    legend.background = element_blank(),
-    legend.text = element_text(size=7),
-    legend.title = element_blank(),
-    legend.key.size = unit(0.75, "lines"),
-    legend.box.spacing = unit(0, "lines"), 
-    legend.spacing.x = unit(0.2, "lines"),
-    legend.margin = margin(0, 0, 5, 2),
-
-    panel.background = element_blank(),
-    panel.spacing.x = unit(0.4, "lines"),
-
-    strip.background = element_blank(),
-    ## strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 4, 0)),
-
-    plot.title = element_text(size=8, face="bold", hjust=0.5),
-    plot.margin = margin(1, 0, 1, 0)
-  )
-#+end_src
-
-#+RESULTS:
-[[file:alpha_beta.tikz]]
-
-#+begin_src async-shell :results none :name latex :dir (sgt/dir ".." "comp-gen-paper")
-sleep 1
-make single
-#+end_src
 
 * Tables
 :PROPERTIES:
@@ -696,7 +704,7 @@ time ./run.sh
 
 * Copy Images to paper
 
-#+begin_src async-shell :results none
+#+begin_src async-shell :results none :name fswatch
 DEST=$(realpath ~/Research/comp-gen-paper/figures)
 
 fswatch . | while read f; do

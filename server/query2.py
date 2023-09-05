@@ -281,7 +281,7 @@ def diospyros_cycles(egg_kernel_csv):
         return pd.DataFrame()
 
 
-@query(key="performance", pinned_date="Apr15-1612")
+@query(key="performance", pinned_date="Sep05")
 def est_cycles(row):
     x = row.exp_dir
     return pd.DataFrame(

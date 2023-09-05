@@ -12,6 +12,24 @@ from typing import Callable
 from server import unique_name
 
 
+def create_compile_config(compile, dest):
+    if isinstance(compile, Path):
+        shutil.copy(compile, dest)
+    elif isinstance(compile, dict):
+        json.dump(compile, dest.open("w"), indent=2)
+    else:
+        raise Exception(f"Unsupported `compile` type! {type(compile)}")
+
+
+def compile_name(compile):
+    if isinstance(compile, Path):
+        return str(compile)
+    elif isinstance(compile, dict):
+        return f"config_a{compile['alpha']}_b{compile['beta']}.json"
+    else:
+        raise Exception(f"Unsupported `compile` type! {type(compile)}")
+
+
 def mat_mul(
     jobs_dir,
     a_rows,
@@ -37,7 +55,7 @@ def mat_mul(
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
-            "compile.json": str(compile),
+            "compile.json": compile_name(compile),
             "costfn": costfn,
         },
     }
@@ -49,7 +67,8 @@ def mat_mul(
         "reg-size": 4,
     }
     shutil.copy(ruleset, job_dir / "rules.json")
-    shutil.copy(compile, job_dir / "compile.json")
+    create_compile_config(compile, job_dir / "compile.json")
+
     command = [
         "RUST_LOG=debug,egg=info",
         "$compgen_bin",
@@ -106,7 +125,7 @@ def make_2d_conv(
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
-            "compile.json": str(compile),
+            "compile.json": compile_name(compile),
             "costfn": costfn,
         },
     }
@@ -121,7 +140,7 @@ def make_2d_conv(
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
     shutil.copy(ruleset, job_dir / "rules.json")
-    shutil.copy(compile, job_dir / "compile.json")
+    create_compile_config(compile, job_dir / "compile.json")
 
     command = [
         "RUST_LOG=debug,egg=info",
@@ -167,7 +186,7 @@ def q_prod(jobs_dir, ruleset, compile, costfn, key=None, timeout=60 * 30):
         "benchmark": "q-prod",
         "metadata": {
             "rules.json": str(ruleset),
-            "compile.json": str(compile),
+            "compile.json": compile_name(compile),
             "costfn": costfn,
         },
     }
@@ -176,7 +195,7 @@ def q_prod(jobs_dir, ruleset, compile, costfn, key=None, timeout=60 * 30):
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
     shutil.copy(ruleset, job_dir / "rules.json")
-    shutil.copy(compile, job_dir / "compile.json")
+    create_compile_config(compile, job_dir / "compile.json")
 
     command = [
         "RUST_LOG=debug,egg=info",
@@ -221,7 +240,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
         "command": "./run.sh",
         "metadata": {
             "rules.json": str(ruleset),
-            "compile.json": str(compile),
+            "compile.json": compile_name(compile),
             "costfn": costfn,
         },
     }
@@ -230,7 +249,7 @@ def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
     json.dump(params, (job_dir / "params.json").open("w"), indent=2)
 
     shutil.copy(ruleset, job_dir / "rules.json")
-    shutil.copy(compile, job_dir / "compile.json")
+    create_compile_config(compile, job_dir / "compile.json")
 
     command = [
         "RUST_LOG=debug,egg=info",
@@ -360,6 +379,67 @@ configs = dict_from_dir(Path("../experiments/configs"))
 #     configs[key] = Path(val).expanduser().resolve()
 
 
+def make_config(alpha=15, beta=6, timeout=180):
+    return {
+        "total_node_limit": 2000000000,
+        "total_iter_limit": 4000,
+        "timeout": timeout,
+        "dry_run": False,
+        "dump_rules": True,
+        "debug": False,
+        "reuse_egraphs": True,
+        "cd_filter": None,
+        "require_all_vars": False,
+        "scheduler": "simple",
+        "alpha": alpha,
+        "beta": beta,
+        "phase": {
+            "phases": [
+                {
+                    "phases": [
+                        {
+                            "name": "pre-compile",
+                            "cd": [None, alpha],
+                            "ca": [beta, None],
+                            "node_limit": 500000,
+                            "timeout": 30,
+                            "iter_limit": 2,
+                            "fresh_egraph": True,
+                            "disabled": False,
+                        },
+                        {
+                            "name": "compile",
+                            "cd": [alpha, None],
+                            "ca": [None, None],
+                            "timeout": 30,
+                            "iter_limit": 2,
+                            "disabled": False,
+                        },
+                        {
+                            "name": "litvec",
+                            "cd": [0.39, 0.41],
+                            "ca": [0.20, 0.22],
+                            "timeout": 30,
+                            "iter_limit": 2,
+                            "disabled": False,
+                        },
+                    ],
+                    "loops": 20,
+                },
+                {
+                    "name": "opt",
+                    "cd": [None, alpha],
+                    "ca": [None, beta],
+                    "fresh_egraph": True,
+                    "iter_limit": 10,
+                    "scheduler": "simple",
+                    "disabled": False,
+                },
+            ]
+        },
+    }
+
+
 def overall_performance():
     """
     This measures the overall performance of the compiler in terms of
@@ -402,10 +482,7 @@ def overall_performance():
     q_prod_params = [0]
     qr_decomp_sizes = [3, 4]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = [
-        configs["loop_alt_cost_t180"],
-        # configs["loop_alt_cost_t1800"]
-    ]
+    cs = [make_config(alpha=15, beta=6, timeout=180)]
 
     # create all the jobs
     for size, c in itertools.product(mat_mul_sizes, cs):
@@ -416,7 +493,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
+            timeout=c["timeout"] * 5,
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -427,7 +504,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
+            timeout=c["timeout"] * 5,
         )
 
     for _, c in itertools.product(q_prod_params, cs):
@@ -437,7 +514,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
+            timeout=c["timeout"] * 5,
         )
 
     for size, c in itertools.product(qr_decomp_sizes, cs):
@@ -448,7 +525,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
+            timeout=c["timeout"] * 5,
         )
 
 
@@ -923,7 +1000,7 @@ def alpha_beta_ablation():
 
 
 def main():
-    # overall_performance()
+    overall_performance()
     # pruning_experiments()
     # understand_cost_function()
     # no_eqsat()
@@ -934,7 +1011,7 @@ def main():
     # test_instruction_ruleset()
     # overview_example()
     # optimization_effect()
-    large_kernels()
+    # large_kernels()
     # alpha_beta_ablation()
 
 
