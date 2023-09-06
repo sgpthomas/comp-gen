@@ -5,7 +5,7 @@ setup to produce the final diospyros =kernel.c= file. I now want to setup a mini
 
 ** Instructions for setting up Xtensa
 
-You first need to download a =XtensaTools=. You can find this on the XPG site under any version number in the tools directory. Put this directory somewhere and extract it. This becomes the root directory of the Xtensa installation.
+You first need to download a =XtensaTools=. You can find this on the [[https://xpg.cadence.com/cdns-xpg-web/faces/login.xhtml?exp=true][XPG site]] under any version number in the tools directory. Put this directory somewhere and extract it. This becomes the root directory of the Xtensa installation.
 
 I have it set up like:
 #+begin_example
