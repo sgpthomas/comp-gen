@@ -999,6 +999,24 @@ def alpha_beta_ablation():
         )
 
 
+def one_off():
+    print("Creating a one-off job")
+
+    size = [20, 20, 20, 20]
+    ruleset = rulesets["ruleset_timeout86400"]
+    cs = dict_from_dir(Path("../experiments/configs/ablation"))
+
+    mat_mul(
+        Path("jobs"),
+        *size,
+        ruleset,
+        cs["config_a15_b6"],
+        "alternative",
+        key="one_off",
+        timeout=json.load(cs["config_a15_b6"].open("r"))["timeout"] * 7,
+    )
+
+
 def main():
     overall_performance()
     # pruning_experiments()
@@ -1013,6 +1031,7 @@ def main():
     # optimization_effect()
     # large_kernels()
     # alpha_beta_ablation()
+    one_off()
 
 
 if __name__ == "__main__":

@@ -72,7 +72,6 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Create jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server/") :results none :name sync
-rm -r jobs/*
 ./jobs.py
 ls jobs
 #+end_src
@@ -86,7 +85,7 @@ Sync jobs.
 Check on server log
 
 #+begin_src async-shell :dir (ec2/tramp "isaria" "~") :results none :name sync
-podman logs --tail 10 --latest --follow
+podman logs --tail 20 --latest --follow
 #+end_src
 
 * Data processing
