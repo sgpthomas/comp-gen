@@ -72,7 +72,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Create jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server/") :results none :name sync
-./jobs.py
+./jobs.py "estimate:--key performance"
 ls jobs
 #+end_src
 

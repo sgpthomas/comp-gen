@@ -1,6 +1,7 @@
+from datetime import datetime
+
 import pandas as pd
 from dfply import dfpipe
-from datetime import datetime
 
 
 def sorter(a):

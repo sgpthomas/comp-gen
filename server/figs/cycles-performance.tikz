@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.12.4 on 2023-09-05 09:23:36
+% Created by tikzDevice version 0.12.4 on 2023-09-07 08:43:06
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
@@ -348,6 +348,9 @@
 \definecolor{fillColor}{RGB}{67,162,202}
 
 \path[draw=drawColor,line width= 0.3pt,fill=fillColor] (488.38, 34.48) rectangle (491.03,187.64);
+\definecolor{fillColor}{RGB}{8,104,172}
+
+\path[draw=drawColor,line width= 0.3pt,fill=fillColor] (491.03, 34.48) rectangle (493.68,162.22);
 \end{scope}
 \begin{scope}
 \path[clip] ( 26.80,  0.00) rectangle (279.05, 11.08);

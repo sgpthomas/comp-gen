@@ -9,7 +9,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+import click
+
 from server import unique_name
+
+JOBS = {}
+
+
+def job(name=None):
+    def inner(func):
+        job_name = name if name is not None else func.__name__
+
+        def f(*args):
+            print(f"Creating {job_name} jobs")
+            func(*args)
+
+        JOBS[job_name] = f
+
+    return inner
 
 
 def create_compile_config(compile, dest):
@@ -347,36 +364,6 @@ def dict_from_dir(path, pat="*.json", key=None):
 
 rulesets = dict_from_dir(Path("../experiments/rulesets"))
 configs = dict_from_dir(Path("../experiments/configs"))
-# rulesets = {
-#     "expanding": "../experiments/rulesets/expanding.json",
-#     "expanding_vecmac": "../experiments/rulesets/expanding_vecmac.json",
-#     "ruler": "../experiments/rulesets/ruleset_timeout432000.json",
-#     "t2": "~/Research/diospyros/t2.json"
-# }
-
-# # resolve the ruleset paths
-# for key, val in rulesets.items():
-#     rulesets[key] = Path(val).expanduser().resolve()
-
-# configs = {
-#     "wack": "../experiments/configs/wack.json",
-#     "phased": "../experiments/configs/phased.json",
-#     "phased_no_opt": "../experiments/configs/phased_no_opt.json",
-#     "phased_no_opt_alt_cost": "../experiments/configs/phased_no_opt_alt_cost.json",
-#     "loop_alt_cost": "../experiments/configs/loop_alt_cost.json",
-#     "loop_alt_cost_t180": "../experiments/configs/loop_alt_cost_t180.json",
-#     "loop_alt_cost_t1800": "../experiments/configs/loop_alt_cost_t1800.json",
-#     "loop_no_opt_alt_cost_t1800": "../experiments/configs/loop_no_opt_alt_cost_t1800.json",
-#     "all-simple": "../experiments/configs/all-simple.json",
-#     "all-backoff": "../experiments/configs/all-backoff.json",
-#     "loop-more-expansion": "../experiments/configs/loop_more_expansion.json",
-#     "loop-dios-cost": "../experiments/configs/loop_dios_cost.json",
-#     "loop_more_compilation": "../experiments/configs/loop_more_compilation.json",
-#     "none": "../experiments/configs/none.json",
-# }
-# resolve the ruleset paths
-# for key, val in configs.items():
-#     configs[key] = Path(val).expanduser().resolve()
 
 
 def make_config(alpha=15, beta=6, timeout=180):
@@ -440,6 +427,7 @@ def make_config(alpha=15, beta=6, timeout=180):
     }
 
 
+@job()
 def overall_performance():
     """
     This measures the overall performance of the compiler in terms of
@@ -449,8 +437,6 @@ def overall_performance():
 
     This is a run with all of the benchmarks that Dios uses.
     """
-
-    print("Creating overall performance jobs")
 
     mat_mul_sizes = [
         [2, 2, 2, 2],
@@ -529,6 +515,7 @@ def overall_performance():
         )
 
 
+@job()
 def pruning_experiments():
     """
     This experiment is meant to show that pruning dramatically decreases
@@ -580,6 +567,7 @@ def pruning_experiments():
         )
 
 
+@job()
 def understand_cost_function():
     """
     1) Try looping config with more expansion iterations.
@@ -604,6 +592,7 @@ def understand_cost_function():
         )
 
 
+@job()
 def no_eqsat():
     """
     Get estimation numbers for all benchmarks with no equality saturation.
@@ -646,6 +635,7 @@ def no_eqsat():
     q_prod(Path("jobs"), ruleset, config, "alternative", key="noeqsat")
 
 
+@job()
 def ruleset_ablation():
     """
     Measure the performance difference between using different rulesets.
@@ -686,6 +676,7 @@ def ruleset_ablation():
         )
 
 
+@job()
 def ruleset_synthesis():
     """
     Synthesize rulesets with different settings.
@@ -713,6 +704,7 @@ def ruleset_synthesis():
         make_synthesis(Path("jobs"), t, eqsat_iter=eqsat[0], eqsat_timeout=eqsat[1])
 
 
+@job()
 def scheduler():
     """
     Make a job that uses all the rules with the backoff scheduler.
@@ -739,6 +731,7 @@ def scheduler():
         )
 
 
+@job()
 def add_instruction_ruleset():
     """
     We make these claims that it's trivial to change the spec to explore the
@@ -761,6 +754,7 @@ def add_instruction_ruleset():
     # make_synthesis(Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000)
 
 
+@job()
 def test_instruction_ruleset():
     """
     Run q-prod, qr-decomp with no fused ops, with muls, and with both fused ops
@@ -839,6 +833,7 @@ def test_instruction_ruleset():
         )
 
 
+@job()
 def overview_example():
     make_2d_conv(
         Path("jobs"),
@@ -850,6 +845,7 @@ def overview_example():
     )
 
 
+@job()
 def optimization_effect():
     """
     What is the overall effect of the optimization phase?
@@ -933,6 +929,7 @@ def optimization_effect():
         )
 
 
+@job()
 def large_kernels():
     print("Creating large kernel jobs")
 
@@ -979,9 +976,8 @@ def large_kernels():
         )
 
 
+@job()
 def alpha_beta_ablation():
-    print("Creating alpha beta jobs")
-
     conv_2d_size = [16, 16, 4, 4]
     ruleset = rulesets["ruleset_timeout86400"]
     cs = dict_from_dir(Path("../experiments/configs/ablation"))
@@ -999,40 +995,79 @@ def alpha_beta_ablation():
         )
 
 
+@job()
 def one_off():
-    print("Creating a one-off job")
-
-    size = [20, 20, 20, 20]
+    size = [4]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = dict_from_dir(Path("../experiments/configs/ablation"))
+    c = make_config(alpha=15, beta=6)
 
-    mat_mul(
+    qr_decomp(
         Path("jobs"),
         *size,
         ruleset,
-        cs["config_a15_b6"],
+        c,
         "alternative",
         key="one_off",
-        timeout=json.load(cs["config_a15_b6"].open("r"))["timeout"] * 7,
+        timeout=c["timeout"] * 7,
     )
 
 
-def main():
-    overall_performance()
-    # pruning_experiments()
-    # understand_cost_function()
-    # no_eqsat()
-    # ruleset_ablation()
-    # ruleset_synthesis()
-    # scheduler()
-    # add_instruction_ruleset()
-    # test_instruction_ruleset()
-    # overview_example()
-    # optimization_effect()
-    # large_kernels()
-    # alpha_beta_ablation()
-    one_off()
+@job()
+def estimate(args):
+    """
+    Run cycle estimation on
+    """
+
+    date_str = datetime.now().strftime("%b%d-%H%M")
+    job_dir = unique_name(Path("jobs") / f"{date_str}-estimate", 0)
+    job_dir.mkdir(exist_ok=False)
+
+    config = {
+        "date": date_str,
+        "name": "estimate",
+        "memory_limit": 220,
+        "command": "./run.sh",
+        "metadata": {
+            "params": str(args),
+        },
+    }
+    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
+
+    command = [
+        "cd ../..",
+        f"./process.py all completed/",
+        f"./estimate.py many latest {args}",
+    ]
+
+    with (job_dir / "run.sh").open("w") as f:
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", "\n".join(command)]))
+    os.chmod(str(job_dir / "run.sh"), 0o777)
+
+
+@click.command()
+@click.argument("job_name", nargs=-1)
+def cli(job_name):
+    available_jobs = "\n".join(map(lambda x: f" - {x}", JOBS.keys()))
+
+    if len(job_name) == 0:
+        print(f"Available jobs:\n{available_jobs}")
+        return
+
+    for name in job_name:
+        if ":" in name:
+            job, args = name.split(":")
+            args = (args,)
+        else:
+            job = name
+            args = ()
+
+        if job in JOBS:
+            JOBS[job](*args)
+        else:
+            raise Exception(
+                f"`{job}` is not a known job! Available jobs:\n{available_jobs}"
+            )
 
 
 if __name__ == "__main__":
-    main()
+    cli()
