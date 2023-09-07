@@ -139,14 +139,18 @@ class Job:
         self.start_time = time.time()
 
         # run the comp-gen binary, storing stdout and stderr in logs
-        self.proc = subprocess.Popen(
-            f"{self.command}",
-            env=self.global_config.env,
-            stdout=stdout_log.open("w"),
-            stderr=stderr_log.open("w"),
-            cwd=self.dir,
-        )
-        return self.proc
+        try:
+            self.proc = subprocess.Popen(
+                f"{self.command}",
+                env=self.global_config.env,
+                stdout=stdout_log.open("w"),
+                stderr=stderr_log.open("w"),
+                cwd=self.dir,
+            )
+            return self.proc
+        except PermissionError:
+            print("Don't have permission to run command!")
+            return None
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
