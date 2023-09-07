@@ -138,6 +138,11 @@ def extraction_time(exp_path):
     return extraction_df["value"].astype("float").sum()
 
 
+def eqsat_time(exp_path):
+    eqsat_df = data_df(exp_path) >> filter_by(X.name == "time")
+    return eqsat_df["value"].astype("float").sum()
+
+
 def compile_time(exp_path):
     return max(0, total_time(exp_path) - extraction_time(exp_path))
 
@@ -297,6 +302,7 @@ def est_cycles(row):
             "cost": [egraph_cost(x)],
             "compile_time": [compile_time(x)],
             "extraction_time": [extraction_time(x)],
+            "eqsat_time": [eqsat_time(x)],
             "total_time": [total_time(x)],
             "max_ram_used": [max_ram(x)],
             "pre_iterations": [phase_iterations(x, "pre")],
@@ -307,9 +313,8 @@ def est_cycles(row):
     )
 
 
-@query(key="diospyros", pinned_date="Apr16-1712")
+@query(key="diospyros", pinned_date="Sep06-1712")
 def diospyros(row):
-    print(row)
     return (
         pd.concat(map(diospyros_cycles, row.exp_dir.glob("**/egg-kernel.csv")))
         >> sort_values(by=["benchmark", "params", "kernel"], key=sorter)

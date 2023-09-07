@@ -21,8 +21,10 @@ tmux send-keys -t diospyros "python3 evaluation/eval_benchmarks.py --timeout 180
 
 Copy the results back here, so that we can analyze them.
 
-#+begin_src async-shell :dir (sgt/dir "server") :var IP=(ec2/get-ip "exp") :results none :name dios
-rsync -avh ubuntu@$IP:~/diospyros/results-t1000/ completed/diospyros/2
+#+header: :var IP=(ec2/get-ip "isaria")
+#+header: :dir (sgt/dir "server")
+#+begin_src async-shell :results none :name dios
+rsync -avh ubuntu@$IP:~/diospyros/results-t180/ completed/diospyros/3
 #+end_src
 
 #+header: :dir (ec2/tramp "exp" "custom-diospyros")
@@ -57,7 +59,7 @@ Finally, the command to actually perform cycle estimates on all the benchmarks.
 #+begin_src async-shell :name dios :results none
 python3 evaluation/eval_benchmarks.py \
         --skipsynth \
-        -o ~/Research/comp-gen/server/completed/diospyros/2
+        -o ~/Research/comp-gen/server/completed/diospyros/3
 #+end_src
 
 ** Syncing diospyros-results between machines
@@ -126,6 +128,7 @@ Rewriting my =query.py= script.
 # ./query2.py update optimization
 # ./query2.py update large --commit
 ./query2.py update est_cycles --commit
+# ./query2.py update diospyros --diff
 #+end_src
 
 * Pictures!!
