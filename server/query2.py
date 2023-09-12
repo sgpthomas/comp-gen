@@ -26,6 +26,16 @@ def query(key=None, pinned_date=None, sort_keys=None):
     return inner
 
 
+def parse_date(date):
+    try:
+        return datetime.strptime(date, "%b%d-%H%M")
+    except ValueError:
+        try:
+            return datetime.strptime(date, "%b%d")
+        except ValueError:
+            return None
+
+
 def all_experiments(base="completed", query_key=None, query_time=None):
     res = []
     for config_path in Path(base).glob("**/config.json"):
@@ -48,7 +58,7 @@ def all_experiments(base="completed", query_key=None, query_time=None):
                     "benchmark": [name],
                     "params": [params],
                     "exp_dir": [exp_dir],
-                    "datetime": [datetime.strptime(date, "%b%d-%H%M")],
+                    "datetime": [parse_date(date)],
                 }
             )
         )

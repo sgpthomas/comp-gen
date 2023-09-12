@@ -10,8 +10,8 @@ if [ ! -d "diospyros" ]; then
 fi
 
 cd diospyros
-git checkout master
-git pull -r
+# git checkout master
+# git pull -r
 
 make
 cargo build --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml
@@ -74,7 +74,7 @@ rsync -avh samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/server/diospyros-r
 Create jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server/") :results none :name sync
-./jobs.py "estimate:--key performance"
+./jobs.py overall_performance
 ls jobs
 #+end_src
 
@@ -126,10 +126,7 @@ python3.11 query.py
 Rewriting my =query.py= script.
 
 #+begin_src async-shell :name query
-# ./query2.py update optimization
-# ./query2.py update large --commit
-./query2.py update est_cycles --commit
-# ./query2.py update diospyros --diff
+./query2.py update alpha_beta # --commit
 #+end_src
 
 * Pictures!!
@@ -151,7 +148,7 @@ library(gtable)
 library(grid)
 #+end_src
 
-** DONE Cycle count (figure 3)
+** DONE Cycle count (figure 4)
 CLOSED: [2023-03-29 Wed 10:03]
 :LOGBOOK:
 - State "DONE"       from "WAITING"    [2023-03-29 Wed 10:03]
@@ -194,7 +191,7 @@ data %>% filter(kernel == "nature" | kernel == "compgen") %>%
 |------------------+----|
 | 3.27463214032345 | 21 |
 
-** DONE Compilation time (figure 4)
+** DONE Compilation time (figure 5)
 CLOSED: [2023-04-16 Sun 10:04]
 :LOGBOOK:
 - State "DONE"       from "NEXT"       [2023-04-16 Sun 10:04]
@@ -211,7 +208,7 @@ compilation()
 #+RESULTS:
 [[file:compile-times.tikz]]
 
-** DONE Pruning (figure 5)
+** DONE Pruning (figure 6)
 CLOSED: [2023-04-18 Tue 12:19]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-04-18 Tue 12:19]
@@ -270,7 +267,7 @@ print(
 #+RESULTS:
 [[file:pruning-table.tex]]
 
-** DONE Ruleset ablation (figure 6)
+** DONE Ruleset ablation (figure 7)
 CLOSED: [2023-04-18 Tue 14:34]
 :LOGBOOK:
 - State "DONE"       from              [2023-04-18 Tue 14:34]
@@ -328,7 +325,7 @@ print(xtable(
 #+RESULTS:
 [[file:instruction.tex]]
 
-** DONE Rule Distribution (figs 7 & 8)
+** DONE Rule Distribution (figs 8 & 9)
 CLOSED: [2023-09-05 Tue 11:16]
 :LOGBOOK:
 - State "DONE"       from              [2023-09-05 Tue 11:16]
@@ -378,7 +375,7 @@ data %>%
     x="$\\beta$ (aggregate cost)",
     y="$\\alpha$ (cost differential)"
   ) +
-  scale_fill_gradient(na.value = NA) +
+  scale_fill_gradient(na.value = "light gray") +
   guides(
     fill = guide_colorbar(
       barwidth=0.3,
@@ -583,9 +580,8 @@ data <- full_join(
 
 data %>%
   select(kernel, benchmark, params, timeout, cycles) %>%
-  filter(kernel == "compgen" | kernel == "nature" | kernel == "naive.clang") %>%
+  filter(kernel == "compgen" | kernel == "nature" | kernel == "naive.clang" | kernel == "dios") %>%
   pivot_wider(names_from=c(kernel, timeout), values_from=cycles) %>%
-  print(n=100) %>%
   mutate(
     nature_su_180 = nature_180 / compgen_180,
     nature_mean_180 = exp(mean(log(nature_su_180), na.rm=T)),
@@ -597,26 +593,31 @@ data %>%
     naive.clang_su_1800 = naive.clang_180 / compgen_1800,
     naive.clang_mean_1800 = exp(mean(log(naive.clang_su_1800), na.rm=T)),
 
+    dios_su_180 = compgen_180 / dios_180,
+    dios_mean_180 = exp(mean(log(dios_su_180), na.rm=T)),
+
     self_su = compgen_180 / compgen_1800,
     self_geomean_su = exp(mean(log(self_su), na.rm=T)),
   ) %>%
+  ## select(benchmark, params, compgen_180, dios_180, dios_su_180, dios_mean_180) %>%
   summarise(
     nature_geomean_180=max(nature_mean_180),
     nature_min_180=min(nature_su_180, na.rm=T),
     nature_median_180=median(nature_su_180, na.rm=T),
     nature_max_180=max(nature_su_180, na.rm=T),
-    nature_geomean_1800=max(nature_mean_1800),
-    nature_min_1800=min(nature_su_1800, na.rm=T),
-    nature_max_1800=max(nature_su_1800, na.rm=T),
+    ## nature_geomean_1800=max(nature_mean_1800),
+    ## nature_min_1800=min(nature_su_1800, na.rm=T),
+    ## nature_max_1800=max(nature_su_1800, na.rm=T),
 
     clang_geomean_180=max(naive.clang_mean_180),
     clang_min_180=min(naive.clang_su_180, na.rm=T),
     clang_max_180=max(naive.clang_su_180, na.rm=T),
-    clang_geomean_1800=max(naive.clang_mean_1800),
-    clang_min_1800=min(naive.clang_su_1800, na.rm=T),
-    clang_max_1800=max(naive.clang_su_1800, na.rm=T),
 
-    self_su=max(self_geomean_su),
+    compgen_percent_faster_dios=1-max(dios_mean_180),
+    ## clang_geomean_1800=max(naive.clang_mean_1800),
+    ## clang_min_1800=min(naive.clang_su_1800, na.rm=T),
+    ## clang_max_1800=max(naive.clang_su_1800, na.rm=T),
+    ## self_su=max(self_geomean_su),
   ) %>% pivot_longer(everything())
 
 ## cycles <- data %>%
@@ -660,16 +661,27 @@ data %>%
 print("time")
 data %>%
   filter(timeout==180) %>%
+  filter(kernel == "compgen" | kernel == "dios") %>%
   mutate(
-    time=if_else(is.na(compile_time), eqsat_time, compile_time)
+    total_time=if_else(kernel == "compgen", pmax(eqsat_time, total_time), total_time)
   ) %>%
-  select(kernel, benchmark, params, time) %>%
-  pivot_wider(names_from=kernel, values_from=time) %>%
+  ## mutate(
+  ##   total_time=pmax(total_time, eqsat_time)
+  ## ) %>%
+  select(kernel, benchmark, params, total_time) %>%
+  ## print(n=100) %>%
+  pivot_wider(names_from=kernel, values_from=total_time) %>%
   select(benchmark, params, compgen, dios) %>%
-  filter(compgen != 0) %>%
+  ## print(n=100) %>%
+  ## filter(compgen != 0) %>%
   mutate(
-    x = compgen / dios
-  ) %>% summarize(mean = exp(mean(log(x))), median = median(x))
+    x = compgen / dios,
+    y = dios / compgen
+  ) %>%
+  filter(compgen > 5) %>%
+  filter(params != 4) %>%
+  print(n=100) %>%
+  summarize(mean = exp(mean(log(x))), median = median(x))
 #+end_src
 
 Ruleset ablation numbers

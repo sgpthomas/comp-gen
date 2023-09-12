@@ -1,6 +1,6 @@
 compilation <- function() {
   data <- full_join(
-    read_csv("data/diospyros.csv") %>% mutate(compile_time=eqsat_time),
+    read_csv("data/diospyros.csv") %>% mutate(compile_time=total_time),
     read_csv("data/est_cycles.csv")
   )
 
@@ -30,7 +30,8 @@ compilation <- function() {
     ggplot(aes(
       x=factor(name, levels=unique(name)),
       y=compile_time,
-      fill=factor(kernel, levels=unique(kernel))
+      fill=factor(kernel, levels=unique(kernel)),
+      pattern=compile_time >= 900
     )) +
     facet_grid(
       ~benchmark,
@@ -50,11 +51,27 @@ compilation <- function() {
       ),
       labels=c("Diospyros", "Isaria")
     ) +
-    scale_y_continuous(
-      breaks=c(0, 300, 600, 900),
-      labels=c("0s", "300s", "600s", "900s"),
-      expand=c(0, 0)
+    geom_col_pattern(
+      position="dodge",
+      color="black",
+      pattern_fill="black",
+      pattern_linetype=0,
+      pattern_alpha=0.5,
+      pattern_spacing=0.3,
+      pattern_density=0.30,
+      linewidth=0.3
     ) +
+    scale_pattern_manual(
+      values=c("none", "stripe")
+    ) +
+    guides(
+      pattern="none"
+    ) +
+    scale_y_continuous(
+      breaks=c(0, 200, 400, 600, 800, 1000),
+      labels=c("0s", "200s", "400s", "600s", "800s", "1000s"),
+      expand=c(0, 0)
+    ) + coord_cartesian(ylim = c(0, 810)) +
     labs(y="Compile Time", fill="Compiler") +
     theme_classic() +
     theme(
@@ -90,7 +107,8 @@ compilation <- function() {
     scales::rescale(c(range, x), c(0,1))[-c(1,2)]
   }
 
-  major_grid <- sapply(c(0, 150, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
+  ## major_grid <- sapply(c(0, 150, 300, 450, 600, 750, 900, 1050), data2npc, axis="y")
+  major_grid <- sapply(c(0, 200, 400, 600, 800), data2npc, axis="y")
 
   pg <- gtable_add_grob(
     pg,
@@ -106,3 +124,4 @@ compilation <- function() {
   grid.newpage()
   grid.draw(pg)
 }
+

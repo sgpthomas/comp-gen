@@ -21,7 +21,7 @@ def get_aws_ip_by_name(name):
         ).stdout
     )
     for tags, ip in data:
-        if tags[0] == name and ip is not None:
+        if tags is not None and tags[0] == name and ip is not None:
             return ip
     raise Exception(f"Machine {name} not found")
 

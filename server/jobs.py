@@ -479,7 +479,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=c["timeout"] * 5,
+            timeout=c["timeout"] * 20,
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -490,7 +490,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=c["timeout"] * 5,
+            timeout=c["timeout"] * 20,
         )
 
     for _, c in itertools.product(q_prod_params, cs):
@@ -500,7 +500,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=c["timeout"] * 5,
+            timeout=c["timeout"] * 20,
         )
 
     for size, c in itertools.product(qr_decomp_sizes, cs):
@@ -511,7 +511,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=c["timeout"] * 5,
+            timeout=c["timeout"] * 20,
         )
 
 

@@ -23,7 +23,6 @@ def sort_path(path):
     seperating characters and converting things into ints.
     """
 
-    # path.replace()
     stem = path.stem.replace("_", "-").replace("x", "-").split("-")
     stem = list(map(lambda x: int(x) if x.isnumeric() else x, stem))
     return stem

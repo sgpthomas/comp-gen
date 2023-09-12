@@ -25,13 +25,6 @@ rule_distribution <- function(alpha_v=12, beta_v=10) {
 
   ## function the determines which phase a rule falls into
   f <- function(avg, diff) {
-    ## ifelse(alpha <= diff,
-    ##        "Compilation",
-    ##        ifelse(beta <= avg,
-    ##               "Expansion",
-    ##               ifelse(avg < beta,
-    ##                             "Optimization",
-    ##                             "<none>")))
     ifelse((diff < alpha_v) & (beta_v <= avg),
            "Expansion",
            ifelse(alpha_v <= diff,
@@ -53,7 +46,7 @@ rule_distribution <- function(alpha_v=12, beta_v=10) {
     ggplot(aes(
       x = average * 2,
       y = differential,
-      color = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization")),
+      fill = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization")),
       shape = factor(f(average * 2, differential), levels=c("Expansion", "Compilation", "Optimization"))
     )) +
     geom_jitter(
@@ -64,6 +57,7 @@ rule_distribution <- function(alpha_v=12, beta_v=10) {
       ),
       size=3,
       alpha=0.6,
+      stroke=0.1
     ) +
     geom_hline(
       yintercept=min(alpha_v, 4041),
@@ -97,7 +91,7 @@ rule_distribution <- function(alpha_v=12, beta_v=10) {
       limits=c(-15, 4041),
       trans=scales::trans_new("custom", yscale, yscale_inv)
     ) +
-    labs(x="Aggregate Cost", y="Cost Differential", color="Phase", shape="Phase") +
+    labs(x="Aggregate Cost", y="Cost Differential", color="Phase", shape="Phase", fill="Phase") +
     theme_classic() +
     theme(
       axis.title.x = element_text(size=8, face="bold"),
@@ -126,8 +120,11 @@ rule_distribution <- function(alpha_v=12, beta_v=10) {
 
       plot.margin = margin(0, 0, 3, 0)
     ) +
-  scale_color_brewer(
+  scale_fill_brewer(
     palette = "Set2"
+  ) +
+  scale_shape_manual(
+    values = c(21, 23, 22)
   )
 
   pb <- ggplot_build(p)
