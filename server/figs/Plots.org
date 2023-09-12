@@ -105,7 +105,8 @@ Process all the log files and generate data csvs.
 #+begin_src async-shell :name estimation
 # ./estimate.py many latest --key noeqsat --override-name noeqsat --force
 # ./estimate.py many Mar29-1443 --key performance --force
-./estimate.py many latest --key performance --force
+./estimate.py many latest --key performance \
+              --xtensa ~/Research/xtensa --dios ~/Research/diospyros
 # ./estimate.py single completed/mat-mul_2x3_3x3/30/ --debug
 #+end_src
 

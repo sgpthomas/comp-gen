@@ -8,11 +8,14 @@ dnf install --installroot $contmnt \
     --repo fedora \
     --releasever 38 \
     coreutils bash git make cmake gcc "gcc-c++" clang-devel z3 z3-devel fontconfig-devel libjpeg-devel \
-    python3-pip \
+    python3-pip libnsl tar libxcrypt-compat \
     --setopt install_weak_deps=false -y
 
 # fix the z3 install so that z3.rs can find it
 buildah run $cont -- ln -sf /usr/include/z3/*.h /usr/include/
+
+# fix ld-lsb not existing
+buildah run $cont -- ln -sf /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 
 # install rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/install-rustup.sh

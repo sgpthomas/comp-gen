@@ -246,7 +246,9 @@ def single(exp_dir, force, results, name, params, debug, xtensa, dios):
 @click.option("--key", default="performance")
 @click.option("--override-name", default="")
 @click.option("--debug", is_flag=True)
-def many(date, force, key, override_name, debug):
+@click.option("--xtensa", default="~/xtensa")
+@click.option("--dios", default="~/diospyros")
+def many(date, force, key, override_name, debug, xtensa, dios):
     experiments = {}
 
     # gather all experiments with "performance" key
@@ -287,7 +289,14 @@ def many(date, force, key, override_name, debug):
     if date in experiments:
         for exp_dir in experiments[date]:
             print(f"Running {exp_dir}")
-            estimate_kernel(exp_dir, force=force, override=override_name, debug=debug)
+            estimate_kernel(
+                exp_dir,
+                force=force,
+                override=override_name,
+                debug=debug,
+                xtensa_root=xtensa,
+                dios_root=dios,
+            )
     else:
         raise Exception(f"Experiment {date} not found! Options: {experiments.keys()}")
 
