@@ -1,15 +1,35 @@
 #!/usr/bin/env bash
 
-# cont="working-container"
 cont=$(buildah from scratch)
 contmnt=$(buildah mount $cont)
 
+packages=(coreutils git make cmake gcc "gcc-c++" \
+                    clang-devel z3 z3-devel fontconfig-devel \
+                    libjpeg-devel python3-pip libnsl tar \
+                    libxcrypt-compat)
+
+# if the -r flag is passed, redownload packages
+case "$1" in
+    -r|--refresh)
+        if [ "$#" -gt 0 ]; then
+            dnf install --installroot $contmnt \
+                --repo fedora --releasever 38 \
+                --setopt cachedir="$HOME/.var/cache/dnf" \
+                --setopt install_weak_deps=false -y \
+                --downloadonly \
+                ${packages[@]}
+        fi
+    ;;
+esac
+
+# install packages from the cache
 dnf install --installroot $contmnt \
-    --repo fedora \
-    --releasever 38 \
-    coreutils bash git make cmake gcc "gcc-c++" clang-devel z3 z3-devel fontconfig-devel libjpeg-devel \
-    python3-pip libnsl tar libxcrypt-compat \
-    --setopt install_weak_deps=false -y
+    --repo fedora --releasever 38 \
+    --setopt cachedir="$HOME/.var/cache/dnf" \
+    --setopt keepcache=True \
+    --setopt install_weak_deps=false -y \
+    -C \
+    ${packages[@]}
 
 # fix the z3 install so that z3.rs can find it
 buildah run $cont -- ln -sf /usr/include/z3/*.h /usr/include/
@@ -28,6 +48,11 @@ chmod +x /tmp/install-racket.sh
 sh /tmp/install-racket.sh --in-place --dest "$contmnt/root/racket"
 rm /tmp/install-racket.sh
 
+# cleanup dnf files to shrink the size of the image
+dnf -y clean all --installroot $contmnt 
+
+# unmount container, we are done installing things into it from the outside
+# the rest of the work happens inside the container
 buildah unmount $cont
 
 # build tools inside of the container
@@ -49,5 +74,7 @@ buildah config \
         --label org.opencontainers.image.source="https://github.com/sgpthomas/comp-gen" \
         $cont
 
-buildah commit working-container isaria-aec
+buildah commit $cont isaria-aec
+buildah rm $cont
+
 podman push isaria-aec ghcr.io/sgpthomas/isaria-aec:latest
