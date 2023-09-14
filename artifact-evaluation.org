@@ -41,3 +41,7 @@ podman run --rm -it \
 ** Manual Installation
 
 You can read the =aec/fedora-build-image.sh= script to see a complete set of instructions for fedora. It should be similar for other Linux distributions.
+
+* Figure 2
+
+This is a test of auto build.
