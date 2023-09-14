@@ -1,11 +1,9 @@
-use ruler::egg::rewrite as rw;
+use egg::rewrite as rw;
 use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
 };
-
-use ruler::egg;
 
 use crate::{
     config,

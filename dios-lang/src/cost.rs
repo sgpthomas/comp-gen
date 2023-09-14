@@ -1,4 +1,4 @@
-use comp_gen::ruler::egg::{self, CostFunction, Language};
+use egg::{self, CostFunction, Language};
 use comp_gen::FromPattern;
 use itertools::Itertools;
 

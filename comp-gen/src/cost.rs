@@ -1,7 +1,5 @@
 use std::marker::PhantomData;
 
-use ruler::egg;
-
 use crate::FromPattern;
 
 /// Metrics defined on an `egg::CostFunction` that are useful for categorizing rules.

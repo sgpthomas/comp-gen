@@ -5,8 +5,6 @@ mod phases;
 mod run;
 mod stats;
 
-use ruler::egg;
-
 pub use compiler::Compiler;
 pub use cost::{CostMetric, CostMetrics};
 pub use phases::PhaseBuilder;

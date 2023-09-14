@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use ruler::egg;
 use serde::{Deserialize, Serialize};
 
 use crate::{phases, FromPattern};

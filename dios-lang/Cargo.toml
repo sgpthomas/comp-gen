@@ -19,11 +19,16 @@ rand_pcg = "0.2"
 rand = { version = "0.7", default-features = false, features = ["std"] }
 num = "0.3"
 num-bigint = { version = "0.3", features = ["rand"] }
-z3 = "0.11.2"
+# had to change z3 version to avoid conflicts with ruler
+z3 = {version = "0.11.2", features = ["static-link-z3"]}
 rustc-hash = "1"
 lexpr = "0.2.6"
 thiserror = "1.0.37"
 anyhow = "1.0.65"
+[dependencies.egg]
+git = "https://github.com/sgpthomas/egg.git"
+branch = "update_symbol_table"
+features = ["serde-1"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 z3 = { version = "0.11.2", features = ["static-link-z3"] }

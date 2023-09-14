@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use log::{debug, info, warn};
-use ruler::egg;
+use egg::*;
 
 use crate::{
     compiler,

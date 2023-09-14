@@ -1,0 +1,12 @@
+{
+  "date": "Sep06-1640",
+  "name": "synthesis",
+  "memory_limit": 220,
+  "timeout": 6000,
+  "command": "./run.sh",
+  "metadata": {
+    "timeout": 259200,
+    "eqsat_iter_limit": 3,
+    "eqsat_timeout": 60
+  }
+}

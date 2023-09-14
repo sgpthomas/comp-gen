@@ -12,7 +12,7 @@ mod synthesis;
 use crate::desugar::Desugar;
 use anyhow::Context;
 use argh::FromArgs;
-use comp_gen::ruler::egg;
+use egg::*;
 pub use error::Res;
 use log::info;
 use std::{fs, io::Write, path::PathBuf, process};
@@ -125,9 +125,10 @@ fn synth(synth_opts: SynthOpts) -> Res<()> {
         synth_opts.config.unwrap_or_default(),
         synth_opts.checkpoint,
     )?;
-    let file = std::fs::File::create(&synth_opts.output)
-        .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
-    serde_json::to_writer_pretty(file, &report).expect("failed to write json");
+    // let file = std::fs::File::create(&synth_opts.output)
+    //     .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
+    report.to_file(&synth_opts.output);
+    // serde_json::to_writer_pretty(file, &report).expect("failed to write json");
     Ok(())
 }
 

@@ -1,5 +1,5 @@
 use derivative::Derivative;
-use ruler::egg;
+use egg::*;
 
 use crate::{config::RuleSchedulerOpt, CostMetric, FromPattern};
 

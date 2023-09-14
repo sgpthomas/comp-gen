@@ -1,4 +1,4 @@
-use comp_gen::ruler::egg;
+use egg::*;
 
 use crate::lang::VecLang;
 

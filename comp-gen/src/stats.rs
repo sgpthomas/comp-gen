@@ -1,5 +1,4 @@
 use log::info;
-use ruler::egg;
 
 use crate::{phases::SinglePhase, FromPattern};
 // use statrs::statistics::Statistics;

@@ -1,7 +1,8 @@
 use comp_gen::{
     ruler,
-    ruler::{egg, SynthLanguage},
+    ruler::SynthLanguage,
 };
+use egg::*;
 use log::{debug, warn};
 use z3::ast::Ast;
 
@@ -9,7 +10,7 @@ use crate::{fuzz::FuzzEquals, lang};
 
 pub trait SmtEquals: ruler::SynthLanguage {
     fn smt_equals(
-        synth: &mut ruler::Synthesizer<Self, ruler::Init>,
+        // synth: &mut ruler::Synthesizer<Self, ruler::Init>,
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool;
@@ -17,7 +18,7 @@ pub trait SmtEquals: ruler::SynthLanguage {
 
 impl SmtEquals for lang::VecLang {
     fn smt_equals(
-        synth: &mut ruler::Synthesizer<Self, ruler::Init>,
+        // synth: &mut ruler::Synthesizer<Self, ruler::Init>,
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
@@ -61,7 +62,7 @@ impl SmtEquals for lang::VecLang {
             smt
         } else {
             warn!("Couldn't translate {lhs} or {rhs} to smt");
-            Self::fuzz_equals(synth, lhs, rhs, false)
+            Self::fuzz_equals(lhs, rhs, false)
         }
     }
 }

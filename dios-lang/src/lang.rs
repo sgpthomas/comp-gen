@@ -1,4 +1,4 @@
-use comp_gen::ruler::egg::{self, define_language, Id, Language};
+use egg::{self, define_language, Id, Language, FromOp};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -44,8 +44,8 @@ impl Display for Value {
     }
 }
 
-define_language! {
-    #[derive(Serialize, Deserialize)]
+egg::define_language! {
+    #[derive(Serialize, Deserialize)] 
     pub enum VecLang {
         // Id is a key to identify EClasses within an EGraph, represents
         // children nodes
@@ -419,3 +419,10 @@ impl comp_gen::FromPattern for VecLang {
             .into()
     }
 }
+
+// impl egg::FromOp for VecLang {
+//     fn from_op(op: &str, children: Vec<Id>) -> Result<Self, Self::Error>
+//     {
+
+//     }
+// }
