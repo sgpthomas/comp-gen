@@ -32,10 +32,28 @@ dnf install --installroot $contmnt \
     ${packages[@]}
 
 # fix the z3 install so that z3.rs can find it
-buildah run $cont -- ln -sf /usr/include/z3/*.h /usr/include/
+echo "Linking /usr/include/z3/*.h -> /usr/include"
+buildah run $cont -- ln -sf /usr/include/z3/z3++.h /usr/include/z3++.h
+buildah run $cont -- ln -sf /usr/include/z3/z3.h /usr/include/z3.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_algebraic.h /usr/include/z3_algebraic.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_api.h /usr/include/z3_api.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_ast_containers.h /usr/include/z3_ast_containers.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_fixedpoint.h /usr/include/z3_fixedpoint.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_fpa.h /usr/include/z3_fpa.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_macros.h /usr/include/z3_macros.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_optimization.h /usr/include/z3_optimization.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_polynomial.h /usr/include/z3_polynomial.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_rcf.h /usr/include/z3_rcf.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_spacer.h /usr/include/z3_spacer.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_v1.h /usr/include/z3_v1.h
+buildah run $cont -- ln -sf /usr/include/z3/z3_version.h /usr/include/z3_version.h
+echo "Done"
+buildah run $cont -- ls /usr/include/
 
 # fix ld-lsb not existing
+echo "Linking /lib64/ld-linux-x86-64.so.2 -> /lib64/ld-lsb-x86-64.so.3"
 buildah run $cont -- ln -sf /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
+echo "Done"
 
 # install rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/install-rustup.sh
@@ -49,7 +67,7 @@ sh /tmp/install-racket.sh --in-place --dest "$contmnt/root/racket"
 rm /tmp/install-racket.sh
 
 # cleanup dnf files to shrink the size of the image
-dnf -y clean all --installroot $contmnt 
+dnf -y clean all --installroot $contmnt --releasever 38
 
 # unmount container, we are done installing things into it from the outside
 # the rest of the work happens inside the container
