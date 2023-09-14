@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+set -e
+
 cont=$(buildah from scratch)
 contmnt=$(buildah mount $cont)
 
 packages=(coreutils git make cmake gcc "gcc-c++" \
                     clang-devel z3 z3-devel fontconfig-devel \
                     libjpeg-devel python3-pip libnsl tar \
-                    libxcrypt-compat)
+                    libxcrypt-compat pango-devel)
 
 # if the -r flag is passed, redownload packages
 case "$1" in
