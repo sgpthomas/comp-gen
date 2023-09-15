@@ -1,9 +1,13 @@
 import json
+import random
 import shutil
+import string
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 
+import click
 import psutil
 
 
@@ -26,6 +30,27 @@ def sort_path(path):
     stem = path.stem.replace("_", "-").replace("x", "-").split("-")
     stem = list(map(lambda x: int(x) if x.isnumeric() else x, stem))
     return stem
+
+
+def generate_unique_exp_id(parent: Path) -> Path:
+    """
+    Generate a unique path relative to a provided parent path.
+
+    This needs to generate a path that is unique across any machine
+    that deals with these paths without any communication. While, this
+    function isn't perfect because it uses a randomly generated seed alongside
+    the date. It should be exceedingly unlikely that two paths clash.
+    """
+
+    datestr = datetime.now().strftime("%b-%m%d-%H%M")
+    randstr = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+    ret_path = parent / f"{datestr}-{randstr}"
+
+    # crash if this path exists already.
+    # this really shouldn't happen
+    assert not ret_path.exists()
+
+    return ret_path
 
 
 class GlobalConfig:
@@ -154,11 +179,7 @@ class Job:
     def complete(self):
         parent_dir = self.global_config.completed / self.name
         parent_dir.mkdir(exist_ok=True)
-        children = filter(lambda x: str(x.name).isnumeric(), parent_dir.glob("*"))
-        print(list(map(lambda x: x.name, parent_dir.glob("*"))))
-        results = parent_dir / str(len(list(children)))
-
-        assert not results.exists()
+        results = generate_unique_exp_id(parent_dir)
 
         # copy over results, job config, and params.json
         shutil.copytree(self.dir, results)
@@ -265,7 +286,9 @@ def single_run(config, alive, update=False):
         del alive[job]
 
 
-def main():
+@click.command()
+@click.option("--auto-update", is_flag=True)
+def main(auto_update):
     config = GlobalConfig(Path("."))
 
     try:
@@ -273,7 +296,7 @@ def main():
         i = 0
         while True:
             config.reload()
-            single_run(config, alive, update=i == 0)
+            single_run(config, alive, update=auto_update and i == 0)
 
             time.sleep(5)
             i = (i + 1) % 10

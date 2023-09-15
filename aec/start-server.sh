@@ -22,7 +22,8 @@ fi
 
 cd /root/comp-gen
 echo "Pulling changes..."
-git pull
+git pull -r
+cargo build --release --manifest-path=dios-lang/Cargo.toml
 
 cd /root/comp-gen/server
 python3 server.py

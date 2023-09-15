@@ -29,6 +29,8 @@ mkdir -p completed jobs
 podman run --rm -it \
        -v ./completed:/root/comp-gen/server/completed \
        -v ./jobs:/root/comp-gen/server/jobs \
+       -v ./xtensa:/root/xtensa \
+       --network slirp4netns:allow_host_loopback=true \
        ghcr.io/sgpthomas/isaria-aec
 #+end_src
 
