@@ -16,4 +16,4 @@ make
 cd /
 
 # install some needed python dependencies for the experiment server
-pip3 install psutil
+pip3 install psutil click
