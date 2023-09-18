@@ -168,6 +168,8 @@ def estimate_kernel(
                 " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
                 shell=True,
                 cwd=exp_path / results,
+                stderr=subprocess.STDOUT,
+                stdout=Path("xt-stdout.log").open("w"),
                 timeout=60 * 60 * 3,
             )
 
