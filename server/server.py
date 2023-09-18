@@ -122,7 +122,10 @@ class Job:
 
         data = json.load(config.open("r"))
         return all(
-            map(lambda k: k in data, ["date", "name", "memory_limit", "command", "key"])
+            map(
+                lambda k: k in data,
+                ["date", "name", "memory_limit", "command"],
+            )
         )
 
     def exec(self):

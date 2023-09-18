@@ -1087,6 +1087,7 @@ def estimate(args):
         "date": date_str,
         "name": "estimate",
         "memory_limit": 220,
+        "timeout": 86400,
         "command": "./run.sh",
         "metadata": {
             "params": str(args),

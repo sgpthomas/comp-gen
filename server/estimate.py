@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import shutil
 import subprocess
 from datetime import datetime
@@ -208,7 +209,7 @@ def estimate_kernel(
         cycles_csv.touch()
         return pd.DataFrame()
     except FileNotFoundError as e:
-        print("File not found")
+        print(f"File not found (cwd: {os.getcwd()})")
         print(e)
         cycles_csv = exp_path / results / "cycles.csv"
         cycles_csv.touch()
