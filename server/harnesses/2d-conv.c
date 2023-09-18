@@ -78,7 +78,8 @@ void naive_convolution_hard_size(float *in, float *f, float *o) {
 }
 
 int main(int argc, char **argv) {
-
+  printf("Testing printing\n");
+  printf("OUTFILE: %s\n", OUTFILE);
   FILE *file = fopen(OUTFILE, "w");
   if (file == NULL) file = stdout;
   fprintf(file, "kernel,I_ROWS,I_COLS,F_ROWS,F_COLS,cycles,correct\n");
