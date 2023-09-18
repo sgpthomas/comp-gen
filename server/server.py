@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import shutil
 import string
@@ -159,7 +160,7 @@ class Job:
         try:
             self.proc = subprocess.Popen(
                 f"{self.command}",
-                env=self.global_config.env,
+                env=self.global_config.env | dict(os.environ),
                 stdout=stdout_log.open("w"),
                 stderr=stderr_log.open("w"),
                 cwd=self.dir,

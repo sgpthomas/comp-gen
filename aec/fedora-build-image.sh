@@ -8,7 +8,7 @@ contmnt=$(buildah mount $cont)
 packages=(coreutils git make cmake gcc "gcc-c++" \
                     clang-devel z3 z3-devel fontconfig-devel \
                     libjpeg-devel python3-pip libnsl tar \
-                    libxcrypt-compat pango-devel)
+                    libxcrypt-compat pango-devel eigen3-devel)
 
 # if the -r flag is passed, redownload packages
 case "$1" in

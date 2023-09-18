@@ -144,10 +144,8 @@ def estimate_kernel(
             "/usr/include/eigen3",
             "-I",
             f"{xtensa_root}/fusiong3_library/include",
-            # "~/Research/xtensa/fusiong3_library/include",
             "-I",
             f"{xtensa_root}/fusiong3_library/include_private",
-            # "~/Research/xtensa/fusiong3_library/include_private",
             "kernel.c",
         ]
 
@@ -166,7 +164,7 @@ def estimate_kernel(
                 )
             subprocess.run(
                 " ".join(cmd + ["harness.c", "-o", "kernel.o"]),
-                # shell=True,
+                shell=True,
                 cwd=exp_path / results,
                 stderr=subprocess.STDOUT,
                 stdout=(exp_path / "xt-stdout.log").open("w"),
@@ -190,10 +188,8 @@ def estimate_kernel(
             xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
         xt_run_cmd += ["kernel.o"]
         subprocess.run(
-            " ".join(xt_run_cmd),
-            shell=True,
+            xt_run_cmd,
             cwd=exp_path / results,
-            capture_output=False,
         )
         print("Done")
 
@@ -203,7 +199,6 @@ def estimate_kernel(
             df = df.replace(to_replace="compgen", value=override)
             df.to_csv(exp_path / results / "cycles.csv")
 
-        print(df)
         return df
     except subprocess.TimeoutExpired:
         print("Timeout!!")
