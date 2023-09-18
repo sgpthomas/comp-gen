@@ -26,11 +26,13 @@ You can run experiments by submitting jobs to the experiment server. But first, 
 
 #+begin_src async-shell
 mkdir -p completed jobs
-podman run --rm -it \
+podman pull ghcr.io/sgpthomas/isaria-aec:latest
+podman run --rm -d \
        -v ./completed:/root/comp-gen/server/completed \
        -v ./jobs:/root/comp-gen/server/jobs \
        -v ./xtensa:/root/xtensa \
        --network slirp4netns:allow_host_loopback=true \
+       --name isaria \
        ghcr.io/sgpthomas/isaria-aec
 #+end_src
 
@@ -44,6 +46,52 @@ podman run --rm -it \
 
 You can read the =aec/fedora-build-image.sh= script to see a complete set of instructions for fedora. It should be similar for other Linux distributions.
 
-* Figure 2
+* Generating all the data
+:PROPERTIES:
+:header-args:async-shell: :name jobs :results none :dir (sgt/dir "server")
+:END:
 
-This is a test of auto build.
+** TODO Overall Performance (Figure 4)
+
+*** Comp-gen Numbers
+
+First generate the jobs.
+
+#+begin_src async-shell
+./jobs.py overall_performance
+#+end_src
+
+Take a look at what is generated in =server/jobs=
+
+Then copy them to the server. The =--clean= flag removes the local copies of the jobs once they have been uploaded to the server.
+
+#+begin_src async-shell
+./sync.py upload --name isaria --dir "~/jobs" --clean
+#+end_src
+
+*** Diospyros Numbers
+
+#+begin_src async-shell
+./jobs.py diospyros
+#+end_src
+
+#+begin_src async-shell
+./sync.py upload --name isaria --dir "~/jobs"
+#+end_src
+
+*** Estimation
+
+Run the estimation job
+
+#+begin_src async-shell
+./jobs.py "estimate:performance"
+#+end_src
+
+** TODO Compilation Time (Figure 5)
+** TODO Pruning (Figure 6)
+** TODO Ruleset Ablation (Figure 7)
+** TODO New Instructions (Table 2)
+** TODO Rule Distribution (Figure 8)
+** TODO Alpha Beta Ablation (Figure 9)
+* Making Figures
+* Making a change

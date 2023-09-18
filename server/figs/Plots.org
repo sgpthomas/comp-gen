@@ -81,7 +81,7 @@ ls jobs
 Sync jobs.
 
 #+begin_src async-shell :dir (sgt/dir "server") :results none :name sync
-./sync.py both --name isaria --dir "~"
+./sync.py upload --name isaria --dir "~/jobs"
 #+end_src
 
 Check on server log

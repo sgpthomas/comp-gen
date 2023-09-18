@@ -71,6 +71,30 @@ def do_send(name, remote_path="~"):
     subprocess.run(["mkdir", "jobs"])
 
 
+def do_upload(name, remote_path, clean=False):
+    ip = get_aws_ip_by_name(name)
+    print(f"Using ip: {ip}")
+    print("Sending jobs", end="...", flush=True)
+    subprocess.run(
+        " ".join(
+            [
+                "rsync",
+                "-e 'ssh -o StrictHostKeyChecking=no'",
+                "-avh",
+                "jobs/",
+                f"ubuntu@{ip}:{remote_path}",
+            ]
+        ),
+        shell=True,
+    )
+    print("Done")
+
+    if clean:
+        print("Cleaning jobs")
+        subprocess.run(["rm", "-r", "jobs"])
+        subprocess.run(["mkdir", "jobs"])
+
+
 def do_retreive(name, remote_path="~"):
     ip = get_aws_ip_by_name(name)
 
@@ -128,6 +152,14 @@ def send(name, dir):
 @click.option("--dir", default="~/comp-gen/server")
 def retreive(name, dir):
     do_retreive(name, remote_path=dir)
+
+
+@cli.command()
+@click.option("--name", default="exp")
+@click.option("--dir", default="~/jobs")
+@click.option("--clean", is_flag=True)
+def upload(name, dir, clean):
+    do_upload(name, dir, clean=clean)
 
 
 @cli.command()

@@ -11,9 +11,17 @@ from typing import Callable
 
 import click
 
-from server import unique_name
-
 JOBS = {}
+
+
+def unique_name(path: Path, suffix: int = 0) -> Path:
+    """Find a unique path based on `path` and adding a suffix."""
+
+    new_path = Path(path.parent) / f"{path.name}-{suffix}"
+    if not new_path.exists():
+        return new_path
+    else:
+        return unique_name(path, suffix + 1)
 
 
 def job(name=None):
@@ -45,6 +53,10 @@ def compile_name(compile):
         return f"config_a{compile['alpha']}_b{compile['beta']}.json"
     else:
         raise Exception(f"Unsupported `compile` type! {type(compile)}")
+
+
+def make_datestr() -> str:
+    return datetime.now().strftime("%b%d-%H%M")
 
 
 def mat_mul(
@@ -513,6 +525,55 @@ def overall_performance():
             key="performance",
             timeout=c["timeout"] * 20,
         )
+
+
+@job()
+def diospyros():
+    """
+    Run diospyros experiments.
+    """
+
+    datestr = make_datestr()
+
+    job_dir = unique_name(Path("jobs") / f"{datestr}-diospyros", 0)
+
+    config = {
+        "date": datestr,
+        "name": "diospyros",
+        "memory_limit": 220,
+        "command": "./run.sh",
+        "key": "diospyros",
+        "metadata": {"timeout": 180},
+    }
+
+    run_sh = "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "",
+            'export PATH="/root/.cargo/bin:/root/racket/bin:$PATH"',
+            "root_dir=$(pwd)",
+            "git clone https://github.com/cucapra/diospyros.git",
+            "cd diospyros",
+            "make",
+            " ".join(
+                [
+                    "python3",
+                    "evaluation/eval_benchmarks.py",
+                    "--timeout 180",
+                    "--skiprun",
+                    '-o "$root_dir/results"',
+                ]
+            ),
+            "cd $root_dir",
+            "rm -rf diospyros",
+        ]
+    )
+
+    job_dir.mkdir(exist_ok=False)
+    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
+    with (job_dir / "run.sh").open("w") as f:
+        f.writelines(run_sh)
+    os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
 @job()
@@ -1034,9 +1095,10 @@ def estimate(args):
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
 
     command = [
-        "cd ../..",
+        "export LM_LICENSE_FILE=27010@10.0.2.2",
+        "cd /root/comp-gen/server",
         f"./process.py all completed/",
-        f"./estimate.py many latest {args}",
+        f"./estimate.py many latest --key {args} --xtensa /root/xtensa --dios /root/diospyros",
     ]
 
     with (job_dir / "run.sh").open("w") as f:

@@ -172,13 +172,16 @@ def estimate_kernel(
 
             print("Done")
 
+        # if we are in force mode, remove cycles.csv if it exists
+        if force:
+            (exp_path / results / "cycles.csv").unlink(missing_ok=True)
+
         # simulate the resulting object file
         print("Simulating", end="...", flush=True)
         xt_run_cmd = [
             build_exec_path(
                 [xtensa_root, xtensa_version, "XtensaTools", "bin"], "xt-run"
             )
-            # "~/Research/xtensa/RI-2021.8-linux/XtensaTools/bin/xt-run"
         ]
         if debug:
             xt_run_cmd += ["--client_commands='trace --level=0 trace.out'"]
@@ -206,6 +209,12 @@ def estimate_kernel(
         return pd.DataFrame()
     except FileNotFoundError as e:
         print("File not found")
+        print(e)
+        cycles_csv = exp_path / results / "cycles.csv"
+        cycles_csv.touch()
+        return pd.DataFrame()
+    except Exception as e:
+        print("Some other error")
         print(e)
         cycles_csv = exp_path / results / "cycles.csv"
         cycles_csv.touch()

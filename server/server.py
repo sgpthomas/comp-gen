@@ -11,16 +11,6 @@ import click
 import psutil
 
 
-def unique_name(path: Path, suffix: int = 0) -> Path:
-    """Find a unique path based on `path` and adding a suffix."""
-
-    new_path = Path(path.parent) / f"{path.name}-{suffix}"
-    if not new_path.exists():
-        return new_path
-    else:
-        return unique_name(path, suffix + 1)
-
-
 def sort_path(path):
     """
     Sort a path by attempting to split it by some common
@@ -132,7 +122,7 @@ class Job:
 
         data = json.load(config.open("r"))
         return all(
-            map(lambda k: k in data, ["date", "name", "memory_limit", "command"])
+            map(lambda k: k in data, ["date", "name", "memory_limit", "command", "key"])
         )
 
     def exec(self):
