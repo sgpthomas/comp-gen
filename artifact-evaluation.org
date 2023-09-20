@@ -51,7 +51,11 @@ You can read the =aec/fedora-build-image.sh= script to see a complete set of ins
 :header-args:async-shell: :name jobs :results none :dir (sgt/dir "server")
 :END:
 
-** TODO Overall Performance (Figure 4)
+** DONE Overall Performance (Figure 4)
+CLOSED: [2023-09-19 Tue 10:19]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
+:END:
 
 *** Comp-gen Numbers
 
@@ -76,7 +80,7 @@ Then copy them to the server. The =--clean= flag removes the local copies of the
 #+end_src
 
 #+begin_src async-shell
-./sync.py upload --name isaria --dir "~/jobs"
+./sync.py upload --name isaria --dir "~/jobs" --clean
 #+end_src
 
 *** Estimation
@@ -85,13 +89,92 @@ Run the estimation job
 
 #+begin_src async-shell
 ./jobs.py "estimate:performance"
+./sync.py update --name isaria --dir "~/jobs" --clean
 #+end_src
 
-** TODO Compilation Time (Figure 5)
-** TODO Pruning (Figure 6)
+*** Download results
+
+#+begin_src async-shell
+./sync.py download --name isaria --dir "~/completed"
+#+end_src
+
+** DONE Compilation Time (Figure 5)
+CLOSED: [2023-09-20 Wed 10:09]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2023-09-20 Wed 10:09]
+:END:
+
+This uses the overall performance numbers. No new experiments needed.
+
+** DONE Pruning (Figure 6)
+CLOSED: [2023-09-19 Tue 10:19]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
+:END:
+
+This needs the pruning experiments.
+
+#+begin_src async-shell
+./jobs.py pruning
+#+end_src
+
+Upload the jobs.
+
+#+begin_src async-shell
+./sync.py upload --name isaria --dir "~/jobs" --clean
+#+end_src
+
 ** TODO Ruleset Ablation (Figure 7)
+
+We first need to synthesize rulesets.
+
+The following command will generate the jobs needed for that.
+
+#+begin_src async-shell
+./jobs.py ruleset_synthesis
+#+end_src
+
+Then we need to compile them with Isaria.
+
+And generate estimation for them. This requires the rulesets existing. If they don't, the job creation can't exist. I would like to be able to start these jobs with the rulesets pre-existing. I probably should put them somewhere else, and then have the person copy them to the right location and name them the right things? Or maybe I don't need them to name them the right things.
+
+*TODO*: run this after running ruleset synthesis
+
+#+begin_src async-shell
+./jobs.py ruleset_ablation
+#+end_src
+
+#+begin_src async-shell
+./jobs.py "estimate:ruleset_ablation"
+#+end_src
+
 ** TODO New Instructions (Table 2)
+
+This generates the new rulesets.
+
+#+begin_src async-shell
+./jobs.py new_instructions_ruleset
+#+end_src
+
+And this runs Isaria on them. However, this job seems wack. Because I'm adding rules?? And hardcoding the synthesis path. I should probably change it.
+
+#+begin_src async-shell
+./jobs.py test_instruction_ruleset
+#+end_src
+
 ** TODO Rule Distribution (Figure 8)
-** TODO Alpha Beta Ablation (Figure 9)
+
+This doesn't require any more experiments. We can just grab one of the rule_distribution.csv that we have generated from above. Or maybe we should just generate it from the ruleset directly. I should probably do that.
+
+** DONE Alpha Beta Ablation (Figure 9)
+CLOSED: [2023-09-19 Tue 11:29]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2023-09-19 Tue 11:29]
+:END:
+
+#+begin_src async-shell
+./jobs.py alpha_beta_ablation
+#+end_src
+
 * Making Figures
 * Making a change

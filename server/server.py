@@ -33,7 +33,7 @@ def generate_unique_exp_id(parent: Path) -> Path:
     the date. It should be exceedingly unlikely that two paths clash.
     """
 
-    datestr = datetime.now().strftime("%b-%m%d-%H%M")
+    datestr = datetime.now().strftime("%b%d-%H%M")
     randstr = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
     ret_path = parent / f"{datestr}-{randstr}"
 

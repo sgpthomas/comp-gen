@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+from pathlib import Path
 
 import click
 
@@ -26,53 +27,7 @@ def get_aws_ip_by_name(name):
     raise Exception(f"Machine {name} not found")
 
 
-def do_send(name, remote_path="~"):
-    ip = get_aws_ip_by_name(name)
-    print(f"Using ip: {ip}")
-    # send the complete jobs to the server so that the number's it generates
-    # are the same as the ones we have
-    print("Sending complete jobs", end="...", flush=True)
-    print(f"remote path: {remote_path}")
-    subprocess.run(
-        " ".join(
-            [
-                "rsync",
-                "-e 'ssh -o StrictHostKeyChecking=no'",
-                "-avh",
-                "--exclude",
-                "*.log",
-                "--exclude",
-                "*.rkt",
-                "completed/",
-                f"ubuntu@{ip}:{remote_path}/completed",
-            ]
-        ),
-        shell=True,
-    )
-    print("Done")
-    print("Sending jobs", end="...", flush=True)
-    subprocess.run(
-        " ".join(
-            [
-                "rsync",
-                "-e 'ssh -o StrictHostKeyChecking=no'",
-                "-avh",
-                "--exclude",
-                "*.rkt",
-                "jobs/",
-                f"ubuntu@{ip}:{remote_path}/jobs",
-            ]
-        ),
-        shell=True,
-    )
-    print("Done")
-    print("Cleaning jobs")
-    subprocess.run(["rm", "-r", "jobs"])
-    subprocess.run(["mkdir", "jobs"])
-
-
-def do_upload(name, remote_path, clean=False):
-    ip = get_aws_ip_by_name(name)
+def do_upload(ip, remote_path, clean=False):
     print(f"Using ip: {ip}")
     print("Sending jobs", end="...", flush=True)
     subprocess.run(
@@ -95,44 +50,30 @@ def do_upload(name, remote_path, clean=False):
         subprocess.run(["mkdir", "jobs"])
 
 
-def do_retreive(name, remote_path="~"):
-    ip = get_aws_ip_by_name(name)
+def do_download(ip, remote_path, clean=False):
+    print(f"Using ip: {ip}")
+    print("Downloading completed", end="...", flush=True)
 
-    print("Syncing in-progress jobs", end="...")
+    # normalize the remote path so that rsync doesn't create completed/completed/*
+    remote_path = str(Path(remote_path)) + "/"
+
     subprocess.run(
         " ".join(
             [
                 "rsync",
                 "-e 'ssh -o StrictHostKeyChecking=no'",
                 "-avh",
-                "--delete",
-                f"ubuntu@{ip}:{remote_path}/jobs/",
-                "in-progress",
+                f"ubuntu@{ip}:{remote_path}",
+                "completed/",
             ]
         ),
         shell=True,
     )
-    print("Done")
 
-    print("Syncing completed", end="...")
-    subprocess.run(
-        " ".join(
-            [
-                "rsync",
-                "-e 'ssh -o StrictHostKeyChecking=no'",
-                "-avh",
-                f"ubuntu@{ip}:{remote_path}/completed/",
-                "completed",
-            ]
-        ),
-        shell=True,
-    )
-    print("Done")
-
-
-def do_both(name, remote_path):
-    do_send(name, remote_path)
-    do_retreive(name, remote_path)
+    if clean:
+        print("Cleaning completed")
+        subprocess.run(["ssh", f"ubuntu@{ip}", "rm", "-r", remote_path])
+        subprocess.run(["ssh", f"ubuntu@{ip}", "mkdir", remote_path])
 
 
 @click.group()
@@ -142,31 +83,20 @@ def cli():
 
 @cli.command()
 @click.option("--name", default="exp")
-@click.option("--dir", default="~/comp-gen/server")
-def send(name, dir):
-    do_send(name, remote_path=dir)
-
-
-@cli.command()
-@click.option("--name", default="exp")
-@click.option("--dir", default="~/comp-gen/server")
-def retreive(name, dir):
-    do_retreive(name, remote_path=dir)
-
-
-@cli.command()
-@click.option("--name", default="exp")
 @click.option("--dir", default="~/jobs")
 @click.option("--clean", is_flag=True)
 def upload(name, dir, clean):
-    do_upload(name, dir, clean=clean)
+    ip = get_aws_ip_by_name(name)
+    do_upload(ip, dir, clean=clean)
 
 
 @cli.command()
 @click.option("--name", default="exp")
-@click.option("--dir", default="~/comp-gen/server")
-def both(name, dir):
-    do_both(name, remote_path=dir)
+@click.option("--dir", default="~/completed")
+@click.option("--clean", is_flag=True)
+def download(name, dir, clean):
+    ip = get_aws_ip_by_name(name)
+    do_download(ip, dir, clean=clean)
 
 
 if __name__ == "__main__":

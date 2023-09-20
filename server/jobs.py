@@ -314,6 +314,7 @@ def make_synthesis(
     synth_timeout,
     eqsat_iter=3,
     eqsat_timeout=60,
+    name="synthesis",
     binops=None,
     triops=None,
     timeout=6000,
@@ -331,7 +332,7 @@ def make_synthesis(
         synth_config["triops"] = triops
     job_config = {
         "date": date_str,
-        "name": "synthesis",
+        "name": name,
         "memory_limit": 220,
         "timeout": timeout,
         "command": "./run.sh",
@@ -339,6 +340,8 @@ def make_synthesis(
             "timeout": synth_timeout,
             "eqsat_iter_limit": eqsat_iter,
             "eqsat_timeout": eqsat_timeout,
+            "binops": binops,
+            "triops": triops,
         },
     }
     json.dump(job_config, (job_dir / "config.json").open("w"), indent=2)
@@ -378,7 +381,7 @@ rulesets = dict_from_dir(Path("../experiments/rulesets"))
 configs = dict_from_dir(Path("../experiments/configs"))
 
 
-def make_config(alpha=15, beta=6, timeout=180):
+def make_config(alpha=15, beta=6, timeout=180, prune=True):
     return {
         "total_node_limit": 2000000000,
         "total_iter_limit": 4000,
@@ -403,7 +406,7 @@ def make_config(alpha=15, beta=6, timeout=180):
                             "node_limit": 500000,
                             "timeout": 30,
                             "iter_limit": 2,
-                            "fresh_egraph": True,
+                            "fresh_egraph": prune,
                             "disabled": False,
                         },
                         {
@@ -429,7 +432,7 @@ def make_config(alpha=15, beta=6, timeout=180):
                     "name": "opt",
                     "cd": [None, alpha],
                     "ca": [None, beta],
-                    "fresh_egraph": True,
+                    "fresh_egraph": prune,
                     "iter_limit": 10,
                     "scheduler": "simple",
                     "disabled": False,
@@ -523,7 +526,7 @@ def overall_performance():
             c,
             "alternative",
             key="performance",
-            timeout=c["timeout"] * 20,
+            timeout=10000,
         )
 
 
@@ -541,6 +544,7 @@ def diospyros():
         "date": datestr,
         "name": "diospyros",
         "memory_limit": 220,
+        "timeout": 10000,
         "command": "./run.sh",
         "key": "diospyros",
         "metadata": {"timeout": 180},
@@ -577,13 +581,11 @@ def diospyros():
 
 
 @job()
-def pruning_experiments():
+def pruning():
     """
     This experiment is meant to show that pruning dramatically decreases
     the how long it takes to find a low-cost program.
     """
-
-    print("Creating pruning experiments")
 
     params = [
         [3, 3, 2, 2],
@@ -609,91 +611,118 @@ def pruning_experiments():
             Path("jobs"),
             *p,
             rulesets["ruleset_timeout86400"],
-            configs["loop_alt_cost_t360"],
+            # configs["loop_alt_cost_t360"],
+            make_config(timeout=timeout, prune=True),
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 5,
+            timeout=timeout * 7,
         )
         # no pruning config
         make_2d_conv(
             Path("jobs"),
             *p,
             rulesets["ruleset_timeout86400"],
-            configs["loop_alt_cost_noprune_t360"],
+            # configs["loop_alt_cost_noprune_t360"],
+            make_config(timeout=timeout, prune=False),
             "alternative",
             key="pruning",
             memory_limit=100,
-            timeout=timeout * 5,
+            timeout=timeout * 7,
         )
 
 
+# @job()
+# def understand_cost_function():
+#     """
+#     1) Try looping config with more expansion iterations.
+#     2) Try looping+pruning with original cost function.
+#     """
+
+#     sizes = [
+#         [2, 2, 2, 2],
+#         [4, 4, 4, 4],
+#         [8, 8, 8, 8],
+#         [16, 16, 16, 16],
+#     ]
+
+#     for s in sizes:
+#         mat_mul(
+#             Path("jobs"),
+#             *s,
+#             rulesets["expanding_vecmac"],
+#             configs["loop_alt_cost_t1800"],
+#             "alternative",
+#             key="fix",
+#         )
+
+
+# @job()
+# def no_eqsat():
+#     """
+#     Get estimation numbers for all benchmarks with no equality saturation.
+#     In other words, what is the effect of doing just the Diospyros symbolic execution.
+#     """
+
+#     mat_mul_sizes = [
+#         [2, 2, 2, 2],
+#         [2, 3, 3, 3],
+#         [3, 3, 3, 3],
+#         [4, 4, 4, 4],
+#         [8, 8, 8, 8],
+#         [10, 10, 10, 10],
+#         [16, 16, 16, 16],
+#     ]
+#     conv_2d_sizes = [
+#         [3, 3, 2, 2],
+#         [3, 3, 3, 3],
+#         [3, 5, 3, 3],
+#         [4, 4, 3, 3],
+#         [8, 8, 3, 3],
+#         [10, 10, 2, 2],
+#         [10, 10, 3, 3],
+#         [10, 10, 4, 4],
+#         [16, 16, 2, 2],
+#         [16, 16, 3, 3],
+#         [16, 16, 4, 4],
+#     ]
+
+#     ruleset = rulesets["expanding_vecmac"]
+#     config = configs["none"]
+
+#     # create all the jobs
+#     for size in mat_mul_sizes:
+#         mat_mul(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
+
+#     for size in conv_2d_sizes:
+#         make_2d_conv(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
+
+#     q_prod(Path("jobs"), ruleset, config, "alternative", key="noeqsat")
+
+
 @job()
-def understand_cost_function():
+def ruleset_synthesis():
     """
-    1) Try looping config with more expansion iterations.
-    2) Try looping+pruning with original cost function.
+    Synthesize rulesets with different timeouts.
     """
 
-    sizes = [
-        [2, 2, 2, 2],
-        [4, 4, 4, 4],
-        [8, 8, 8, 8],
-        [16, 16, 16, 16],
+    timeouts = [
+        60,
+        600,
+        6000,
+        60000,
     ]
 
-    for s in sizes:
-        mat_mul(
+    for t in timeouts:
+        make_synthesis(
             Path("jobs"),
-            *s,
-            rulesets["expanding_vecmac"],
-            configs["loop_alt_cost_t1800"],
-            "alternative",
-            key="fix",
+            t,
+            name="synthesis",
+            binops=["+", "-", "*", "/"],
+            triops=["mac"],
+            eqsat_iter=3,
+            eqsat_timeout=60,
         )
-
-
-@job()
-def no_eqsat():
-    """
-    Get estimation numbers for all benchmarks with no equality saturation.
-    In other words, what is the effect of doing just the Diospyros symbolic execution.
-    """
-
-    mat_mul_sizes = [
-        [2, 2, 2, 2],
-        [2, 3, 3, 3],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [8, 8, 8, 8],
-        [10, 10, 10, 10],
-        [16, 16, 16, 16],
-    ]
-    conv_2d_sizes = [
-        [3, 3, 2, 2],
-        [3, 3, 3, 3],
-        [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        [16, 16, 4, 4],
-    ]
-
-    ruleset = rulesets["expanding_vecmac"]
-    config = configs["none"]
-
-    # create all the jobs
-    for size in mat_mul_sizes:
-        mat_mul(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
-
-    for size in conv_2d_sizes:
-        make_2d_conv(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
-
-    q_prod(Path("jobs"), ruleset, config, "alternative", key="noeqsat")
 
 
 @job()
@@ -719,7 +748,7 @@ def ruleset_ablation():
         [18, 18, 4, 4],
     ]
 
-    config = configs["loop_alt_cost_t1800"]
+    config = make_config(timeout=1800)
 
     def read_time(p):
         config = json.load((p.parents[0] / "config.json").open("r"))
@@ -738,62 +767,7 @@ def ruleset_ablation():
 
 
 @job()
-def ruleset_synthesis():
-    """
-    Synthesize rulesets with different settings.
-    """
-
-    timeouts = [
-        # 60,
-        # 600,
-        # 6000,
-        # 60000,
-        # 600000,
-        60
-        * 60
-        * 24
-        * 3
-    ]
-
-    eqsat_settings = [
-        # (2, 60),
-        (3, 60),
-        # (4, 120),
-    ]
-    exps = itertools.product(timeouts, eqsat_settings)
-    for t, eqsat in exps:
-        make_synthesis(Path("jobs"), t, eqsat_iter=eqsat[0], eqsat_timeout=eqsat[1])
-
-
-@job()
-def scheduler():
-    """
-    Make a job that uses all the rules with the backoff scheduler.
-    """
-
-    size = [[8, 8, 3, 3]]
-
-    for s in size:
-        make_2d_conv(
-            Path("jobs"),
-            *s,
-            rulesets["ruleset_timeout86400"],
-            configs["all-backoff"],
-            "alternative",
-            key="scheduler",
-        )
-        make_2d_conv(
-            Path("jobs"),
-            *s,
-            rulesets["ruleset_timeout86400"],
-            configs["all-simple"],
-            "alternative",
-            key="scheduler",
-        )
-
-
-@job()
-def add_instruction_ruleset():
+def new_instructions_ruleset():
     """
     We make these claims that it's trivial to change the spec to explore the
     design space of different instructions. Test this by generating rulesets
@@ -805,14 +779,29 @@ def add_instruction_ruleset():
     make_synthesis(
         Path("jobs"),
         60000,
+        name="new_instructions",
         binops=binops + ["sqrtsgn"],
         triops=["mac", "muls"],
         timeout=6000000,
     )
     # baseline + muls
-    # make_synthesis(Path("jobs"), 60000, binops=binops, triops=["mac", "muls"], timeout=6000000)
+    make_synthesis(
+        Path("jobs"),
+        60000,
+        name="new_instructions",
+        binops=binops,
+        triops=["mac", "muls"],
+        timeout=6000000,
+    )
     # baseline + mulsgn
-    # make_synthesis(Path("jobs"), 60000, binops=binops + ["~*"], triops=["mac"], timeout=6000000)
+    make_synthesis(
+        Path("jobs"),
+        60000,
+        name="new_instructions",
+        binops=binops + ["~*"],
+        triops=["mac"],
+        timeout=6000000,
+    )
 
 
 @job()
@@ -882,111 +871,15 @@ def test_instruction_ruleset():
 
     rulesets = dict_from_dir(Path("instruction-rulesets"))
 
-    for n, r in rulesets.items():
+    for _, r in rulesets.items():
         qr_decomp(
             Path("jobs"),
             3,
             r,
-            configs["loop_alt_cost_t360"],
+            make_config(timeout=360),
             "alternative",
             key="instruction",
             timeout=7200,
-        )
-
-
-@job()
-def overview_example():
-    make_2d_conv(
-        Path("jobs"),
-        *[2, 2, 2, 2],
-        rulesets["ruleset_timeout86400"],
-        configs["all-backoff"],
-        "alternative",
-        key="overview",
-    )
-
-
-@job()
-def optimization_effect():
-    """
-    What is the overall effect of the optimization phase?
-
-    Test this by running a pass with compilation loop timeout of 180, and 180
-    seconds for optimization.
-    """
-
-    print("Creating overall performance jobs")
-
-    mat_mul_sizes = [
-        # [2, 2, 2, 2],
-        # [2, 3, 3, 3],
-        # [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [8, 8, 8, 8],
-        [10, 10, 10, 10],
-        [16, 16, 16, 16],
-        # [18, 18, 18, 18],
-        [20, 20, 20, 20],
-    ]
-    conv_2d_sizes = [
-        # [3, 3, 2, 2],
-        # [3, 3, 3, 3],
-        # [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        # [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        # [16, 16, 3, 3],
-        [16, 16, 4, 4],
-        # [18, 18, 2, 2],
-        [18, 18, 3, 3],
-        # [18, 18, 4, 4],
-    ]
-    # q_prod_params = [0]
-    qr_decomp_sizes = [
-        3,
-        # 4
-    ]
-    ruleset = rulesets["ruleset_timeout86400"]
-    cs = [
-        configs["loop_alt_cost_t180_w_opt"],
-        configs["loop_alt_cost_t180_n_opt"],
-    ]
-
-    # create all the jobs
-    for size, c in itertools.product(mat_mul_sizes, cs):
-        mat_mul(
-            Path("jobs"),
-            *size,
-            ruleset,
-            c,
-            "alternative",
-            key="optimization",
-            timeout=json.load(c.open("r"))["timeout"] * 3,
-        )
-
-    for size, c in itertools.product(conv_2d_sizes, cs):
-        make_2d_conv(
-            Path("jobs"),
-            *size,
-            ruleset,
-            c,
-            "alternative",
-            key="optimization",
-            timeout=json.load(c.open("r"))["timeout"] * 3,
-        )
-
-    for size, c in itertools.product(qr_decomp_sizes, cs):
-        qr_decomp(
-            Path("jobs"),
-            size,
-            ruleset,
-            c,
-            "alternative",
-            key="performance",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
         )
 
 
@@ -995,23 +888,21 @@ def large_kernels():
     print("Creating large kernel jobs")
 
     mat_mul_sizes = [
-        # [25, 25, 25, 25],
-        # [30, 30, 30, 30],
-        # [40, 40, 40, 40],
+        [25, 25, 25, 25],
+        [30, 30, 30, 30],
+        [40, 40, 40, 40],
     ]
     conv_2d_sizes = [
-        # [20, 20, 5, 5],
-        # [30, 30, 5, 5],
+        [20, 20, 5, 5],
+        [30, 30, 5, 5],
         [32, 32, 5, 5],
         [34, 34, 5, 5],
         [36, 36, 5, 5],
         [38, 38, 5, 5],
-        # [40, 40, 5, 5],
+        [40, 40, 5, 5],
     ]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = [
-        configs["loop_alt_cost_t18000"],
-    ]
+    cs = [make_config(timeout=18000)]
 
     # create all the jobs
     for size, c in itertools.product(mat_mul_sizes, cs):
@@ -1022,7 +913,7 @@ def large_kernels():
             c,
             "alternative",
             key="large",
-            timeout=json.load(c.open("r"))["timeout"] * 7,
+            timeout=c["timeout"] * 7,
         )
 
     for size, c in itertools.product(conv_2d_sizes, cs):
@@ -1033,7 +924,7 @@ def large_kernels():
             c,
             "alternative",
             key="large",
-            timeout=json.load(c.open("r"))["timeout"] * 7,
+            timeout=c["timeout"] * 7,
         )
 
 
@@ -1041,42 +932,42 @@ def large_kernels():
 def alpha_beta_ablation():
     conv_2d_size = [16, 16, 4, 4]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = dict_from_dir(Path("../experiments/configs/ablation"))
-    for c in cs.values():
-        # beta = float(c.stem.split("_")[2][1:])
-        # if beta in [2022]:
-        make_2d_conv(
-            Path("jobs"),
-            *conv_2d_size,
-            ruleset,
-            c,
-            "alternative",
-            key="alpha-beta",
-            timeout=json.load(c.open("r"))["timeout"] * 5,
-        )
-
-
-@job()
-def one_off():
-    size = [4]
-    ruleset = rulesets["ruleset_timeout86400"]
-    c = make_config(alpha=15, beta=6)
-
-    qr_decomp(
-        Path("jobs"),
-        *size,
-        ruleset,
-        c,
-        "alternative",
-        key="one_off",
-        timeout=c["timeout"] * 7,
-    )
+    alphas = [
+        -4045,
+        -4040,
+        -4035,
+        -15,
+        -10,
+        -5,
+        -1,
+        -0.5,
+        0.5,
+        1,
+        5,
+        10,
+        15,
+        4035,
+        4040,
+        4045,
+    ]
+    betas = [0, 1, 2, 3, 4, 5, 6, 10, 15, 20, 30, 2020, 2025]
+    for beta in betas:
+        for alpha in alphas:
+            make_2d_conv(
+                Path("jobs"),
+                *conv_2d_size,
+                ruleset,
+                make_config(alpha=alpha, beta=beta),
+                "alternative",
+                key="alpha-beta",
+                timeout=1000,
+            )
 
 
 @job()
 def estimate(args):
     """
-    Run cycle estimation on
+    Run cycle estimation on jobs that the key: `args`
     """
 
     date_str = datetime.now().strftime("%b%d-%H%M")
