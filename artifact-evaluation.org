@@ -117,6 +117,9 @@ docker run --rm -d \
 #+end_src
 
 * Reproducing paper results
+:PROPERTIES:
+:header-args:async-shell: :name aec :results none :dir (sgt/dir "server")
+:END:
 
 ** Overall performance (Figure 4 & 5)
 

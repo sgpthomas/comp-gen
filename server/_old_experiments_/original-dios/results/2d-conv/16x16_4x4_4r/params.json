@@ -1,0 +1,7 @@
+{
+    "input-rows": 16,
+    "input-cols": 16,
+    "filter-rows": 4,
+    "filter-cols": 4,
+    "reg-size": 4
+}

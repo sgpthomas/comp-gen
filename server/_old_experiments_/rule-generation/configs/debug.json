@@ -1,0 +1,53 @@
+{
+  "constants": [
+    {
+      "kind": "int",
+      "value": 0
+    },
+    {
+      "kind": "int",
+      "value": 1
+    }
+  ],
+  "seed_rules": [],
+  "unops": [
+    "sqrt",
+    "sgn",
+    "neg"
+  ],
+  "binops": [
+    "/",
+    "+",
+    "*",
+    "-"
+  ],
+  "use_scalar": true,
+  "use_vector": true,
+  "vector_mac": true,
+  "variable_duplication": false,
+  "vector_size": 1,
+  "always_smt": true,
+  "smt_fallback": true,
+  "ruler_config": {
+    "seed": 0,
+    "n_samples": 0,
+    "variables": 6,
+    "abs_timeout": 86400,
+    "iters": 3,
+    "rules_to_take": 18446744073709551615,
+    "chunk_size": 100000,
+    "no_constants_above_iter": 999999,
+    "no_conditionals": false,
+    "no_run_rewrites": false,
+    "linear_cvec_matching": false,
+    "outfile": "out.json",
+    "eqsat_node_limit": 2000000,
+    "eqsat_iter_limit": 3,
+    "eqsat_time_limit": 60,
+    "important_cvec_offsets": 5,
+    "complete_cvec": false,
+    "do_final_run": true,
+    "enable_explanations": false,
+    "enable_checkpointing": false
+  }
+}

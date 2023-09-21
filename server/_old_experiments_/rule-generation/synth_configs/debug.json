@@ -1,0 +1,21 @@
+{
+    "seed": 0,
+    "n_samples": 0,
+    "variables": 6,
+    "abs_timeout": 600,
+    "iters": 2,
+    "rules_to_take": 18446744073709551615,
+    "chunk_size": 100000,
+    "no_constants_above_iter": 999999,
+    "no_conditionals": false,
+    "no_run_rewrites": false,
+    "linear_cvec_matching": false,
+    "outfile": "out.json",
+    "eqsat_node_limit": 1000000,
+    "eqsat_iter_limit": 5,
+    "eqsat_time_limit": 60,
+    "important_cvec_offsets": 5,
+    "complete_cvec": false,
+    "do_final_run": true,
+    "enable_explanations": true 
+}

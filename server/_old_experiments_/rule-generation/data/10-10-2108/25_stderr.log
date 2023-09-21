@@ -1,0 +1,570 @@
+[INFO  dios_lang::synthesis] running with config: DiosConfig {
+        constants: [],
+        seed_rules: [
+            DiosSeedRules {
+                lhs: "(Vec (+ ?a ?b) (+ ?c ?d))",
+                rhs: "(VecAdd (Vec ?a ?c) (Vec ?b ?d))",
+            },
+            DiosSeedRules {
+                lhs: "(Vec (* ?a ?b) (* ?c ?d))",
+                rhs: "(VecMul (Vec ?a ?c) (Vec ?b ?d))",
+            },
+            DiosSeedRules {
+                lhs: "(Vec (- ?a ?b) (- ?c ?d))",
+                rhs: "(VecMinus (Vec ?a ?c) (Vec ?b ?d))",
+            },
+        ],
+        unops: [
+            "neg",
+        ],
+        binops: [
+            "+",
+            "*",
+            "-",
+        ],
+        use_scalar: true,
+        use_vector: true,
+        vector_mac: true,
+        variable_duplication: false,
+        vector_size: 1,
+        always_smt: false,
+        smt_fallback: true,
+    }
+[INFO  dios_lang::synthesis] running with synth config SynthParams {
+        seed: 0,
+        n_samples: 0,
+        variables: 6,
+        abs_timeout: 600,
+        iters: 3,
+        rules_to_take: 18446744073709551615,
+        chunk_size: 100000,
+        minimize: false,
+        no_constants_above_iter: 999999,
+        no_conditionals: false,
+        no_run_rewrites: false,
+        linear_cvec_matching: false,
+        outfile: "out.json",
+        eqsat_node_limit: 20000000,
+        eqsat_iter_limit: 3,
+        eqsat_time_limit: 120,
+        important_cvec_offsets: 5,
+        str_int_variables: 1,
+        complete_cvec: false,
+        no_xor: false,
+        no_shift: false,
+        num_fuzz: 4,
+        use_smt: false,
+        do_final_run: true,
+        enable_explanations: false,
+    }
+[INFO  ruler] [[[ Iteration 1 ]]]
+[INFO  ruler] Made layer! Using chunk size: 100000
+[INFO  ruler] egraph n=6, e=6
+[INFO  ruler] running eqsat with 3 rules
+[INFO  ruler] Saturated collecting unions...
+[INFO  ruler] Ran 3 rules in 454.095µs
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 78
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 5 candidate eqs
+[INFO  ruler] egraph n=324, e=324
+[INFO  ruler] choose_eqs: 5
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 7
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 4 / 5 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 8
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 3 / 5 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 9
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 2 / 5 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 10
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 1 / 5 remain
+[INFO  ruler] Chose 5 good rules
+[INFO  ruler] Time taken in... run_rewrites: 0.000497149, rule discovery: 0.00220889, rule minimization: 0.000410709
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] [[[ Iteration 2 ]]]
+[INFO  ruler] Made layer! Using chunk size: 100000
+[INFO  ruler] egraph n=324, e=323
+[INFO  ruler] running eqsat with 8 rules
+[INFO  ruler] Saturated collecting unions...
+[INFO  ruler] Ran 8 rules in 392.635259ms
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2175
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 302 candidate eqs
+[INFO  ruler] egraph n=100201, e=45329
+[INFO  ruler] choose_eqs: 302
+[INFO  ruler] Shrinking with 100 keepers
+[INFO  ruler] # rewrites: 188
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 91 rules, 111 / 302 remain
+[INFO  ruler] Shrinking with 200 keepers
+[INFO  ruler] # rewrites: 371
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 8 rules, 3 / 302 remain
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 31
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 61 rules, 132 / 203 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 46
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 6 rules, 116 / 203 remain
+[INFO  ruler] Shrinking with 30 keepers
+[INFO  ruler] # rewrites: 65
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 7 rules, 99 / 203 remain
+[INFO  ruler] Shrinking with 40 keepers
+[INFO  ruler] # rewrites: 82
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 6 rules, 83 / 203 remain
+[INFO  ruler] Shrinking with 50 keepers
+[INFO  ruler] # rewrites: 98
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 20 rules, 53 / 203 remain
+[INFO  ruler] Shrinking with 60 keepers
+[INFO  ruler] # rewrites: 118
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 10 rules, 33 / 203 remain
+[INFO  ruler] Shrinking with 70 keepers
+[INFO  ruler] # rewrites: 136
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 2 rules, 21 / 203 remain
+[INFO  ruler] Shrinking with 80 keepers
+[INFO  ruler] # rewrites: 154
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 7 rules, 4 / 203 remain
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 13
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 5 rules, 78 / 84 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 15
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 77 / 84 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 17
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 76 / 84 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 18
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 75 / 84 remain
+[INFO  ruler] Shrinking with 5 keepers
+[INFO  ruler] # rewrites: 20
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 74 / 84 remain
+[INFO  ruler] Shrinking with 6 keepers
+[INFO  ruler] # rewrites: 22
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 73 / 84 remain
+[INFO  ruler] Shrinking with 7 keepers
+[INFO  ruler] # rewrites: 24
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 72 / 84 remain
+[INFO  ruler] Shrinking with 8 keepers
+[INFO  ruler] # rewrites: 26
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 71 / 84 remain
+[INFO  ruler] Shrinking with 9 keepers
+[INFO  ruler] # rewrites: 28
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 70 / 84 remain
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 30
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 1 rules, 68 / 84 remain
+[INFO  ruler] Shrinking with 11 keepers
+[INFO  ruler] # rewrites: 31
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 67 / 84 remain
+[INFO  ruler] Shrinking with 12 keepers
+[INFO  ruler] # rewrites: 32
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 1 rules, 65 / 84 remain
+[INFO  ruler] Shrinking with 13 keepers
+[INFO  ruler] # rewrites: 33
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 64 / 84 remain
+[INFO  ruler] Shrinking with 14 keepers
+[INFO  ruler] # rewrites: 35
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 1 rules, 62 / 84 remain
+[INFO  ruler] Shrinking with 15 keepers
+[INFO  ruler] # rewrites: 36
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 61 / 84 remain
+[INFO  ruler] Shrinking with 16 keepers
+[INFO  ruler] # rewrites: 37
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 1 rules, 59 / 84 remain
+[INFO  ruler] Shrinking with 17 keepers
+[INFO  ruler] # rewrites: 39
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 57 / 84 remain
+[INFO  ruler] Shrinking with 18 keepers
+[INFO  ruler] # rewrites: 41
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 56 / 84 remain
+[INFO  ruler] Shrinking with 19 keepers
+[INFO  ruler] # rewrites: 43
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 4 rules, 51 / 84 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 45
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 50 / 84 remain
+[INFO  ruler] Shrinking with 21 keepers
+[INFO  ruler] # rewrites: 47
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 49 / 84 remain
+[INFO  ruler] Shrinking with 22 keepers
+[INFO  ruler] # rewrites: 49
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 48 / 84 remain
+[INFO  ruler] Shrinking with 23 keepers
+[INFO  ruler] # rewrites: 51
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 47 / 84 remain
+[INFO  ruler] Shrinking with 24 keepers
+[INFO  ruler] # rewrites: 52
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 45 / 84 remain
+[INFO  ruler] Shrinking with 25 keepers
+[INFO  ruler] # rewrites: 53
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 44 / 84 remain
+[INFO  ruler] Shrinking with 26 keepers
+[INFO  ruler] # rewrites: 54
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 43 / 84 remain
+[INFO  ruler] Shrinking with 27 keepers
+[INFO  ruler] # rewrites: 56
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 42 / 84 remain
+[INFO  ruler] Shrinking with 28 keepers
+[INFO  ruler] # rewrites: 58
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 40 / 84 remain
+[INFO  ruler] Shrinking with 29 keepers
+[INFO  ruler] # rewrites: 60
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 39 / 84 remain
+[INFO  ruler] Shrinking with 30 keepers
+[INFO  ruler] # rewrites: 62
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 37 / 84 remain
+[INFO  ruler] Shrinking with 31 keepers
+[INFO  ruler] # rewrites: 64
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 36 / 84 remain
+[INFO  ruler] Shrinking with 32 keepers
+[INFO  ruler] # rewrites: 66
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 34 / 84 remain
+[INFO  ruler] Shrinking with 33 keepers
+[INFO  ruler] # rewrites: 68
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 33 / 84 remain
+[INFO  ruler] Shrinking with 34 keepers
+[INFO  ruler] # rewrites: 70
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 32 / 84 remain
+[INFO  ruler] Shrinking with 35 keepers
+[INFO  ruler] # rewrites: 72
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 30 / 84 remain
+[INFO  ruler] Shrinking with 36 keepers
+[INFO  ruler] # rewrites: 74
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 29 / 84 remain
+[INFO  ruler] Shrinking with 37 keepers
+[INFO  ruler] # rewrites: 76
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 28 / 84 remain
+[INFO  ruler] Shrinking with 38 keepers
+[INFO  ruler] # rewrites: 78
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 27 / 84 remain
+[INFO  ruler] Shrinking with 39 keepers
+[INFO  ruler] # rewrites: 80
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 26 / 84 remain
+[INFO  ruler] Shrinking with 40 keepers
+[INFO  ruler] # rewrites: 82
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 25 / 84 remain
+[INFO  ruler] Shrinking with 41 keepers
+[INFO  ruler] # rewrites: 84
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 24 / 84 remain
+[INFO  ruler] Shrinking with 42 keepers
+[INFO  ruler] # rewrites: 86
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 23 / 84 remain
+[INFO  ruler] Shrinking with 43 keepers
+[INFO  ruler] # rewrites: 88
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 20 / 84 remain
+[INFO  ruler] Shrinking with 44 keepers
+[INFO  ruler] # rewrites: 90
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 19 / 84 remain
+[INFO  ruler] Shrinking with 45 keepers
+[INFO  ruler] # rewrites: 92
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 18 / 84 remain
+[INFO  ruler] Shrinking with 46 keepers
+[INFO  ruler] # rewrites: 94
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 17 / 84 remain
+[INFO  ruler] Shrinking with 47 keepers
+[INFO  ruler] # rewrites: 96
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 16 / 84 remain
+[INFO  ruler] Shrinking with 48 keepers
+[INFO  ruler] # rewrites: 98
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 15 / 84 remain
+[INFO  ruler] Shrinking with 49 keepers
+[INFO  ruler] # rewrites: 100
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 14 / 84 remain
+[INFO  ruler] Shrinking with 50 keepers
+[INFO  ruler] # rewrites: 102
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 12 / 84 remain
+[INFO  ruler] Shrinking with 51 keepers
+[INFO  ruler] # rewrites: 104
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 11 / 84 remain
+[INFO  ruler] Shrinking with 52 keepers
+[INFO  ruler] # rewrites: 106
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 10 / 84 remain
+[INFO  ruler] Shrinking with 53 keepers
+[INFO  ruler] # rewrites: 108
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 9 / 84 remain
+[INFO  ruler] Shrinking with 54 keepers
+[INFO  ruler] # rewrites: 110
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 6 / 84 remain
+[INFO  ruler] Shrinking with 55 keepers
+[INFO  ruler] # rewrites: 112
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 4 / 84 remain
+[INFO  ruler] Shrinking with 56 keepers
+[INFO  ruler] # rewrites: 114
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 3 / 84 remain
+[INFO  ruler] Shrinking with 57 keepers
+[INFO  ruler] # rewrites: 116
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 2 / 84 remain
+[INFO  ruler] Shrinking with 58 keepers
+[INFO  ruler] # rewrites: 118
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 1 / 84 remain
+[INFO  ruler] Chose 59 good rules
+[INFO  ruler] Time taken in... run_rewrites: 0.414296298, rule discovery: 0.272235643, rule minimization: 0.249108175
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=100201, e=45328
+[INFO  ruler] running eqsat with 67 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 67 rules in 9.026021645s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2175
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 71 candidate eqs
+[INFO  ruler] egraph n=146366, e=78231
+[INFO  ruler] choose_eqs: 71
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 138
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 45 rules, 16 / 71 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 154
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 3 / 71 remain
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 122
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 7 rules, 15 / 23 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 123
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 12 / 23 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 124
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 10 / 23 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 126
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 6 / 23 remain
+[INFO  ruler] Shrinking with 5 keepers
+[INFO  ruler] # rewrites: 127
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 5 / 23 remain
+[INFO  ruler] Shrinking with 6 keepers
+[INFO  ruler] # rewrites: 129
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 3 / 23 remain
+[INFO  ruler] Shrinking with 7 keepers
+[INFO  ruler] # rewrites: 131
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 2 / 23 remain
+[INFO  ruler] Shrinking with 8 keepers
+[INFO  ruler] # rewrites: 133
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 0 / 23 remain
+[INFO  ruler] Chose 8 good rules
+[INFO  ruler] Time taken in... run_rewrites: 9.104004326, rule discovery: 1.277063335, rule minimization: 0.105027558
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=146366, e=78230
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 16.852722754s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2185
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=204482, e=130653
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=204482, e=130653
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 22.219961945s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2185
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=258570, e=179301
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=258570, e=179301
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 27.056609908s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2195
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=303456, e=219663
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=303456, e=219663
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 29.459358889s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2205
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=348068, e=260397
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=348068, e=260397
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 32.339059191s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2205
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=388090, e=295177
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=388090, e=295177
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 34.841667358s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2215
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=420442, e=324737
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=420442, e=324737
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 35.924796018s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2235
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=451846, e=354235
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=451846, e=354235
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 36.683822599s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2235
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=453286, e=355411
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] [[[ Iteration 3 ]]]
+[INFO  ruler] Made layer! Using chunk size: 100000
+[INFO  ruler] egraph n=453286, e=355411
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 48.212388811s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2757
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=553220, e=451801
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=553220, e=451801
+[INFO  ruler] running eqsat with 75 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 75 rules in 53.407368197s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2992
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 1 candidate eqs
+[INFO  ruler] egraph n=653166, e=549335
+[INFO  ruler] choose_eqs: 1
+[INFO  ruler] Chose 1 good rules
+[INFO  ruler] Time taken in... run_rewrites: 53.712812775, rule discovery: 45.276216875, rule minimization: 0.000679271
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=653166, e=549334
+[INFO  ruler] running eqsat with 76 rules
+[INFO  ruler] IterationLimit(3) collecting unions...
+[INFO  ruler] Ran 76 rules in 57.031367821s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3304
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=753104, e=647479
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=753104, e=647479

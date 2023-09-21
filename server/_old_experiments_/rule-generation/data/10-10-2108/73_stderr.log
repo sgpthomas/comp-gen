@@ -1,0 +1,985 @@
+[INFO  dios_lang::synthesis] running with config: DiosConfig {
+        constants: [
+            DiosConstant {
+                kind: "int",
+                value: 0,
+            },
+            DiosConstant {
+                kind: "int",
+                value: 1,
+            },
+        ],
+        seed_rules: [],
+        unops: [
+            "neg",
+        ],
+        binops: [
+            "+",
+            "*",
+            "-",
+        ],
+        use_scalar: true,
+        use_vector: true,
+        vector_mac: true,
+        variable_duplication: false,
+        vector_size: 1,
+        always_smt: false,
+        smt_fallback: true,
+    }
+[INFO  dios_lang::synthesis] running with synth config SynthParams {
+        seed: 0,
+        n_samples: 0,
+        variables: 6,
+        abs_timeout: 60000,
+        iters: 3,
+        rules_to_take: 18446744073709551615,
+        chunk_size: 100000,
+        minimize: false,
+        no_constants_above_iter: 999999,
+        no_conditionals: false,
+        no_run_rewrites: false,
+        linear_cvec_matching: false,
+        outfile: "out.json",
+        eqsat_node_limit: 20000000,
+        eqsat_iter_limit: 3,
+        eqsat_time_limit: 120,
+        important_cvec_offsets: 5,
+        str_int_variables: 1,
+        complete_cvec: false,
+        no_xor: false,
+        no_shift: false,
+        num_fuzz: 4,
+        use_smt: false,
+        do_final_run: true,
+        enable_explanations: false,
+    }
+[INFO  ruler] [[[ Iteration 1 ]]]
+[INFO  ruler] Made layer! Using chunk size: 100000
+[INFO  ruler] egraph n=8, e=8
+[INFO  ruler] running eqsat with 0 rules
+[INFO  ruler] Saturated collecting unions...
+[INFO  ruler] Ran 0 rules in 707.437µs
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 92
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 25 candidate eqs
+[INFO  ruler] egraph n=722, e=722
+[INFO  ruler] choose_eqs: 25
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 15
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 13 rules, 2 / 25 remain
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 1
+[INFO  ruler] Stopping Saturated, 1
+[INFO  ruler] Minimizing... threw away 0 rules, 11 / 12 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 2
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 1 rules, 9 / 12 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 3
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 8 / 12 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 4
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 7 / 12 remain
+[INFO  ruler] Shrinking with 5 keepers
+[INFO  ruler] # rewrites: 5
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 1 rules, 5 / 12 remain
+[INFO  ruler] Shrinking with 6 keepers
+[INFO  ruler] # rewrites: 7
+[INFO  ruler] Stopping Saturated, 2
+[INFO  ruler] Minimizing... threw away 0 rules, 4 / 12 remain
+[INFO  ruler] Shrinking with 7 keepers
+[INFO  ruler] # rewrites: 9
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 3 / 12 remain
+[INFO  ruler] Shrinking with 8 keepers
+[INFO  ruler] # rewrites: 11
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 2 / 12 remain
+[INFO  ruler] Shrinking with 9 keepers
+[INFO  ruler] # rewrites: 13
+[INFO  ruler] Stopping Saturated, 3
+[INFO  ruler] Minimizing... threw away 0 rules, 1 / 12 remain
+[INFO  ruler] Chose 10 good rules
+[INFO  ruler] Time taken in... run_rewrites: 0.000798998, rule discovery: 0.004102631, rule minimization: 0.123274094
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] [[[ Iteration 2 ]]]
+[INFO  ruler] Made layer! Using chunk size: 100000
+[INFO  ruler] egraph n=722, e=721
+[INFO  ruler] running eqsat with 10 rules
+[INFO  ruler] Saturated collecting unions...
+[INFO  ruler] Ran 10 rules in 816.863283ms
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 1459
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 375 candidate eqs
+[INFO  ruler] egraph n=100698, e=74755
+[INFO  ruler] choose_eqs: 375
+[INFO  ruler] Shrinking with 100 keepers
+[INFO  ruler] # rewrites: 190
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 275 rules, 0 / 375 remain
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 29
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 44 rules, 46 / 100 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 45
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 34 rules, 2 / 100 remain
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 15
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 8 rules, 13 / 22 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 16
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 12 / 22 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 18
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 10 / 22 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 20
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 8 / 22 remain
+[INFO  ruler] Shrinking with 5 keepers
+[INFO  ruler] # rewrites: 21
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 6 / 22 remain
+[INFO  ruler] Shrinking with 6 keepers
+[INFO  ruler] # rewrites: 23
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 2 / 22 remain
+[INFO  ruler] Shrinking with 7 keepers
+[INFO  ruler] # rewrites: 25
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 0 / 22 remain
+[INFO  ruler] Chose 7 good rules
+[INFO  ruler] Time taken in... run_rewrites: 0.840909653, rule discovery: 0.102221721, rule minimization: 4.689337035
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=100698, e=74755
+[INFO  ruler] running eqsat with 17 rules
+[INFO  ruler] Other("Node limit: 28289275") collecting unions...
+[INFO  ruler] Ran 17 rules in 364.839006184s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2040
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 4 candidate eqs
+[INFO  ruler] egraph n=169061, e=140107
+[INFO  ruler] choose_eqs: 4
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 27
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 0 / 4 remain
+[INFO  ruler] Chose 1 good rules
+[INFO  ruler] Time taken in... run_rewrites: 374.292426405, rule discovery: 0.133172573, rule minimization: 0.001299412
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=169061, e=140106
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] Other("Node limit: 30682665") collecting unions...
+[INFO  ruler] Ran 18 rules in 452.477169237s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2467
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=234114, e=203477
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=234114, e=203477
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] Other("Node limit: 32805295") collecting unions...
+[INFO  ruler] Ran 18 rules in 558.654087533s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2734
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=295600, e=263691
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=295600, e=263691
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] Other("Node limit: 34114883") collecting unions...
+[INFO  ruler] Ran 18 rules in 634.996860695s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2852
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=350855, e=317793
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=350855, e=317793
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] NodeLimit(40180093) collecting unions...
+[INFO  ruler] Ran 18 rules in 703.921261399s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 2996
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=405048, e=370573
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=405048, e=370573
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] NodeLimit(40329802) collecting unions...
+[INFO  ruler] Ran 18 rules in 507.621659245s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3048
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=462340, e=426754
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=462340, e=426754
+[INFO  ruler] running eqsat with 18 rules
+[INFO  ruler] NodeLimit(40729557) collecting unions...
+[INFO  ruler] Ran 18 rules in 525.559477771s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 2 candidate eqs
+[INFO  ruler] egraph n=510872, e=474348
+[INFO  ruler] choose_eqs: 2
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 29
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 1 / 2 remain
+[INFO  ruler] Chose 2 good rules
+[INFO  ruler] Time taken in... run_rewrites: 535.132925822, rule discovery: 0.479688444, rule minimization: 0.001808751
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=510872, e=474347
+[INFO  ruler] running eqsat with 20 rules
+[INFO  ruler] NodeLimit(40916475) collecting unions...
+[INFO  ruler] Ran 20 rules in 539.116070926s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 223 candidate eqs
+[INFO  ruler] egraph n=585924, e=549154
+[INFO  ruler] choose_eqs: 223
+[INFO  ruler] Shrinking with 100 keepers
+[INFO  ruler] # rewrites: 200
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 63 rules, 60 / 223 remain
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 45
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 62 rules, 88 / 160 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 62
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 4 rules, 74 / 160 remain
+[INFO  ruler] Shrinking with 30 keepers
+[INFO  ruler] # rewrites: 78
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 63 / 160 remain
+[INFO  ruler] Shrinking with 40 keepers
+[INFO  ruler] # rewrites: 96
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 4 rules, 49 / 160 remain
+[INFO  ruler] Shrinking with 50 keepers
+[INFO  ruler] # rewrites: 114
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 12 rules, 27 / 160 remain
+[INFO  ruler] Shrinking with 60 keepers
+[INFO  ruler] # rewrites: 132
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 16 / 160 remain
+[INFO  ruler] Shrinking with 70 keepers
+[INFO  ruler] # rewrites: 150
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 3 / 160 remain
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 32
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 7 rules, 65 / 73 remain
+[INFO  ruler] Shrinking with 2 keepers
+[INFO  ruler] # rewrites: 33
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 62 / 73 remain
+[INFO  ruler] Shrinking with 3 keepers
+[INFO  ruler] # rewrites: 35
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 61 / 73 remain
+[INFO  ruler] Shrinking with 4 keepers
+[INFO  ruler] # rewrites: 37
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 58 / 73 remain
+[INFO  ruler] Shrinking with 5 keepers
+[INFO  ruler] # rewrites: 39
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 57 / 73 remain
+[INFO  ruler] Shrinking with 6 keepers
+[INFO  ruler] # rewrites: 40
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 56 / 73 remain
+[INFO  ruler] Shrinking with 7 keepers
+[INFO  ruler] # rewrites: 42
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 54 / 73 remain
+[INFO  ruler] Shrinking with 8 keepers
+[INFO  ruler] # rewrites: 44
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 53 / 73 remain
+[INFO  ruler] Shrinking with 9 keepers
+[INFO  ruler] # rewrites: 46
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 52 / 73 remain
+[INFO  ruler] Shrinking with 10 keepers
+[INFO  ruler] # rewrites: 48
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 51 / 73 remain
+[INFO  ruler] Shrinking with 11 keepers
+[INFO  ruler] # rewrites: 50
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 50 / 73 remain
+[INFO  ruler] Shrinking with 12 keepers
+[INFO  ruler] # rewrites: 51
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 48 / 73 remain
+[INFO  ruler] Shrinking with 13 keepers
+[INFO  ruler] # rewrites: 52
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 46 / 73 remain
+[INFO  ruler] Shrinking with 14 keepers
+[INFO  ruler] # rewrites: 53
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 45 / 73 remain
+[INFO  ruler] Shrinking with 15 keepers
+[INFO  ruler] # rewrites: 55
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 42 / 73 remain
+[INFO  ruler] Shrinking with 16 keepers
+[INFO  ruler] # rewrites: 57
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 39 / 73 remain
+[INFO  ruler] Shrinking with 17 keepers
+[INFO  ruler] # rewrites: 59
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 38 / 73 remain
+[INFO  ruler] Shrinking with 18 keepers
+[INFO  ruler] # rewrites: 61
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 36 / 73 remain
+[INFO  ruler] Shrinking with 19 keepers
+[INFO  ruler] # rewrites: 63
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 35 / 73 remain
+[INFO  ruler] Shrinking with 20 keepers
+[INFO  ruler] # rewrites: 64
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 32 / 73 remain
+[INFO  ruler] Shrinking with 21 keepers
+[INFO  ruler] # rewrites: 65
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 31 / 73 remain
+[INFO  ruler] Shrinking with 22 keepers
+[INFO  ruler] # rewrites: 66
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 30 / 73 remain
+[INFO  ruler] Shrinking with 23 keepers
+[INFO  ruler] # rewrites: 68
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 27 / 73 remain
+[INFO  ruler] Shrinking with 24 keepers
+[INFO  ruler] # rewrites: 69
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 2 rules, 24 / 73 remain
+[INFO  ruler] Shrinking with 25 keepers
+[INFO  ruler] # rewrites: 71
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 23 / 73 remain
+[INFO  ruler] Shrinking with 26 keepers
+[INFO  ruler] # rewrites: 73
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 22 / 73 remain
+[INFO  ruler] Shrinking with 27 keepers
+[INFO  ruler] # rewrites: 75
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 21 / 73 remain
+[INFO  ruler] Shrinking with 28 keepers
+[INFO  ruler] # rewrites: 77
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 3 rules, 17 / 73 remain
+[INFO  ruler] Shrinking with 29 keepers
+[INFO  ruler] # rewrites: 79
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 16 / 73 remain
+[INFO  ruler] Shrinking with 30 keepers
+[INFO  ruler] # rewrites: 81
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 15 / 73 remain
+[INFO  ruler] Shrinking with 31 keepers
+[INFO  ruler] # rewrites: 83
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 14 / 73 remain
+[INFO  ruler] Shrinking with 32 keepers
+[INFO  ruler] # rewrites: 85
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 13 / 73 remain
+[INFO  ruler] Shrinking with 33 keepers
+[INFO  ruler] # rewrites: 87
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 4 rules, 8 / 73 remain
+[INFO  ruler] Shrinking with 34 keepers
+[INFO  ruler] # rewrites: 89
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 7 / 73 remain
+[INFO  ruler] Shrinking with 35 keepers
+[INFO  ruler] # rewrites: 90
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 5 / 73 remain
+[INFO  ruler] Shrinking with 36 keepers
+[INFO  ruler] # rewrites: 92
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 4 / 73 remain
+[INFO  ruler] Shrinking with 37 keepers
+[INFO  ruler] # rewrites: 94
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 0 rules, 3 / 73 remain
+[INFO  ruler] Shrinking with 38 keepers
+[INFO  ruler] # rewrites: 96
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 1 / 73 remain
+[INFO  ruler] Chose 39 good rules
+[INFO  ruler] Time taken in... run_rewrites: 548.641106624, rule discovery: 0.885107751, rule minimization: 0.617075702
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=585924, e=549153
+[INFO  ruler] running eqsat with 59 rules
+[INFO  ruler] NodeLimit(41022334) collecting unions...
+[INFO  ruler] Ran 59 rules in 552.901599486s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 2 candidate eqs
+[INFO  ruler] egraph n=654336, e=615115
+[INFO  ruler] choose_eqs: 2
+[INFO  ruler] Shrinking with 1 keepers
+[INFO  ruler] # rewrites: 100
+[INFO  ruler] Stopping IterationLimit(3), 3
+[INFO  ruler] Minimizing... threw away 1 rules, 0 / 2 remain
+[INFO  ruler] Chose 1 good rules
+[INFO  ruler] Time taken in... run_rewrites: 562.579114253, rule discovery: 0.987185768, rule minimization: 0.004831626
+[INFO  ruler] Stopping early, took all eqs
+[INFO  ruler] egraph n=654336, e=615114
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41111004) collecting unions...
+[INFO  ruler] Ran 60 rules in 554.61602023s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=718079, e=677608
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=718079, e=677608
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41186564) collecting unions...
+[INFO  ruler] Ran 60 rules in 557.43098202s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=779655, e=737582
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=779655, e=737582
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41247444) collecting unions...
+[INFO  ruler] Ran 60 rules in 557.543825951s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=835147, e=791828
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=835147, e=791828
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41309527) collecting unions...
+[INFO  ruler] Ran 60 rules in 559.369636785s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=890172, e=845730
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=890172, e=845730
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41362943) collecting unions...
+[INFO  ruler] Ran 60 rules in 573.853907654s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=946005, e=900423
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=946005, e=900423
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41415087) collecting unions...
+[INFO  ruler] Ran 60 rules in 569.477928203s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=995780, e=949424
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=995780, e=949424
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41482992) collecting unions...
+[INFO  ruler] Ran 60 rules in 570.557311347s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1063254, e=1016883
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1063254, e=1016883
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41539648) collecting unions...
+[INFO  ruler] Ran 60 rules in 576.177102418s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1119703, e=1073330
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1119703, e=1073330
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41599274) collecting unions...
+[INFO  ruler] Ran 60 rules in 576.843767568s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1179707, e=1133334
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1179707, e=1133334
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41659250) collecting unions...
+[INFO  ruler] Ran 60 rules in 576.542300534s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1239326, e=1192953
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1239326, e=1192953
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41721618) collecting unions...
+[INFO  ruler] Ran 60 rules in 582.492585792s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1302037, e=1255664
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1302037, e=1255664
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41785245) collecting unions...
+[INFO  ruler] Ran 60 rules in 579.100041937s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1363894, e=1317257
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1363894, e=1317257
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41849795) collecting unions...
+[INFO  ruler] Ran 60 rules in 579.321906687s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1428731, e=1382036
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1428731, e=1382036
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41910325) collecting unions...
+[INFO  ruler] Ran 60 rules in 583.350516557s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1487697, e=1440767
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1487697, e=1440767
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(41973109) collecting unions...
+[INFO  ruler] Ran 60 rules in 585.323553551s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1550808, e=1503791
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1550808, e=1503791
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42036959) collecting unions...
+[INFO  ruler] Ran 60 rules in 585.01314067s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1614411, e=1567394
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1614411, e=1567394
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42097198) collecting unions...
+[INFO  ruler] Ran 60 rules in 586.543568814s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1674512, e=1627459
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1674512, e=1627459
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42162762) collecting unions...
+[INFO  ruler] Ran 60 rules in 587.916865275s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1739821, e=1692746
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1739821, e=1692746
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42221790) collecting unions...
+[INFO  ruler] Ran 60 rules in 589.267820123s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1798749, e=1751584
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1798749, e=1751584
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42282628) collecting unions...
+[INFO  ruler] Ran 60 rules in 599.315609175s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1861274, e=1814083
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1861274, e=1814083
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42315534) collecting unions...
+[INFO  ruler] Ran 60 rules in 600.113951278s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1894510, e=1847319
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1894510, e=1847319
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42334507) collecting unions...
+[INFO  ruler] Ran 60 rules in 602.575089979s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1911504, e=1864161
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1911504, e=1864161
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42399385) collecting unions...
+[INFO  ruler] Ran 60 rules in 604.486267535s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=1973798, e=1926227
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=1973798, e=1926227
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42466764) collecting unions...
+[INFO  ruler] Ran 60 rules in 602.980503777s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2035244, e=1986788
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2035244, e=1986788
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42531163) collecting unions...
+[INFO  ruler] Ran 60 rules in 610.225552767s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2098165, e=2049688
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2098165, e=2049688
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42592654) collecting unions...
+[INFO  ruler] Ran 60 rules in 612.090055241s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2159598, e=2111121
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2159598, e=2111121
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42655917) collecting unions...
+[INFO  ruler] Ran 60 rules in 609.596572764s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2223290, e=2174813
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2223290, e=2174813
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42716735) collecting unions...
+[INFO  ruler] Ran 60 rules in 611.182199934s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2282272, e=2233531
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2282272, e=2233531
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42779588) collecting unions...
+[INFO  ruler] Ran 60 rules in 614.306037235s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2345025, e=2296284
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2345025, e=2296284
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42844334) collecting unions...
+[INFO  ruler] Ran 60 rules in 619.087128251s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2409782, e=2361041
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2409782, e=2361041
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42904600) collecting unions...
+[INFO  ruler] Ran 60 rules in 616.882965906s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2470025, e=2421284
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2470025, e=2421284
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(42967879) collecting unions...
+[INFO  ruler] Ran 60 rules in 619.401297873s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2533649, e=2484908
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2533649, e=2484908
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43038252) collecting unions...
+[INFO  ruler] Ran 60 rules in 620.658875707s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2596164, e=2546923
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2596164, e=2546923
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43099310) collecting unions...
+[INFO  ruler] Ran 60 rules in 629.679031081s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2655159, e=2605251
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2655159, e=2605251
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43165598) collecting unions...
+[INFO  ruler] Ran 60 rules in 631.369928164s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2720652, e=2670683
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2720652, e=2670683
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43226176) collecting unions...
+[INFO  ruler] Ran 60 rules in 634.71315968s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2781057, e=2731088
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2781057, e=2731088
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43285453) collecting unions...
+[INFO  ruler] Ran 60 rules in 633.80966905s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2840430, e=2790461
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2840430, e=2790461
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43349136) collecting unions...
+[INFO  ruler] Ran 60 rules in 634.685425013s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2903348, e=2853379
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2903348, e=2853379
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43419696) collecting unions...
+[INFO  ruler] Ran 60 rules in 635.426892111s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=2966471, e=2915717
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=2966471, e=2915717
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43481099) collecting unions...
+[INFO  ruler] Ran 60 rules in 642.88842961s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=3029078, e=2978169
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=3029078, e=2978169
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43541652) collecting unions...
+[INFO  ruler] Ran 60 rules in 644.449101895s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=3089429, e=3038462
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=3089429, e=3038462
+[INFO  ruler] running eqsat with 60 rules
+[INFO  ruler] NodeLimit(43605207) collecting unions...
+[INFO  ruler] Ran 60 rules in 641.426564415s
+[INFO  ruler] cvec matching... (no_conditionals: false)
+[INFO  ruler] (cvec_match_pair_wise) # unique cvecs: 3167
+[INFO  ruler] CVec Loop
+[INFO  ruler] done
+[INFO  ruler] 0 candidate eqs
+[INFO  ruler] egraph n=3152953, e=3101986
+[INFO  ruler] choose_eqs: 0
+[INFO  ruler] Stopping early, no eqs
+[INFO  ruler] egraph n=3152953, e=3101986
+[INFO  ruler] running eqsat with 60 rules

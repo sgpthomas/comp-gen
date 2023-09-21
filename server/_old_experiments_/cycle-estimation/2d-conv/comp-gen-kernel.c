@@ -1,0 +1,137 @@
+#include <float.h>
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <xtensa/sim.h>
+#include <xtensa/tie/xt_pdxn.h>
+#include <xtensa/tie/xt_timer.h>
+#include <xtensa/xt_profiling.h>
+
+int __attribute__((section(".dram0.data"))) Z[4] = {0, 0, 0, 0};
+float __attribute__((section(".dram0.data"))) v_0[4] = {0.0, 0, 0, 0};
+int __attribute__((section(".dram0.data"))) v_5[4] = {0, 5, 5, 0};
+int __attribute__((section(".dram0.data"))) v_5_0[4] = {0, 5, 5, 0};
+int __attribute__((section(".dram0.data"))) v_8[4] = {0, 0, 0, 1};
+int __attribute__((section(".dram0.data"))) v_8_0[4] = {0, 0, 0, 1};
+int __attribute__((section(".dram0.data"))) v_10[4] = {0, 1, 2, 2};
+int __attribute__((section(".dram0.data"))) v_10_0[4] = {0, 1, 2, 2};
+int __attribute__((section(".dram0.data"))) v_24[4] = {0, 5, 6, 0};
+int __attribute__((section(".dram0.data"))) v_24_0[4] = {0, 5, 6, 0};
+int __attribute__((section(".dram0.data"))) v_27[4] = {0, 3, 1, 1};
+int __attribute__((section(".dram0.data"))) v_27_0[4] = {0, 3, 1, 1};
+int __attribute__((section(".dram0.data"))) v_29[4] = {3, 0, 4, 5};
+int __attribute__((section(".dram0.data"))) v_29_0[4] = {3, 0, 4, 5};
+int __attribute__((section(".dram0.data"))) v_32[4] = {0, 1, 5, 2};
+int __attribute__((section(".dram0.data"))) v_32_0[4] = {0, 1, 5, 2};
+int __attribute__((section(".dram0.data"))) v_34[4] = {2, 2, 0, 3};
+int __attribute__((section(".dram0.data"))) v_34_0[4] = {2, 2, 0, 3};
+int __attribute__((section(".dram0.data"))) v_41[4] = {2, 2, 2, 3};
+int __attribute__((section(".dram0.data"))) v_41_0[4] = {2, 2, 2, 3};
+int __attribute__((section(".dram0.data"))) v_43[4] = {3, 4, 5, 5};
+int __attribute__((section(".dram0.data"))) v_43_0[4] = {3, 4, 5, 5};
+int __attribute__((section(".dram0.data"))) v_47[4] = {0, 11, 11, 0};
+int __attribute__((section(".dram0.data"))) v_47_0[4] = {0, 7, 7, 0};
+int __attribute__((section(".dram0.data"))) v_50[4] = {6, 6, 8, 8};
+int __attribute__((section(".dram0.data"))) v_50_0[4] = {2, 2, 4, 4};
+int __attribute__((section(".dram0.data"))) v_52[4] = {0, 1, 0, 1};
+int __attribute__((section(".dram0.data"))) v_52_0[4] = {0, 1, 0, 1};
+int __attribute__((section(".dram0.data"))) v_61[4] = {2, 3, 2, 3};
+int __attribute__((section(".dram0.data"))) v_61_0[4] = {2, 3, 2, 3};
+void kernel(float * I, float * F, float * O) {
+float * __restrict I_mut = I;
+  valign align_I;
+  align_I = PDX_LA_MXF32_PP((xb_vecMxf32 *) I);
+  float * __restrict F_mut = F;
+  valign align_F;
+  align_F = PDX_LA_MXF32_PP((xb_vecMxf32 *) F);
+  float * __restrict O_mut = O;
+  valign align_O = PDX_Z_ALIGN();
+  xb_vecMxf32 I_0_4;
+  PDX_LAV_MXF32_XP(I_0_4, align_I, (xb_vecMxf32 *) I_mut, 16);
+  xb_vecMxf32 I_4_8;
+  PDX_LAV_MXF32_XP(I_4_8, align_I, (xb_vecMxf32 *) I_mut, 16);
+  xb_vecMxf32 I_8_12;
+  PDX_LAV_MXF32_XP(I_8_12, align_I, (xb_vecMxf32 *) I_mut, 16);
+  xb_vecMxf32 F_0_4;
+  PDX_LAV_MXF32_XP(F_0_4, align_F, (xb_vecMxf32 *) F_mut, 16);
+  float v_1 = 1;
+  float v_2 = I[0];
+  float v_3 = F[1];
+  float v_4_tmp[4] = {v_1, v_2, v_3, v_1};
+  xb_vecMxf32 v_4 = *((xb_vecMxf32 *) v_4_tmp);
+  xb_vecMxf32 v_6;
+  v_6 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMxf32 *) v_0), *((xb_vecMx32 *) v_5_0)));
+  xb_vecMxf32 v_7 = PDX_MUL_MXF32(v_4, v_6);
+  xb_vecMxf32 v_9;
+  v_9 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_8_0)));
+  xb_vecMxf32 v_11;
+  v_11 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(I_0_4), *((xb_vecMx32 *) v_10_0)));
+  xb_vecMxf32 v_12 = v_7;
+  PDX_MULA_MXF32(v_12, v_9, v_11);
+  float v_13 = 0;
+  float v_14 = F[0];
+  float v_15 = I[1];
+  float v_16_tmp[4] = {v_13, v_14, v_15, v_1};
+  xb_vecMxf32 v_16 = *((xb_vecMxf32 *) v_16_tmp);
+  float v_17 = I[4];
+  float v_18 = F[3];
+  float v_19_tmp[4] = {v_1, v_17, v_18, v_13};
+  xb_vecMxf32 v_19 = *((xb_vecMxf32 *) v_19_tmp);
+  xb_vecMxf32 v_20 = PDX_MUL_MXF32(v_16, v_19);
+  float v_21 = I[3];
+  float v_22 = F[2];
+  float v_23_tmp[4] = {v_1, v_21, v_22, v_1};
+  xb_vecMxf32 v_23 = *((xb_vecMxf32 *) v_23_tmp);
+  xb_vecMxf32 v_25;
+  v_25 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMxf32 *) v_0), *((xb_vecMx32 *) v_24_0)));
+  xb_vecMxf32 v_26 = v_20;
+  PDX_MULA_MXF32(v_26, v_23, v_25);
+  xb_vecMxf32 v_28;
+  v_28 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_27_0)));
+  xb_vecMxf32 v_30;
+  v_30 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(I_4_8), PDX_MOV_MX32_FROM_MXF32(I_0_4), *((xb_vecMx32 *) v_29_0)));
+  xb_vecMxf32 v_31 = PDX_MUL_MXF32(v_28, v_30);
+  xb_vecMxf32 v_33;
+  v_33 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(I_4_8), PDX_MOV_MX32_FROM_MXF32(I_0_4), *((xb_vecMx32 *) v_32_0)));
+  xb_vecMxf32 v_35;
+  v_35 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_34_0)));
+  xb_vecMxf32 v_36 = v_31;
+  PDX_MULA_MXF32(v_36, v_33, v_35);
+  xb_vecMxf32 v_37 = PDX_ADD_MXF32(v_26, v_36);
+  float v_38_tmp[4] = {v_13, v_18, v_18, v_1};
+  xb_vecMxf32 v_38 = *((xb_vecMxf32 *) v_38_tmp);
+  float v_39_tmp[4] = {v_1, v_21, v_17, v_13};
+  xb_vecMxf32 v_39 = *((xb_vecMxf32 *) v_39_tmp);
+  xb_vecMxf32 v_40 = PDX_MUL_MXF32(v_38, v_39);
+  xb_vecMxf32 v_42;
+  v_42 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_41_0)));
+  xb_vecMxf32 v_44;
+  v_44 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(I_4_8), PDX_MOV_MX32_FROM_MXF32(I_0_4), *((xb_vecMx32 *) v_43_0)));
+  xb_vecMxf32 v_45 = PDX_MUL_MXF32(v_42, v_44);
+  float v_46_tmp[4] = {v_1, v_14, v_3, v_1};
+  xb_vecMxf32 v_46 = *((xb_vecMxf32 *) v_46_tmp);
+  xb_vecMxf32 v_48;
+  v_48 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(I_4_8), *((xb_vecMxf32 *) v_0), *((xb_vecMx32 *) v_47_0)));
+  xb_vecMxf32 v_49 = PDX_MUL_MXF32(v_46, v_48);
+  xb_vecMxf32 v_51;
+  v_51 = PDX_MOV_MXF32_FROM_MX32(PDX_SEL_MX32(PDX_MOV_MX32_FROM_MXF32(I_8_12), PDX_MOV_MX32_FROM_MXF32(I_4_8), *((xb_vecMx32 *) v_50_0)));
+  xb_vecMxf32 v_53;
+  v_53 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_52_0)));
+  xb_vecMxf32 v_54 = v_49;
+  PDX_MULA_MXF32(v_54, v_51, v_53);
+  xb_vecMxf32 v_55 = PDX_ADD_MXF32(v_45, v_54);
+  xb_vecMxf32 v_56 = PDX_ADD_MXF32(v_40, v_55);
+  float v_57_tmp[4] = {v_1, v_22, v_18, v_1};
+  xb_vecMxf32 v_57 = *((xb_vecMxf32 *) v_57_tmp);
+  xb_vecMxf32 v_60 = PDX_MUL_MXF32(v_57, v_48);
+  xb_vecMxf32 v_62;
+  v_62 = PDX_MOV_MXF32_FROM_MX32(PDX_SHFL_MX32(PDX_MOV_MX32_FROM_MXF32(F_0_4), *((xb_vecMx32 *) v_61_0)));
+  xb_vecMxf32 v_65 = v_60;
+  PDX_MULA_MXF32(v_65, v_62, v_51);
+  PDX_SAV_MXF32_XP(v_12, align_O, (xb_vecMxf32 *) O, 16);
+  PDX_SAV_MXF32_XP(v_37, align_O, (xb_vecMxf32 *) O, 16);
+  PDX_SAV_MXF32_XP(v_56, align_O, (xb_vecMxf32 *) O, 16);
+  PDX_SAV_MXF32_XP(v_65, align_O, (xb_vecMxf32 *) O, 16);
+  PDX_SAPOS_MXF32_FP(align_O, (xb_vecMxf32 *) O);
+}

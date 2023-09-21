@@ -1,0 +1,14 @@
+/home/ubuntu/diospyros/dios-example-gen -w 4 -b mat-mul -p  mat-mul-params -o mat-mul-out
+#f
+cargo run --release --manifest-path /home/ubuntu/diospyros/src/dios-egraphs/Cargo.toml  -- mat-mul-out/spec.rkt --no-ac  > mat-mul-out/res.rkt
+    Finished release [optimized] target(s) in 0.02s
+     Running `src/dios-egraphs/target/release/dios-egraphs mat-mul-out/spec.rkt --no-ac`
+Running egg with timeout 180s, width: 4
+Dropping inapplicable rules: div-1 div-1-inv neg-neg neg-neg-rev neg-sgn neg-sgn-rev neg-zero-inv neg-zero-inv-rev neg-minus neg-minus-rev neg-minus-zero neg-minus-zero-rev sqrt-1-inv sqrt-1-inv-rev neg_unop sqrt_unop /_binop
+Stopped after 8 iterations, reason: Some(Saturated)output
+
+Cost: 2.0519999999999996
+/home/ubuntu/diospyros/dios  -w 4 -e -o mat-mul-out/kernel.c mat-mul-out
+Reading input program from mat-mul-out
+Optimizing intermediate program
+Compiling to Tensilica backend

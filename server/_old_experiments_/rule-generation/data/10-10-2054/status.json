@@ -1,0 +1,207 @@
+{
+  "machines": [
+    {
+      "name": "10-10-2054_0",
+      "type": "r5.4xlarge",
+      "id": "i-0208b9d18e287ed60",
+      "state": "running",
+      "ip": "3.140.249.52",
+      "files": true,
+      "experiment": null
+    },
+    {
+      "name": "10-10-2054_1",
+      "type": "r5.4xlarge",
+      "id": "i-0185cd43944520a42",
+      "state": "running",
+      "ip": "3.138.197.44",
+      "files": true,
+      "experiment": null
+    },
+    {
+      "name": "10-10-2054_2",
+      "type": "r5.4xlarge",
+      "id": "i-040ae5aadce81593d",
+      "state": "running",
+      "ip": "3.143.143.146",
+      "files": true,
+      "experiment": null
+    },
+    {
+      "name": "10-10-2054_3",
+      "type": "r5.4xlarge",
+      "id": "i-056c1d6279cb03d2e",
+      "state": "running",
+      "ip": "18.189.13.130",
+      "files": true,
+      "experiment": null
+    },
+    {
+      "name": "10-10-2054_4",
+      "type": "r5.4xlarge",
+      "id": "i-03fd244e58d5b6961",
+      "state": "running",
+      "ip": "3.143.238.81",
+      "files": true,
+      "experiment": null
+    },
+    {
+      "name": "10-10-2054_5",
+      "type": "r5.4xlarge",
+      "id": "i-06edd8e3a90822bbc",
+      "state": "running",
+      "ip": "18.117.179.50",
+      "files": true,
+      "experiment": null
+    }
+  ],
+  "remaining": [
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_6000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json",
+    "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_600000.json"
+  ],
+  "count": 16,
+  "finished": [
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr0_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr3_usTrue_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfTrue.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c0_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr0_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    },
+    {
+      "name": null,
+      "config": "./run.sh synth out.json --config configs/config_c2_sr3_usFalse_sfFalse.json --synth-config synth_configs/abs_timeout_60.json",
+      "oom_killed": true
+    }
+  ]
+}

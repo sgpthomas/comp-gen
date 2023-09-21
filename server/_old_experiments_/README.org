@@ -1,0 +1,630 @@
+* Comp-gen experiments
+
+** Description
+
+Fix a ruleset, vary the following configuration options:
+- rule filtering
+- phase enforcing
+- new egraph for every phase
+- scheduler
+- syntax filtering
+
+For each configuration, I want to measure:
+- rule generation time
+- compile time
+- e-graph cost
+- performance (simulated cycles)
+
+Compare this against, handwritten Diospyros rules
+
+** Testing some configurations
+
+Reasonable config
+
+#+begin_src json :file (ec2/tramp "west" "test.json") :results file silent
+{
+    "total_node_limit": 50000000,
+    "total_iter_limit": 20,
+    "timeout": 240,
+    "dry_run": false,
+    "dump_rules": true,
+    "reuse_egraphs": true,
+    "cd_filter": null, 
+    "require_all_vars": false,
+    "phases": [
+	{
+	    "name": "pre-compile",
+	    "cd": [null, 25.0],
+	    "ca": [null, 8.0],
+	    "cd_": [null, null],
+	    "ca_": [null, null],
+	    "node_limit": 1000000,
+	    "iter_limit_": 20
+	},
+	{
+	    "name": "compile",
+	    "cd": [0.0, null],
+	    "ca": [50.0, 60.0]
+	},
+	{
+	    "name": "opt",
+	    "cd": [null, null],
+	    "ca": [null, null],
+	    "fresh_egraph": true
+	},
+	{
+	    "name": "all",
+	    "cd": [null, null],
+	    "ca": [null, null],
+	    "disabled": true
+	}
+    ]
+}
+#+end_src
+
+Wack config (that will probably work)
+
+#+begin_src json :file filtering/test.json :results file silent
+{
+    "total_node_limit": 5000000,
+    "total_iter_limit": 20,
+    "timeout": 120,
+    "dry_run": false,
+    "dump_rules": false,
+    "reuse_egraphs": true,
+    "cd_filter": 10.0,
+    "require_all_vars": true,
+    "phases": [
+	{
+	    "name": "pre-compile",
+	    "cd": [null, null],
+	    "ca": [null, 10.0],
+	    "node_limit": 100000,
+	    "iter_limit": 10
+	},
+	{
+	    "name": "compile",
+	    "cd": [null, null],
+	    "ca": [10.0, 70.0]
+	},
+	{
+	    "name": "opt",
+	    "cd": [null, null],
+	    "ca": [70.0, null]
+	}
+    ]
+}
+#+end_src
+
+Setup a remote machine
+
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results output
+IP="3.18.225.198" 
+rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout86400.json"
+compile_config="experiments/filtering/test.json"
+alias r="rsync -e 'ssh -o StrictHostKeyChecking=no'"
+r -v $rule_config ubuntu@$IP:~/rules.json
+r -v $compile_config ubuntu@$IP:~/compile.json
+
+cargo build --release --manifest-path dios-lang/Cargo.toml
+r -v dios-lang/target/release/dios-lang \
+      ~/Research/diospyros/*-params \
+      ubuntu@$IP:
+
+r -rv experiments/rule-generation/configs ubuntu@$IP:~/
+r -rv experiments/rule-generation/synth_configs ubuntu@$IP:~/
+#+end_src
+
+#+RESULTS:
+: #<buffer *ob-async-shell*>
+
+*** Running on AWS
+
+Just send everything to the remote machine.
+#+name: rsync
+#+begin_src shell :dir (magit-toplevel) :var IP=(ec2/get-ip "west") :results silent output
+rsync -rvp --exclude='.git*' --filter="dir-merge,- .gitignore" . \
+      ubuntu@$IP:
+#+end_src
+
+Look at this insidious rule: =(/ (/ ?b ?b) (- ?a 1)) -> (* (+ ?a ?a) (/ 1 ?a))=
+
+I'm trying to merge the following two classes. These should be the same:
+=(sgn (* a a)) <-> (sgn (* (* (* a a) (* a a)) (* (* a a) (* a a))))=
+
+The left hand side looks right. All the values are either 1 or 0. The right hand side however, is wack. Some of the values are -1.
+
+The justification that I'm given looks like: =Some(Rule("(- (/ ?a ?a) (/ 0 ?a)) -> (sgn (* ?a ?a))"))=. Depending on what you want to do with division by zero, this rule seems correct.
+
+Firstly, why does this rule cause these two things to get merged? It must be because =(- (/ ?a ?a) (/ 0 ?a))= is in the equivalence class of =(sgn (* a a))= right? I think that's right. Can I verify this?
+
+#+begin_example
+(VecDiv (VecDiv ?d ?c) (VecMul ?b ?a)) => (VecDiv (VecSqrt ?c) (VecMinus ?d ?a))
+(VecDiv (VecSqrt ?c) (VecMinus ?d ?a)) => (VecDiv (VecDiv ?d ?c) (VecMul ?b ?a))
+#+end_example
+
+Run things on remote machine.
+#+begin_src async-shell :dir (ec2/tramp "west" "/" "home" "ubuntu") :results silent :ansi t
+dir="experiments/rule-generation"
+export RUST_BACKTRACE=1
+export RUST_LOG='info,egg=info,ruler=info,z3=off'
+
+time cargo run --manifest-path dios-lang/Cargo.toml --release \
+    -- synth debug_sgn.json \
+    --config $dir/configs/debug.json
+
+# mat-mul, q-prod, 2d-conv, *qr-decomp*
+# BENCH=q-prod
+# RUST_LOG='debug,egg=info' time \
+    # 	cargo run --release --manifest-path dios-lang/Cargo.toml -- \
+    # 	compile $BENCH \
+    # 	    --dios-example-bin diospyros/dios-example-gen \
+    # 	    --dios-params $BENCH-params \
+    # 	    --vector-width 2 \
+    # 	    --rules debug_sgn.json \
+    # 	    --config experiments/filtering/test.json
+#+end_src
+
+The money question is why we are using rules that are never explicitly checked by =L::is_valid=.
+This was not the money question :(
+
+Ok, well I'm not getting exactly the same results after checkpointing. But it still crashes and so maybe it will still be useful?
+
+*** Rest
+
+#+begin_src async-shell :dir (magit-toplevel) :results silent
+cd dios-lang
+
+# rsync -vP  \ samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/rule-generation/data/10-10-2108/58.json 
+# RUST_LOG=debug,egg=off \
+
+systemd-run -E RUST_LOG='debug,egg=off' --scope --user -p MemoryMax=4G \
+	    cargo run --release -- compile q-prod \
+      --dios-example-bin ~/Research/diospyros/dios-example-gen \
+      --dios-params ~/Research/diospyros/q-prod-params \
+      --vector-width 2 \
+      --rules ~/Research/comp-gen/experiments/rule-generation/data/10-10-2108/58.json \
+      --config ../experiments/filtering/test.json
+
+      # --pre-desugared --rules ~/Research/diospyros/t2.json \
+#+end_src
+
+Debug =sgn= ruler synthesis.
+#+begin_src async-shell :dir (concat (magit-toplevel) "dios-lang") :results silent
+systemd-run -E RUST_LOG="info,egg=off,ruler=info,z3=off" --scope --user -p MemoryMax=6G \
+	    cargo run --release -- synth \
+      ../experiments/debug_sgn.json \
+      --config ../experiments/rule-generation/configs/debug.json \
+      --ruler ../experiments/rule-generation/synth_configs/debug.json
+#+end_src
+
+* Aella (simple IMP-like language) experiments
+
+** Description
+
+Compare against handwritten rules. Show that some known, but non-trivial optimizations can be automatically generated.
+
+* Rule Generation
+
+** Description
+
+Fix a set of filtering parameters, and play with the following settings:
+- initial seed set
+- how long we run ruler
+
+** TODO add sqrt, and sgn to ruler generation
+
+** Run the experiment
+
+#+begin_src async-shell :dir rule-generation
+./run.py new
+./run.py setup <dir>
+./run.py watch <dir>
+#+end_src
+
+** Emacs Play zone
+
+#+begin_src emacs-lisp :results silent
+(setq sgt/elisp-compile-command
+      '(async-shell-command
+        (format "cd %s && cargo build --release --manifest-path dios-lang/Cargo.toml && rsync -vP dios-lang/target/release/dios-lang ubuntu@%s:"
+		(magit-toplevel)
+		(ec2/get-ip "exp1"))))
+#+end_src
+
+#+begin_src async-shell :dir (ec2/tramp "exp" "/" "home" "ubuntu") :results silent :ansi t
+export RUST_LOG=info,egg=off
+./dios-lang synth out.json \
+	    --config configs/debug.json
+	    # --ruler synth_configs/base.json
+#+end_src
+
+* Testing rulesets
+
+** Params
+
+Mat mul params
+
+#+begin_src json :file (ec2/tramp "exp" "/" "home" "ubuntu" "mat-mul-params") :results silent
+{
+  "A-rows": 3,
+  "A-cols": 3,
+  "B-rows": 2,
+  "B-cols": 2,
+  "reg-size": 4
+}
+#+end_src
+
+** Running
+
+#+begin_src async-shell :dir (magit-toplevel) :var IP=(ec2/get-ip "exp") :results silent :ansi t :name comp
+rule_config="experiments/rule-generation/data/11-14-test/ruleset_timeout432000.json"
+compile_config="experiments/filtering/test.json"
+
+function rs() {
+    rsync -e 'ssh -o StrictHostKeyChecking=no' -v $@
+}
+
+# r $rule_config ubuntu@$IP:~/rules.json
+# rs $compile_config ubuntu@$IP:~/compile.json
+# rs "experiments/original_dios_rules.json" ubuntu@$IP:~/original_dios_rules.json
+# rs "experiments/manual_expansion/manual_rules.json" ubuntu@$IP:~/manual_rules.json
+# rs "experiments/manual_expansion/expanding_rules.json" ubuntu@$IP:~/expanding.json
+
+cargo build --release --manifest-path dios-lang/Cargo.toml
+rs dios-lang/target/release/dios-lang ubuntu@$IP:
+# r ~/Research/diospyros/*-params ubuntu@$IP:
+
+# r -r experiments/rule-generation/configs ubuntu@$IP:~/
+# r -r experiments/rule-generation/synth_configs ubuntu@$IP:~/
+#+end_src
+
+#+begin_src async-shell :results silent :dir (ec2/tramp "exp" "/" "home" "ubuntu") :ansi t :name comp
+export RUST_BACKTRACE=1
+export RUST_LOG='debug,egg=info'
+bench="mat-mul"
+./dios-lang \
+    compile $bench \
+    --dios-bin diospyros/dios \
+    --dios-example-bin diospyros/dios-example-gen \
+    --dios-params $bench-params-2x2_2x2_r4 \
+    --vector-width 4 \
+    --rules rules.json \
+    --config compile.json
+#+end_src
+
+Local version
+
+#+begin_src async-shell :results silent :dir (magit-toplevel) :ansi t :name comp
+export RUST_BACKTRACE=1
+export RUST_LOG='debug,egg=info'
+bench="q-prod"
+cargo run --release --manifest-path=dios-lang/Cargo.toml -- \
+    compile $bench \
+    --dios-bin ../diospyros/dios \
+    --dios-example-bin ../diospyros/dios-example-gen \
+    --dios-params ../diospyros/$bench-params \
+    --vector-width 4 \
+    --rules experiments/rulesets/ruleset_timeout432000.json \
+    --config experiments/configs/loop_alt_cost_t180.json --alt-cost
+    # --config experiments/compile.json
+#+end_src
+
+* Fixing the Diospyros backend
+
+The backend doesn't correctly compile Vector expressions that have accesses to different memories. I'm not yet entirely sure that this is even a valid thing to do? But if it is, it would be very nice to fix.
+
+#+begin_src emacs-lisp :tangle (concat (magit-toplevel) "/../diospyros/fix-backend-out/res.rkt") :mkdirp t
+(Concat
+ (VecMAC
+  (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 0) (Get I 1) 0))
+  (Vec (Get F 0) (Get F 0) (Get I 2) (Get F 1))
+  (Vec (Get I 0) (Get I 1) (Get F 0) (Get I 2)))
+ (Concat
+  (VecMinus
+   (VecAdd
+    (VecMul
+     (Vec (Get F 2) (Get F 2) (Get F 2) (Get I 5))
+     (Vec (Get I 0) (Get I 1) (Get I 2) (Get F 1)))
+    (VecMAC
+     (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 3) (Get I 4) 0))
+     (Vec (Get F 0) (Get F 3) (Get I 1) (Get F 3))
+     (Vec (Get I 3) (Get I 0) (Get F 3) (Get I 2))))
+   (VecMul (Vec 0 (Get I 4) (Get I 5) 0) (VecNeg (Vec 0 (Get F 0) (Get F 0) 0))))
+  (Concat
+   (VecMinus
+    (VecAdd
+     (VecMul
+      (LitVec (Get F 2) (Get F 2) (Get F 2) (Get F 3))
+      (LitVec (Get I 3) (Get I 4) (Get I 5) (Get I 5)))
+     (VecMAC
+      (VecMul (Vec 0 (Get F 1) (Get F 1) 0) (Vec 0 (Get I 6) (Get I 7) 0))
+      (Vec (Get I 6) (Get F 3) (Get I 4) (Get I 8))
+      (Vec (Get F 0) (Get I 3) (Get F 3) (Get F 1))))
+    (VecMul (Vec 0 (Get I 7) (Get I 8) 0) (VecNeg (Vec 0 (Get F 0) (Get F 0) 0))))
+   (VecMAC
+    (VecMul (Vec 0 (Get I 6) (Get F 3) 0) (Vec 1 (Get F 3) (Get I 7) 0))
+    (Vec (Get F 2) (Get F 2) (Get I 8) (Get I 8))
+    (Vec (Get I 6) (Get I 7) (Get F 2) (Get F 3))))))
+#+end_src
+
+#+header: :var exp=(sgt/dir "server" "completed" "mat-mul_8x8_8x8" "14" "results")
+#+header: :dir "~/Research/diospyros"
+#+begin_src async-shell :results silent :name dios
+echo $exp
+make dios
+./dios -w 4 --egg --suppress-git \
+    -o $exp/kernel.c \
+    $exp
+head -n 10 $exp/kernel.c
+#+end_src
+
+#+begin_src async-shell :dir (magit-toplevel) :results silent :ansi t
+IP="3.18.225.198"
+rsync -e 'ssh -o StrictHostKeyChecking=no' -v \
+      ubuntu@$IP:~/q-prod-out/kernel.c \
+      samthomas@sgt.csres.utexas.edu:~/Research/comp-gen/experiments/cycle-estimation/q-prod/
+#+end_src
+
+* Some ruler 2.0 rules
+
+#+begin_example
+(* ?b ?a) ==> (* ?a ?b)
+(+ ?b ?a) ==> (+ ?a ?b)
+(neg (neg ?a)) ==> ?a
+(- ?a ?a) ==> 0
+(* ?a 1) ==> ?a
+?a ==> (+ 0 ?a)
+?a ==> (- ?a 0)
+(- 0 ?a) ==> (neg ?a)
+(* 0 ?a) ==> 0
+(- (* ?a ?b) ?a) ==> (* ?a (- ?b 1))
+(+ ?a (* ?b ?a)) ==> (* (+ ?b 1) ?a)
+(- ?b (* ?b ?a)) ==> (* ?b (- 1 ?a))
+(* ?b (+ ?a ?a)) ==> (* (+ ?b ?b) ?a)
+(* ?b (neg ?a)) ==> (neg (* ?b ?a))
+(* ?b (neg ?a)) ==> (* (neg ?b) ?a)
+(- (+ ?c ?b) ?a) ==> (- ?c (- ?a ?b))
+(+ ?c (+ ?b ?a)) ==> (+ (+ ?c ?b) ?a)
+(- ?c (- ?b ?a)) ==> (- ?a (- ?b ?c))
+(* ?c (* ?b ?a)) ==> (* ?b (* ?a ?c))
+(* ?b (- (+ 1 1) ?a)) ==> (+ ?b (- ?b (* ?a ?b)))
+(- (* ?b ?a) 0) ==> (* ?a ?b)
+(* 0 (- ?b ?a)) ==> (- ?a ?a)
+(* (- ?b ?a) (+ ?b ?a)) ==> (- (* ?b ?b) (* ?a ?a))
+(- (* (+ ?c ?b) ?a) 0) ==> (* (+ ?c ?b) ?a)
+(* ?c (* ?b ?a)) ==> (- (* ?c (* ?b ?a)) 0)
+(* ?c (* ?b ?a)) ==> (* ?a (- (* ?c ?b) 0))
+(* 0 (+ ?c (+ ?b ?a))) ==> (- ?c ?c)
+(* 0 (- ?c (+ ?b ?a))) ==> (- ?b ?b)
+(- ?c (* 0 (+ ?b ?a))) ==> ?c
+(+ ?c (* 0 (- ?b ?a))) ==> ?c
+(* ?d (* ?c (* ?b ?a))) ==> (* (* ?c (* ?b ?d)) ?a)
+(* (* (* ?d ?c) ?b) ?a) ==> (* (* (* ?a ?b) ?c) ?d)
+(* (* (* ?d ?c) ?b) ?a) ==> (* (* (* ?c ?a) ?d) ?b)
+(* (* (* ?d ?c) ?b) ?a) ==> (* (* (* ?d ?b) ?c) ?a)
+(* (* (* ?d ?c) ?b) ?a) ==> (* (* (* ?b ?c) ?d) ?a)
+(* (* ?d ?c) (* ?b ?a)) ==> (* (* ?d ?b) (* ?a ?c))
+(* ?d (* (* ?c ?b) ?a)) ==> (* (* (* ?d ?b) ?a) ?c)
+(* ?d (* ?c (* ?b ?a))) ==> (* ?a (* ?d (* ?b ?c)))
+(* ?d (* (* ?c ?b) ?a)) ==> (* ?a (* ?c (* ?b ?d)))
+(+ ?d (+ ?c (+ ?b ?a))) ==> (+ ?d (+ ?b (+ ?a ?c)))
+(+ ?d (+ ?c (+ ?b ?a))) ==> (+ ?d (+ ?c (+ ?a ?b)))
+(+ ?d (+ ?c (+ ?b ?a))) ==> (+ ?b (+ ?c (+ ?a ?d)))
+(- (* ?d (* ?c ?b)) ?a) ==> (- (* ?b (* ?d ?c)) ?a)
+(- (* ?d (* ?c ?b)) ?a) ==> (- (* (* ?c ?b) ?d) ?a)
+(- (* ?d (- ?c ?b)) ?a) ==> (- (* (- ?c ?b) ?d) ?a)
+(- ?d (- (* ?c ?b) ?a)) ==> (- ?d (- (* ?b ?c) ?a))
+(- (* ?d ?c) (* ?b ?a)) ==> (- (* ?c ?d) (* ?b ?a))
+(- (* ?d ?c) (* ?b ?a)) ==> (- (* ?d ?c) (* ?a ?b))
+(* (- ?d ?c) (- ?b ?a)) ==> (* (- ?c ?d) (- ?a ?b))
+(* (- ?d ?c) (- ?b ?a)) ==> (* (- ?b ?a) (- ?d ?c))
+(+ ?d (+ ?c (* ?b ?a))) ==> (+ ?d (+ ?c (* ?a ?b)))
+(+ ?d (+ ?c (* ?b ?a))) ==> (+ ?c (+ ?d (* ?a ?b)))
+(+ ?d (+ ?c (* ?b ?a))) ==> (+ (* ?a ?b) (+ ?d ?c))
+(+ (* ?d ?c) (+ ?b ?a)) ==> (+ ?a (+ (* ?d ?c) ?b))
+(+ (* ?d ?c) (+ ?b ?a)) ==> (+ ?b (+ (* ?c ?d) ?a))
+(+ ?d (+ (* ?c ?b) ?a)) ==> (+ ?a (+ (* ?b ?c) ?d))
+(+ ?d (+ (* ?c ?b) ?a)) ==> (+ ?a (+ (* ?c ?b) ?d))
+(* (+ ?d ?c) (+ ?b ?a)) ==> (* (+ ?a ?b) (+ ?c ?d))
+(* (+ ?d ?c) (+ ?b ?a)) ==> (* (+ ?c ?d) (+ ?b ?a))
+(* (+ ?d (+ ?c ?b)) ?a) ==> (* (+ ?b (+ ?c ?d)) ?a)
+(* (+ ?d (+ ?c ?b)) ?a) ==> (* (+ ?d (+ ?b ?c)) ?a)
+(* (+ ?d (+ ?c ?b)) ?a) ==> (* ?a (+ ?d (+ ?c ?b)))
+(* (+ ?d (+ ?c ?b)) ?a) ==> (* ?a (+ ?c (+ ?d ?b)))
+(* ?d (+ ?c (+ ?b ?a))) ==> (* ?d (+ ?b (+ ?c ?a)))
+(* ?d (- (* ?c ?b) ?a)) ==> (* ?d (- (* ?b ?c) ?a))
+(* ?d (- (* ?c ?b) ?a)) ==> (* (- (* ?c ?b) ?a) ?d)
+(* (+ ?d (* ?c ?b)) ?a) ==> (* (+ ?d (* ?b ?c)) ?a)
+(* ?d (+ ?c (* ?b ?a))) ==> (* ?d (+ ?c (* ?a ?b)))
+(* (+ ?d (* ?c ?b)) ?a) ==> (* ?a (+ ?d (* ?c ?b)))
+(* (+ ?d (* ?c ?b)) ?a) ==> (* (+ (* ?c ?b) ?d) ?a)
+(* ?d (+ ?c (* ?b ?a))) ==> (* (+ (* ?b ?a) ?c) ?d)
+(* ?d (+ ?c (* ?b ?a))) ==> (* ?d (+ (* ?b ?a) ?c))
+(* ?d (+ (* ?c ?b) ?a)) ==> (* ?d (+ (* ?b ?c) ?a))
+(* ?d (+ (* ?c ?b) ?a)) ==> (* (+ (* ?c ?b) ?a) ?d)
+(- (* ?d ?c) (- ?b ?a)) ==> (- (* ?c ?d) (- ?b ?a))
+(+ (* (* ?d ?c) ?b) ?a) ==> (+ (* (* ?c ?d) ?b) ?a)
+(+ (* (* ?d ?c) ?b) ?a) ==> (+ (* (* ?b ?c) ?d) ?a)
+(+ (* (* ?d ?c) ?b) ?a) ==> (+ ?a (* (* ?b ?d) ?c))
+(+ ?d (* (* ?c ?b) ?a)) ==> (+ ?d (* ?a (* ?b ?c)))
+(+ ?d (* ?c (* ?b ?a))) ==> (+ ?d (* ?b (* ?a ?c)))
+(+ ?d (* (* ?c ?b) ?a)) ==> (+ (* ?b (* ?a ?c)) ?d)
+(+ ?d (* (* ?c ?b) ?a)) ==> (+ (* ?c (* ?b ?a)) ?d)
+(+ (* ?d (* ?c ?b)) ?a) ==> (+ (* ?b (* ?c ?d)) ?a)
+(* (- ?d (- ?c ?b)) ?a) ==> (* ?a (- ?d (- ?c ?b)))
+(* (* ?d (- ?c ?b)) ?a) ==> (* (* ?a (- ?c ?b)) ?d)
+(* (* ?d (- ?c ?b)) ?a) ==> (* ?d (* ?a (- ?c ?b)))
+(* ?d (* ?c (- ?b ?a))) ==> (* (* (- ?b ?a) ?d) ?c)
+(* ?d (* ?c (- ?b ?a))) ==> (* (- ?b ?a) (* ?c ?d))
+(* (* ?d ?c) (- ?b ?a)) ==> (* (* ?c ?d) (- ?b ?a))
+(* (- ?d ?c) (* ?b ?a)) ==> (* (* ?a ?b) (- ?d ?c))
+(+ (* ?d ?c) (* ?b ?a)) ==> (+ (* ?c ?d) (* ?b ?a))
+(+ (* ?d ?c) (* ?b ?a)) ==> (+ (* ?b ?a) (* ?d ?c))
+(- ?d (* ?c (- ?b ?a))) ==> (- ?d (* (- ?b ?a) ?c))
+(+ ?d (* ?c (+ ?b ?a))) ==> (+ ?d (* ?c (+ ?a ?b)))
+(+ ?d (* ?c (+ ?b ?a))) ==> (+ ?d (* (+ ?b ?a) ?c))
+(+ (* ?d (+ ?c ?b)) ?a) ==> (+ (* ?d (+ ?b ?c)) ?a)
+(+ ?d (* ?c (+ ?b ?a))) ==> (+ (* ?c (+ ?b ?a)) ?d)
+(+ ?d (* ?c (+ ?b ?a))) ==> (+ (* (+ ?a ?b) ?c) ?d)
+(+ (* (+ ?d ?c) ?b) ?a) ==> (+ (* (+ ?c ?d) ?b) ?a)
+(+ (* ?d (+ ?c ?b)) ?a) ==> (+ (* (+ ?c ?b) ?d) ?a)
+(+ (* (+ ?d ?c) ?b) ?a) ==> (+ ?a (* (+ ?d ?c) ?b))
+(+ ?d (+ ?c (- ?b ?a))) ==> (+ ?b (+ ?c (- ?d ?a)))
+(+ ?d (+ ?c (- ?b ?a))) ==> (+ ?d (+ ?b (- ?c ?a)))
+(+ ?d (+ ?c (- ?b ?a))) ==> (- (+ ?c (+ ?b ?d)) ?a)
+(+ (- ?d (- ?c ?b)) ?a) ==> (+ ?b (- (+ ?d ?a) ?c))
+(+ ?d (- (+ ?c ?b) ?a)) ==> (+ ?b (- (+ ?c ?d) ?a))
+(+ ?d (+ ?c (- ?b ?a))) ==> (+ (- (+ ?c ?b) ?a) ?d)
+(+ (- (+ ?d ?c) ?b) ?a) ==> (+ (- (+ ?d ?a) ?b) ?c)
+(+ (- (+ ?d ?c) ?b) ?a) ==> (- (+ ?a (+ ?c ?d)) ?b)
+(+ (- (+ ?d ?c) ?b) ?a) ==> (+ (- (+ ?a ?d) ?b) ?c)
+(+ ?d (- (+ ?c ?b) ?a)) ==> (+ ?b (- (+ ?d ?c) ?a))
+(+ (- (+ ?d ?c) ?b) ?a) ==> (+ ?c (- (+ ?a ?d) ?b))
+(- ?d (- (- ?c ?b) ?a)) ==> (+ ?a (+ (- ?b ?c) ?d))
+(+ ?d (+ (- ?c ?b) ?a)) ==> (+ ?d (- (+ ?a ?c) ?b))
+(+ ?d (- ?c (- ?b ?a))) ==> (+ (- ?c ?b) (+ ?a ?d))
+(+ (- ?d ?c) (+ ?b ?a)) ==> (+ (- ?d ?c) (+ ?a ?b))
+(+ ?d (- (+ ?c ?b) ?a)) ==> (+ (- ?b ?a) (+ ?c ?d))
+(* (* ?d (+ ?c ?b)) ?a) ==> (* (* ?a (+ ?b ?c)) ?d)
+(* (* ?d (+ ?c ?b)) ?a) ==> (* (* ?a (+ ?c ?b)) ?d)
+(* (* ?d (+ ?c ?b)) ?a) ==> (* (+ ?c ?b) (* ?a ?d))
+(* (* ?d ?c) (+ ?b ?a)) ==> (* (* ?c ?d) (+ ?a ?b))
+(* (+ ?d ?c) (* ?b ?a)) ==> (* (* ?b ?a) (+ ?d ?c))
+(* ?d (* (+ ?c ?b) ?a)) ==> (* ?a (* (+ ?c ?b) ?d))
+(* ?d (* ?c (+ ?b ?a))) ==> (* (* (+ ?a ?b) ?d) ?c)
+(* (* (+ ?d ?c) ?b) ?a) ==> (* (+ ?c ?d) (* ?a ?b))
+(* ?d (* (+ ?c ?b) ?a)) ==> (* ?d (* (+ ?b ?c) ?a))
+(- ?d (- (+ ?c ?b) ?a)) ==> (- (+ (- ?d ?c) ?a) ?b)
+(- ?d (- (+ ?c ?b) ?a)) ==> (- (+ ?a ?d) (+ ?c ?b))
+(+ (- ?d (+ ?c ?b)) ?a) ==> (+ (- (- ?a ?b) ?c) ?d)
+(+ (- ?d (+ ?c ?b)) ?a) ==> (+ ?d (- (- ?a ?b) ?c))
+(+ ?d (- ?c (+ ?b ?a))) ==> (+ (- ?d ?b) (- ?c ?a))
+(+ ?d (- ?c (+ ?b ?a))) ==> (+ ?c (- ?d (+ ?b ?a)))
+(+ (- ?d ?c) (- ?b ?a)) ==> (- (+ ?b (- ?d ?a)) ?c)
+(- (+ ?d ?c) (+ ?b ?a)) ==> (+ (- ?c ?a) (- ?d ?b))
+(+ (- ?d ?c) (- ?b ?a)) ==> (- ?d (- ?a (- ?b ?c)))
+(- ?d (* (* ?c ?b) ?a)) ==> (- ?d (* (* ?a ?b) ?c))
+(- ?d (* (* ?c ?b) ?a)) ==> (- ?d (* (* ?b ?c) ?a))
+(- ?d (* ?c (* ?b ?a))) ==> (- ?d (* ?a (* ?b ?c)))
+(- ?d (* (* ?c ?b) ?a)) ==> (- ?d (* ?b (* ?c ?a)))
+(* ?d (- ?c (* ?b ?a))) ==> (* ?d (- ?c (* ?a ?b)))
+(* ?d (- ?c (* ?b ?a))) ==> (* (- ?c (* ?b ?a)) ?d)
+(- (- ?d ?c) (* ?b ?a)) ==> (- (- ?d ?c) (* ?a ?b))
+(- (- (* ?d ?c) ?b) ?a) ==> (- (- (* ?c ?d) ?b) ?a)
+(* (- (- ?d ?c) ?b) ?a) ==> (* ?a (- (- ?d ?c) ?b))
+(* (- ?d ?c) (+ ?b ?a)) ==> (* (- ?d ?c) (+ ?a ?b))
+(* (+ ?d ?c) (- ?b ?a)) ==> (* (+ ?c ?d) (- ?b ?a))
+(* (- ?d ?c) (+ ?b ?a)) ==> (* (+ ?b ?a) (- ?d ?c))
+(- (+ ?d ?c) (* ?b ?a)) ==> (- (+ ?c ?d) (* ?a ?b))
+(- (+ ?d ?c) (* ?b ?a)) ==> (- (+ ?c ?d) (* ?b ?a))
+(- ?d (- (* ?c ?b) ?a)) ==> (+ ?a (- ?d (* ?c ?b)))
+(+ ?d (- ?c (* ?b ?a))) ==> (- (+ ?c ?d) (* ?a ?b))
+(+ (- ?d (* ?c ?b)) ?a) ==> (+ (- ?a (* ?b ?c)) ?d)
+(+ ?d (- ?c (* ?b ?a))) ==> (+ (- ?d (* ?b ?a)) ?c)
+(+ (- ?d (* ?c ?b)) ?a) ==> (+ (- ?a (* ?c ?b)) ?d)
+(+ (- ?d (* ?c ?b)) ?a) ==> (- (+ ?a ?d) (* ?c ?b))
+(- ?d (* (+ ?c ?b) ?a)) ==> (- ?d (* (+ ?b ?c) ?a))
+(- ?d (* (+ ?c ?b) ?a)) ==> (- ?d (* ?a (+ ?b ?c)))
+(- (+ (* ?d ?c) ?b) ?a) ==> (- (+ (* ?c ?d) ?b) ?a)
+(- (+ (* ?d ?c) ?b) ?a) ==> (+ (* ?c ?d) (- ?b ?a))
+(+ (* ?d ?c) (- ?b ?a)) ==> (+ ?b (- (* ?c ?d) ?a))
+(+ (* ?d ?c) (- ?b ?a)) ==> (+ ?b (- (* ?d ?c) ?a))
+(- (+ ?d (* ?c ?b)) ?a) ==> (- (+ ?d (* ?b ?c)) ?a)
+(+ ?d (- (* ?c ?b) ?a)) ==> (- (+ ?d (* ?c ?b)) ?a)
+(+ ?d (- (* ?c ?b) ?a)) ==> (+ (- ?d ?a) (* ?b ?c))
+(- (+ ?d (* ?c ?b)) ?a) ==> (+ (- ?d ?a) (* ?b ?c))
+(+ (- ?d ?c) (* ?b ?a)) ==> (- (* ?b ?a) (- ?c ?d))
+(+ ?d (- (* ?c ?b) ?a)) ==> (+ (- (* ?b ?c) ?a) ?d)
+(+ ?d (- (* ?c ?b) ?a)) ==> (+ (- (* ?c ?b) ?a) ?d)
+(+ (- ?d ?c) (* ?b ?a)) ==> (+ (- (* ?b ?a) ?c) ?d)
+(- (* (+ ?d ?c) ?b) ?a) ==> (- (* (+ ?c ?d) ?b) ?a)
+(- (* (+ ?d ?c) ?b) ?a) ==> (- (* ?b (+ ?c ?d)) ?a)
+(* (- ?d (- ?c ?b)) ?a) ==> (* ?a (+ (- ?b ?c) ?d))
+(* ?d (- ?c (- ?b ?a))) ==> (* ?d (+ ?a (- ?c ?b)))
+(* ?d (- ?c (- ?b ?a))) ==> (* (+ ?c (- ?a ?b)) ?d)
+(* (+ ?d (- ?c ?b)) ?a) ==> (* (+ (- ?c ?b) ?d) ?a)
+(* ?d (+ ?c (- ?b ?a))) ==> (* ?d (- (+ ?b ?c) ?a))
+(* ?d (- (+ ?c ?b) ?a)) ==> (* ?d (+ ?c (- ?b ?a)))
+(* ?d (- (+ ?c ?b) ?a)) ==> (* ?d (+ (- ?b ?a) ?c))
+(* ?d (+ (- ?c ?b) ?a)) ==> (* (- (+ ?a ?c) ?b) ?d)
+(* ?d (+ ?c (- ?b ?a))) ==> (* (- (+ ?c ?b) ?a) ?d)
+(* (- (+ ?d ?c) ?b) ?a) ==> (* (- (+ ?c ?d) ?b) ?a)
+(* (+ (- ?d ?c) ?b) ?a) ==> (* (+ (- ?b ?c) ?d) ?a)
+(* (- (+ ?d ?c) ?b) ?a) ==> (* (+ (- ?d ?b) ?c) ?a)
+(+ (* ?d (- ?c ?b)) ?a) ==> (+ ?a (* ?d (- ?c ?b)))
+(+ ?d (* ?c (- ?b ?a))) ==> (- ?d (* (- ?a ?b) ?c))
+(+ ?d (* ?c (- ?b ?a))) ==> (+ (* (- ?b ?a) ?c) ?d)
+(- ?d (* (- ?c ?b) ?a)) ==> (+ (* (- ?b ?c) ?a) ?d)
+(- ?d (* (- ?c ?b) ?a)) ==> (+ ?d (* (- ?b ?c) ?a))
+(+ (* (- ?d ?c) ?b) ?a) ==> (+ ?a (* (- ?d ?c) ?b))
+(* ?c (* ?b ?a)) ==> (* (* ?c ?b) ?a)
+(* ?c (* ?b ?a)) ==> (* ?c (* ?a ?b))
+(+ ?c (+ ?b ?a)) ==> (+ ?a (+ ?b ?c))
+(+ ?c (+ ?b ?a)) ==> (+ ?c (+ ?a ?b))
+(+ (* ?c ?b) ?a) ==> (+ (* ?b ?c) ?a)
+(+ (* ?c ?b) ?a) ==> (+ ?a (* ?b ?c))
+(* (+ ?c ?b) ?a) ==> (* (+ ?b ?c) ?a)
+(* (+ ?c ?b) ?a) ==> (* ?a (+ ?b ?c))
+(* (- ?c ?b) ?a) ==> (* ?a (- ?c ?b))
+(- (* ?c ?b) ?a) ==> (- (* ?b ?c) ?a)
+(- ?c (- ?b ?a)) ==> (+ ?c (- ?a ?b))
+(+ (- ?c ?b) ?a) ==> (+ (- ?a ?b) ?c)
+(+ (- ?c ?b) ?a) ==> (+ ?c (- ?a ?b))
+(+ ?c (- ?b ?a)) ==> (- (+ ?b ?c) ?a)
+(- ?c (* ?b ?a)) ==> (- ?c (* ?a ?b))
+(- ?c (+ ?b ?a)) ==> (- (neg (- ?b ?c)) ?a)
+(- (- ?c ?b) (neg ?a)) ==> (- ?c (- ?b ?a))
+(* (neg ?c) (- ?b ?a)) ==> (* ?c (- ?a ?b))
+(- ?c (- ?b ?a)) ==> (- ?a (neg (- ?c ?b)))
+(neg (- ?c (* ?b ?a))) ==> (- (* ?b ?a) ?c)
+(+ ?c (+ ?b ?a)) ==> (- ?b (neg (+ ?c ?a)))
+(- ?c (- ?b ?a)) ==> (neg (- (- ?b ?c) ?a))
+(- ?c (+ ?b ?a)) ==> (+ ?c (neg (+ ?a ?b)))
+(+ ?c (+ ?b ?a)) ==> (- (+ ?a ?c) (neg ?b))
+(neg (- (* ?c ?b) ?a)) ==> (- ?a (* ?c ?b))
+(- ?c (+ ?b ?a)) ==> (+ (neg (+ ?b ?a)) ?c)
+(- ?c (+ ?b ?a)) ==> (- (+ ?c (neg ?b)) ?a)
+(- (- ?c ?b) ?a) ==> (neg (+ ?a (- ?b ?c)))
+(+ ?c (- ?b ?a)) ==> (+ (neg (- ?a ?b)) ?c)
+(+ ?c (- ?b ?a)) ==> (+ ?b (neg (- ?a ?c)))
+(+ (neg ?c) (+ ?b ?a)) ==> (+ ?a (- ?b ?c))
+(* (- ?c ?b) ?a) ==> (* (+ ?c (neg ?b)) ?a)
+(* ?c (- ?b ?a)) ==> (neg (* ?c (- ?a ?b)))
+(* (+ ?c ?b) ?a) ==> (* ?a (- ?b (neg ?c)))
+(+ ?c (* ?b ?a)) ==> (- (* ?b ?a) (neg ?c))
+(+ (* ?c (neg ?b)) ?a) ==> (- ?a (* ?b ?c))
+(- (* ?c ?b) ?a) ==> (+ (neg ?a) (* ?c ?b))
+(+ ?c (* ?b ?a)) ==> (- ?c (* ?b (neg ?a)))
+(- (neg (+ ?c ?b)) ?a) ==> (- (neg (+ ?c ?a)) ?b)
+(- (neg (+ ?c ?b)) ?a) ==> (- (neg (+ ?b ?a)) ?c)
+(- (neg (+ ?c ?b)) ?a) ==> (neg (+ ?c (+ ?a ?b)))
+(- ?c (+ ?b ?a)) ==> (+ (neg ?a) (- ?c ?b))
+(+ ?c (* (- ?b ?b) ?a)) ==> ?c
+(+ ?c (* ?b (- ?a ?a))) ==> ?c
+(- (* (- ?c ?c) ?b) ?a) ==> (neg ?a)
+(+ ?b (- (- ?c ?b) ?a)) ==> (- ?c ?a)
+(+ ?a (+ ?c (- ?b ?a))) ==> (+ ?c ?b)
+(* (- ?c ?b) ?a) ==> (- (* ?a ?c) (* ?a ?b))
+(* ?c (+ ?b ?a)) ==> (+ (* ?a ?c) (* ?b ?c))
+(+ (* 0 (* ?c ?b)) ?a) ==> ?a
+(+ ?c (* 0 (+ ?b ?a))) ==> ?c
+(- ?c (* (* ?b ?a) 0)) ==> ?c
+#+end_example
+
+* Sending some experiments
+
+#+begin_src async-shell :dir (magit-toplevel) :results none :var IP=(ec2/get-ip "exp")
+cd server
+rsync -avh jobs -e 'ssh -o StrictHostKeyChecking=no' ubuntu@$IP:~/comp-gen/server
+#+end_src
+
+Reading the experiments back again
+
+#+begin_src async-shell :dir (magit-toplevel) :results none :var IP=(ec2/get-ip "exp")
+USER="ubuntu"
+cd server
+rsync -avh -e 'ssh -o StrictHostKeyChecking=no' \
+      $USER@$IP:~/comp-gen/server/completed/ \
+      completed/
+#+end_src

@@ -1,0 +1,22 @@
+{
+  "total_node_limit": 20000000000,
+  "total_iter_limit": 40000,
+  "timeout": 86400,
+  "dry_run": false,
+  "dump_rules": true,
+  "debug": false,
+  "reuse_egraphs": true,
+  "cd_filter": null,
+  "require_all_vars": false,
+  "scheduler": "simple",
+  "phase": {
+    "phases": [
+      {
+        "name": "all",
+        "cd": [null, null],
+        "ca": [null, null],
+        "disabled": false
+      }
+    ]
+  }
+}

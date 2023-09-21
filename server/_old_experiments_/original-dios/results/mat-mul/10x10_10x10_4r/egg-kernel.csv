@@ -1,0 +1,5 @@
+kernel,A_ROWS,A_COLS,B_ROWS,B_COLS,cycles
+Naive,10,10,10,10,756
+Naive hard size,10,10,10,10,760
+Diospyros,10,10,10,10,724
+Eigen,10,10,10,10,5880

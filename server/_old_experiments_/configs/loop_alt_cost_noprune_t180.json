@@ -1,0 +1,53 @@
+{
+  "total_node_limit": 2000000000,
+  "total_iter_limit": 4000,
+  "timeout": 180,
+  "dry_run": false,
+  "dump_rules": true,
+  "debug": false,
+  "reuse_egraphs": true,
+  "cd_filter": null,
+  "require_all_vars": false,
+  "scheduler": "simple",
+  "phase": {
+    "phases": [
+      {
+        "phases": [
+          {
+            "name": "pre-compile",
+            "cd": [null, 25.0],
+            "ca": [5.0, 1000.0],
+            "timeout": 30,
+            "iter_limit": 2,
+            "disabled": false
+          },
+          {
+            "name": "compile",
+            "cd": [-0.1, null],
+            "ca": [2000.0, 3000.0],
+            "timeout": 30,
+            "iter_limit": 2,
+            "disabled": false
+          },
+          {
+            "name": "litvec",
+            "cd": [0.39, 0.41],
+            "ca": [0.20, 0.22],
+            "timeout": 30,
+            "iter_limit": 2,
+            "disabled": false
+          }
+        ],
+        "loops": 20
+      },
+      {
+        "name": "opt",
+        "cd": [-5.0, 5.0],
+        "ca": [null, 9.0],
+        "iter_limit": 200,
+        "scheduler": "backoff",
+        "disabled": false
+      }
+    ]
+  }
+}
