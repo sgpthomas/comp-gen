@@ -317,7 +317,6 @@ def make_synthesis(
     name="synthesis",
     binops=None,
     triops=None,
-    timeout=6000,
 ):
     date_str = datetime.now().strftime("%b%d-%H%M")
     job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{synth_timeout}", 0)
@@ -334,7 +333,7 @@ def make_synthesis(
         "date": date_str,
         "name": name,
         "memory_limit": 220,
-        "timeout": timeout,
+        "timeout": synth_timeout * 5,
         "command": "./run.sh",
         "metadata": {
             "timeout": synth_timeout,
@@ -782,7 +781,6 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops + ["sqrtsgn"],
         triops=["mac", "muls"],
-        timeout=6000000,
     )
     # baseline + muls
     make_synthesis(
@@ -791,7 +789,6 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops,
         triops=["mac", "muls"],
-        timeout=6000000,
     )
     # baseline + mulsgn
     make_synthesis(
@@ -800,7 +797,6 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops + ["~*"],
         triops=["mac"],
-        timeout=6000000,
     )
 
 

@@ -7,6 +7,7 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Iterator, List
 
 import click
 import psutil
@@ -59,7 +60,11 @@ class GlobalConfig:
         self.env = {}
         self.jobs_at_once = 1
 
-    def list_jobs(self):
+        # compute memory available on machine
+        mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+        self.machine_memory = mem_bytes / float(1024**3)
+
+    def list_jobs(self) -> Iterator["Job"]:
         """Read jobs directory and produce an iterator of tasks to perform."""
 
         for task_dir in sorted(self.jobs.glob("*"), key=sort_path):
@@ -129,7 +134,7 @@ class Job:
             )
         )
 
-    def exec(self):
+    def exec(self) -> subprocess.Popen:
         # prepare log files
         stdout_log = self.dir / "stdout.log"
         stderr_log = self.dir / "stderr.log"
@@ -157,18 +162,14 @@ class Job:
         self.start_time = time.time()
 
         # run the comp-gen binary, storing stdout and stderr in logs
-        try:
-            self.proc = subprocess.Popen(
-                f"{self.command}",
-                env=self.global_config.env | dict(os.environ),
-                stdout=stdout_log.open("w"),
-                stderr=stderr_log.open("w"),
-                cwd=self.dir,
-            )
-            return self.proc
-        except PermissionError:
-            print("Don't have permission to run command!")
-            return None
+        self.proc = subprocess.Popen(
+            f"{self.command}",
+            env=self.global_config.env | dict(os.environ),
+            stdout=stdout_log.open("w"),
+            stderr=stderr_log.open("w"),
+            cwd=self.dir,
+        )
+        return self.proc
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
@@ -191,7 +192,7 @@ class Job:
         return f"<Job {self.dir} {self.date}>"
 
 
-def memory_used_by(pid):
+def memory_used_by(pid) -> float:
     """
     Return the memory used by `pid` and
     all children of `pid` in GB.
@@ -201,10 +202,17 @@ def memory_used_by(pid):
     mem = process.memory_info().rss
     for child in process.children(recursive=True):
         mem += child.memory_info().rss
-    return mem / float(10**9)
+    return mem / float(1024**3)
 
 
-def single_run(config, alive, update=False):
+def single_run(config: GlobalConfig, alive: Dict[Job, subprocess.Popen], update=False):
+    """
+    A single round of the main loop. Each time this is called, it
+    1) Tries to start any new jobs that we have the resources for
+    2) Updates stats collected about running jobs (killing them if necessary)
+    3) Completes jobs by moving them to completed/
+    """
+
     if update:
         subprocess.run("git pull -r", shell=True)
         subprocess.run(
@@ -213,18 +221,30 @@ def single_run(config, alive, update=False):
         subprocess.run("git pull -r", shell=True, cwd=config.diospyros)
         subprocess.run("make dios dios-example-gen", shell=True, cwd=config.diospyros)
 
+    # try and start any new jobs
     print("Looking for jobs...")
+    queued_jobs: List[Job] = list(config.list_jobs())
+    print(f"Considering {len(queued_jobs)} jobs")
 
-    # reload the config, to catch any potential changes
-    config.reload()
-
-    for job in config.list_jobs():
-        print(f"considering: {job}")
-        # if we have found a job that we haven't seen before
-        # start a new process for it
-        if job not in alive and len(alive) < config.jobs_at_once:
-            print(f"Found {job}")
-            alive[job] = job.exec()
+    for job in queued_jobs:
+        # start a job if:
+        #  1) the job is not already running
+        #  2) we don't have more that `config.jobs_at_once` jobs running
+        #  3) the memory limit for this job is smaller than memory for all job
+        if (
+            job not in alive
+            and len(alive) < config.jobs_at_once
+            and job.memory_limit + sum([j.memory_limit for j in alive.keys()])
+            < config.machine_memory
+        ):
+            print(f"Starting {job}")
+            try:
+                alive[job] = job.exec()
+            except PermissionError:
+                print(f"Don't have permission to run command for {job}!")
+            except Exception as e:
+                print(f"An exception occurred while trying to start job: {job}.")
+                print(e)
 
     # keep track of the things that are dead on this time around
     dead = []
@@ -240,6 +260,8 @@ def single_run(config, alive, update=False):
             # where to write the memory report
             memory_csv = job.dir / "memory.csv"
 
+            # this is set when the job is started
+            assert job.start_time is not None
             time_diff = time.time() - job.start_time
 
             # record memory usage
@@ -286,7 +308,7 @@ def main(auto_update):
     config = GlobalConfig(Path("."))
 
     try:
-        alive = {}
+        alive: Dict[Job, subprocess.Popen] = {}
         i = 0
         while True:
             config.reload()

@@ -3,30 +3,62 @@
 Website: https://sites.google.com/view/asplos24aec/home
 HotCRP: https://asplos24aec-spring.hotcrp.com/
 
-* Building a container with =buildah=
-:PROPERTIES:
-:header-args:async-shell: :name buildah :results none
-:END:
+(forgive the wording for now, I'll improve later)
 
-To build, you need =buildah= and a =fedora= machine. To keep the image as small as possible, we start the image from just a base file system and use the host package manager to install packages in the image.
+Here are the instructions to:
+1) reproduce the figures in our paper
+2) demonstrate the robustness of our artifact by showing how to extend it
+
+Many of our experiments require large amounts of memory to complete, and access to proprietary tools to compile kernels for the Tensilica architecture and perform cycle estimation. Educational licenses are available for free [[https://www.cadence.com/en_US/home/company/cadence-academic-network/university-program.html][here]], but we also separate out the generation of the data from the making of plots. We provide all of the data that we used for the paper.
+
+For each figure, we will split instructions into how to generate the data, and how to make the plot. We will provide the data so that you can generate the plots without waiting for all the experiments to run.
+
+* TODO Software Prerequisites
+
+You will need the following software to replicate our results.
+
+** Podman or Docker (for re-running experiments)
+** Python
+** R (for making plots)
+** AWSCLI (optional dependency)
+
+This makes it easier to run experiments on EC2 machines.
+
+* Starting the experiment server
+
+If you want to re-run our experiments, you will need to setup the experiment server. You can run locally on your machine, or remotely on a machine with more resources.
+
+The server is distributed as a container, with all of it's dependencies bundled. This should hopefully make it easy to set up. All you need is a container manager. I prefer =podman=, but =docker= should work the same.
+
+** Podman
+
+Instructions for installing podman are here: https://podman.io/docs/installation
+
+Then, download the Isaria image.
 
 #+begin_src async-shell
-buildah unshare ./aec/fedora-build-image.sh
+podman pull ghcr.io/sgpthomas/isaria-aec:latest
 #+end_src
 
-* Installation
-
-** Containerized Installation (recommended for AEC)
-
-The easiest way to run experiments is to use [[https://www.docker.com/][docker]] or [[https://podman.io/][podman]]. I personally prefer =podman= because it's easier to install and get running and has better support for rootless containers. The commands use =podman=, however, you can substitute them for =docker= and they should work exactly the same.
-
-*** Starting the experiment server
-
-You can run experiments by submitting jobs to the experiment server. But first, we need to setup the server. The following command will pull an image from the =ghcr.io= container registry and start the server.
+You will need to make two directories on the host to hold queued jobs and completed jobs.
 
 #+begin_src async-shell
 mkdir -p completed jobs
-podman pull ghcr.io/sgpthomas/isaria-aec:latest
+#+end_src
+
+If you don't have an =Xtensa= installation setup, you will not be able to run cycle estimation, but you can still run Isaria. In this case, start the server with:
+
+#+begin_src async-shell
+podman run --rm -d \
+       -v ./completed:/root/comp-gen/server/completed \
+       -v ./jobs:/root/comp-gen/server/jobs \
+       --name isaria \
+       ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
+Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation.
+
+#+begin_src async-shell
 podman run --rm -d \
        -v ./completed:/root/comp-gen/server/completed \
        -v ./jobs:/root/comp-gen/server/jobs \
@@ -36,15 +68,118 @@ podman run --rm -d \
        ghcr.io/sgpthomas/isaria-aec
 #+end_src
 
-**** Flags explanation
+You will also need to start the license server on the host (not inside container). You can do that with:
 
-- =--rm= will remove the container after the command executes
-- =-it= starts the container in interactive mode and allocates a tty for the process so that we can pass stdin to the server
-- =-v host-path:container-path= maps a directory on the host to a directory in the container. We use to pass files back and forth from the container.
+#+begin_src async-shell
+./x64_lsb/lmgrd -c LICENSE \
+                -z # add -z if you want to start the license daemon attached to a TTY
+                   # this is useful for debugging
+#+end_src
 
-** Manual Installation
+** TODO Docker
 
-You can read the =aec/fedora-build-image.sh= script to see a complete set of instructions for fedora. It should be similar for other Linux distributions.
+*WARNING*: untested
+
+Instructions for installing docker are here: https://www.docker.com/get-started/.
+
+Then, download the Isaria image.
+
+#+begin_src async-shell
+docker pull ghcr.io/sgpthomas/isaria-aec:latest
+#+end_src
+
+You will need to make two directories on the host to hold queued jobs and completed jobs.
+
+#+begin_src async-shell
+mkdir -p completed jobs
+#+end_src
+
+If you don't have an =Xtensa= installation setup, you will not be able to run cycle estimation, but you can still run Isaria. Start the server with:
+
+#+begin_src async-shell
+docker run --rm -d \
+       -v ./completed:/root/comp-gen/server/completed \
+       -v ./jobs:/root/comp-gen/server/jobs \
+       --name isaria \
+       ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
+Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation.
+
+#+begin_src async-shell
+docker run --rm -d \
+       -v ./completed:/root/comp-gen/server/completed \
+       -v ./jobs:/root/comp-gen/server/jobs \
+       -v ./xtensa:/root/xtensa \
+       --network slirp4netns:allow_host_loopback=true \
+       --name isaria \
+       ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
+* Reproducing paper results
+
+** Overall performance (Figure 4 & 5)
+
+These figures explore how well the programs that an Isaria compiler generates performs compared against Diospyros, and some other tools. We look at both the estimated cycles of compiled programs as well as how long it took to generate them.
+
+*** Generate data
+
+#+begin_src async-shell
+# generates jobs that run Isaria on all benchmarks
+./jobs.py overall_performance
+
+# generates a job that runs cycle estimation on all benchmarks
+./jobs.py "estimate:performance" --after performance
+
+# generates a job that reproduces the original Diospyros numbers
+./jobs.py diospyros
+#+end_src
+
+If the experiment server is running locally, =./jobs.py= will put jobs into the correct location be default. Otherwise, you have to copy them to the server yourself.
+
+#+begin_src async-shell
+./sync.py upload --ip <ip-of-machine> --dir "~/jobs" --clean
+#+end_src
+
+Once the experiments have finished (there are no jobs left in the jobs directory), you can copy the data locally again with:
+
+#+begin_src async-shell
+./sync.py download --ip <ip-of-machine> --dir "~/completed" --clean
+#+end_src
+
+Then, we can collate the data.
+
+#+begin_src async-shell
+./query2.py asdf
+#+end_src
+
+**** EC2 instructions
+
+#+begin_src async-shell
+./sync.py upload --name <name-of-ec2-machine> --dir "~/jobs" --clean
+#+end_src
+
+*** TODO Make Plots
+
+** Exploration of the effect of pruning (Figure 6)
+
+*** Generate data
+*** Make Plots
+
+** Exploration of time spent generating rules (Figure 7)
+
+*** Generate Data
+*** Make Plots
+
+** Adding new instructions (Table 2)
+
+*** Generate Data
+*** Make Plots
+
+** Exploring the effect of alpha and beta parameters (Figure 8 & 9)
+
+*** Generate Data
+*** Make Plots
 
 * Generating all the data
 :PROPERTIES:
@@ -178,3 +313,20 @@ CLOSED: [2023-09-19 Tue 11:29]
 
 * Making Figures
 * Making a change
+* Nitty-Gritty details
+
+This section is for the brave who want to build the experiment server container (or run the server outside of a container). 
+
+** Building a container with =buildah=
+:PROPERTIES:
+:header-args:async-shell: :name buildah :results none
+:END:
+
+To build, you need =buildah= and a relatively up-to-date =fedora= machine. To keep the image as small as possible, we start the image from just a base file system and use the host package manager to install packages in the image. Running the =aec/fedora-build-image.sh= inside of a =buildah unshare= session should do all the hard-work for you.
+
+#+begin_src async-shell
+buildah unshare ./aec/fedora-build-image.sh
+#+end_src
+
+If you want to build and run the server from scratch, read the =fedora-build-image= script to see what all the dependencies are.
+
