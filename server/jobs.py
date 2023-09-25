@@ -332,7 +332,7 @@ def make_synthesis(
     job_config = {
         "date": date_str,
         "name": name,
-        "memory_limit": 220,
+        "memory_limit": 450,
         "timeout": synth_timeout * 5,
         "command": "./run.sh",
         "metadata": {
