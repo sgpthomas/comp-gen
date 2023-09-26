@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import click
@@ -23,12 +24,12 @@ def get_aws_ip_by_name(name):
     )
     for tags, ip in data:
         if tags is not None and tags[0] == name and ip is not None:
+            print(f"Resolved {name} to {ip}")
             return ip
     raise Exception(f"Machine {name} not found")
 
 
 def do_upload(ip, remote_path, clean=False):
-    print(f"Using ip: {ip}")
     print("Sending jobs", end="...", flush=True)
     subprocess.run(
         " ".join(
@@ -51,7 +52,6 @@ def do_upload(ip, remote_path, clean=False):
 
 
 def do_download(ip, remote_path, clean=False):
-    print(f"Using ip: {ip}")
     print("Downloading completed", end="...", flush=True)
 
     # normalize the remote path so that rsync doesn't create completed/completed/*
@@ -76,26 +76,51 @@ def do_download(ip, remote_path, clean=False):
         subprocess.run(["ssh", f"ubuntu@{ip}", "mkdir", remote_path])
 
 
+def resolve_name_ip(name, ip):
+    """
+    If ip is defined, always use ip.
+    If name is defined, but ip is not defined,
+    then resolve name by using awscli.
+
+    Otherwise error out.
+    """
+
+    if ip is not None:
+        return ip
+    elif name is not None:
+        try:
+            return get_aws_ip_by_name(name)
+        except FileNotFoundError:
+            print(
+                "`aws` was not found.\nInstall it to be able to use the --name option."
+            )
+            sys.exit(-1)
+    else:
+        raise Exception("You need to pass in either --name or --ip")
+
+
 @click.group()
 def cli():
     pass
 
 
 @cli.command()
-@click.option("--name", default="exp")
+@click.option("--name")
+@click.option("--ip")
 @click.option("--dir", default="~/jobs")
 @click.option("--clean", is_flag=True)
-def upload(name, dir, clean):
-    ip = get_aws_ip_by_name(name)
+def upload(name, ip, dir, clean):
+    ip = resolve_name_ip(name, ip)
     do_upload(ip, dir, clean=clean)
 
 
 @cli.command()
-@click.option("--name", default="exp")
+@click.option("--name")
+@click.option("--ip")
 @click.option("--dir", default="~/completed")
 @click.option("--clean", is_flag=True)
-def download(name, dir, clean):
-    ip = get_aws_ip_by_name(name)
+def download(name, ip, dir, clean):
+    ip = resolve_name_ip(name, ip)
     do_download(ip, dir, clean=clean)
 
 
