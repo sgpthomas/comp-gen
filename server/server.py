@@ -7,7 +7,7 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Set
 
 import click
 import psutil
@@ -111,6 +111,12 @@ class Job:
         self.name = data["name"]
         self.memory_limit = data["memory_limit"]
         self.command = data["command"]
+        self.key: str | None = None
+        if "key" in data and isinstance(str, data["key"]):
+            self.key = data["key"]
+        self.after: str | None = None
+        if "after" in data and isinstance(str, data["after"]):
+            self.after = data["after"]
         self.start_time = None
         if "timeout" in data:
             self.timeout = data["timeout"]
@@ -224,18 +230,24 @@ def single_run(config: GlobalConfig, alive: Dict[Job, subprocess.Popen], update=
     # try and start any new jobs
     print("Looking for jobs...")
     queued_jobs: List[Job] = list(config.list_jobs())
-    print(f"Considering {len(queued_jobs)} jobs")
+    # the unique set of keys for queued jobs
+    queued_keys: Set[str] = set([j.key for j in queued_jobs if j.key is not None])
+    print(f"Considering {len(queued_jobs)} jobs of type {list(queued_keys)}")
 
     for job in queued_jobs:
         # start a job if:
-        #  1) the job is not already running
-        #  2) we don't have more that `config.jobs_at_once` jobs running
-        #  3) the memory limit for this job is smaller than memory for all job
         if (
+            # 1) the job is not already running
             job not in alive
+            # 2) we don't have more that `config.jobs_at_once` jobs running
             and len(alive) < config.jobs_at_once
+            # 3) the memory limit for this job is smaller than memory for all job
             and job.memory_limit + sum([j.memory_limit for j in alive.keys()])
             < config.machine_memory
+            # 4) there are no queued jobs that have key "after"
+            #    if job.after is None, then this check will be True
+            #    because None is not in queued_keys
+            and job.after not in queued_keys
         ):
             print(f"Starting {job}")
             try:
