@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Dict, List, Tuple
 
 import click
 
@@ -28,9 +28,9 @@ def job(name=None):
     def inner(func):
         job_name = name if name is not None else func.__name__
 
-        def f(*args):
+        def f(*args, **kwargs):
             print(f"Creating {job_name} jobs")
-            func(*args)
+            func(*args, **kwargs)
 
         JOBS[job_name] = f
 
@@ -59,328 +59,60 @@ def make_datestr() -> str:
     return datetime.now().strftime("%b%d-%H%M")
 
 
-def mat_mul(
-    jobs_dir,
-    a_rows,
-    a_cols,
-    b_rows,
-    b_cols,
-    ruleset,
-    compile,
-    costfn,
-    key=None,
-    timeout=60 * 30,
-):
+def make_run_script(job_dir: Path, command: List[str], script_name: str = "run.sh"):
+    """
+    Make a script that executes `command' and place it into `job_dir'.
+    """
+
+    with (job_dir / script_name).open("w") as f:
+        f.writelines("\n".join(["#!/usr/bin/env bash", "", "\n".join(command)]))
+    os.chmod(str(job_dir / script_name), 0o777)
+
+
+def make_job_dir(
+    jobs_dir: Path, name: str, config: Dict, command: List[str] | None = None
+) -> Path:
     date_str = datetime.now().strftime("%b%d-%H%M")
-    name = f"mat-mul_{a_rows}x{a_cols}_{b_rows}x{b_cols}"
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
     job_dir.mkdir(exist_ok=False)
-    config = {
-        "date": date_str,
-        "name": name,
-        "key": key,
-        "memory_limit": 220,
-        "timeout": timeout,
-        "command": "./run.sh",
-        "metadata": {
-            "rules.json": str(ruleset),
-            "compile.json": compile_name(compile),
-            "costfn": costfn,
-        },
-    }
-    params = {
-        "A-rows": a_rows,
-        "A-cols": a_cols,
-        "B-rows": b_rows,
-        "B-cols": b_cols,
-        "reg-size": 4,
-    }
-    shutil.copy(ruleset, job_dir / "rules.json")
-    create_compile_config(compile, job_dir / "compile.json")
 
-    command = [
-        "RUST_LOG=debug,egg=info",
-        "$compgen_bin",
-        "compile",
-        "mat-mul",
-        "--dios-bin",
-        "$dios_bin",
-        "--dios-example-bin",
-        "$dios_example_bin",
-        "--dios-params",
-        "params.json",
-        "--vector-width",
-        "4",
-        "--rules",
-        "rules.json",
-        "--config",
-        "compile.json",
-        "--output-dir",
-        "results",
-        "--costfn",
-        costfn,
-    ]
-
+    config = {"date": date_str, "name": name, **config}
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
-    os.chmod(str(job_dir / "run.sh"), 0o777)
+
+    if command is not None:
+        make_run_script(job_dir, command)
+
+    return job_dir
 
 
-def make_2d_conv(
-    jobs_dir,
-    irows,
-    icols,
-    frows,
-    fcols,
-    ruleset,
-    compile,
-    costfn,
-    key=None,
-    timeout=60 * 30,
-    memory_limit=220,
-):
-    date_str = datetime.now().strftime("%b%d-%H%M")
-    name = f"2d-conv_{irows}x{icols}_{frows}x{fcols}"
-    job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
-    job_dir.mkdir(exist_ok=False)
-    config = {
-        "date": date_str,
-        "name": name,
-        "key": key,
-        "memory_limit": memory_limit,
-        "timeout": timeout,
-        "command": "./run.sh",
-        "metadata": {
-            "rules.json": str(ruleset),
-            "compile.json": compile_name(compile),
-            "costfn": costfn,
-        },
-    }
-    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    params = {
-        "input-rows": irows,
-        "input-cols": icols,
-        "filter-rows": frows,
-        "filter-cols": fcols,
-        "reg-size": 4,
-    }
-    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
-
-    shutil.copy(ruleset, job_dir / "rules.json")
-    create_compile_config(compile, job_dir / "compile.json")
-
-    command = [
-        "RUST_LOG=debug,egg=info",
-        "$compgen_bin",
-        "compile",
-        "2d-conv",
-        "--dios-bin",
-        "$dios_bin",
-        "--dios-example-bin",
-        "$dios_example_bin",
-        "--dios-params",
-        "params.json",
-        "--vector-width",
-        "4",
-        "--rules",
-        "rules.json",
-        "--config",
-        "compile.json",
-        "--output-dir",
-        "results",
-        "--costfn",
-        costfn,
-    ]
-
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
-    # make the run script executable
-    os.chmod(str(job_dir / "run.sh"), 0o777)
+def compgen_run(benchmark: str, costfn: str, vector_width: int = 4) -> str:
+    return " ".join(
+        [
+            "RUST_LOG=debug,egg=info",
+            "$compgen_bin",
+            "compile",
+            benchmark,
+            "--dios-bin",
+            "$dios_bin",
+            "--dios-example-bin",
+            "$dios_example_bin",
+            "--dios-params",
+            "params.json",
+            "--vector-width",
+            str(vector_width),
+            "--rules",
+            "rules.json",
+            "--config",
+            "compile.json",
+            "--output-dir",
+            "results",
+            "--costfn",
+            costfn,
+        ]
+    )
 
 
-def q_prod(jobs_dir, ruleset, compile, costfn, key=None, timeout=60 * 30):
-    date_str = datetime.now().strftime("%b%d-%H%M")
-    name = "q-prod"
-    job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
-    job_dir.mkdir(exist_ok=False)
-    config = {
-        "date": date_str,
-        "name": name,
-        "key": key,
-        "memory_limit": 220,
-        "timeout": timeout,
-        "command": "./run.sh",
-        "benchmark": "q-prod",
-        "metadata": {
-            "rules.json": str(ruleset),
-            "compile.json": compile_name(compile),
-            "costfn": costfn,
-        },
-    }
-    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    params = {"reg-size": 4}
-    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
-
-    shutil.copy(ruleset, job_dir / "rules.json")
-    create_compile_config(compile, job_dir / "compile.json")
-
-    command = [
-        "RUST_LOG=debug,egg=info",
-        "$compgen_bin",
-        "compile",
-        "q-prod",
-        "--dios-bin",
-        "$dios_bin",
-        "--dios-example-bin",
-        "$dios_example_bin",
-        "--dios-params",
-        "params.json",
-        "--vector-width",
-        "4",
-        "--rules",
-        "rules.json",
-        "--config",
-        "compile.json",
-        "--output-dir",
-        "results",
-        "--costfn",
-        costfn,
-    ]
-
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
-    # make the run script executable
-    os.chmod(str(job_dir / "run.sh"), 0o777)
-
-
-def qr_decomp(jobs_dir, N, ruleset, compile, costfn, key=None, timeout=60 * 30):
-    date_str = datetime.now().strftime("%b%d-%H%M")
-    name = f"qr-decomp_{N}"
-    job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
-    job_dir.mkdir(exist_ok=False)
-    config = {
-        "date": date_str,
-        "name": name,
-        "key": key,
-        "memory_limit": 220,
-        "timeout": timeout,
-        "command": "./run.sh",
-        "metadata": {
-            "rules.json": str(ruleset),
-            "compile.json": compile_name(compile),
-            "costfn": costfn,
-        },
-    }
-    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    params = {"N": N, "reg-size": 4}
-    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
-
-    shutil.copy(ruleset, job_dir / "rules.json")
-    create_compile_config(compile, job_dir / "compile.json")
-
-    command = [
-        "RUST_LOG=debug,egg=info",
-        "$compgen_bin",
-        "compile",
-        "qr-decomp",
-        "--dios-bin",
-        "$dios_bin",
-        "--dios-example-bin",
-        "$dios_example_bin",
-        "--dios-params",
-        "params.json",
-        "--vector-width",
-        "4",
-        "--rules",
-        "rules.json",
-        "--config",
-        "compile.json",
-        "--output-dir",
-        "results",
-        "--costfn",
-        costfn,
-    ]
-
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
-    # make the run script executable
-    os.chmod(str(job_dir / "run.sh"), 0o777)
-
-
-def make_synthesis(
-    jobs_dir,
-    synth_timeout,
-    eqsat_iter=3,
-    eqsat_timeout=60,
-    name="synthesis",
-    binops=None,
-    triops=None,
-):
-    date_str = datetime.now().strftime("%b%d-%H%M")
-    job_dir = unique_name(jobs_dir / f"{date_str}-synthesis-{synth_timeout}", 0)
-    job_dir.mkdir(exist_ok=False)
-    synth_config = json.load((Path("synthesis") / "base.json").open("r"))
-    synth_config["ruler_config"]["abs_timeout"] = synth_timeout
-    synth_config["ruler_config"]["eqsat_iter_limit"] = eqsat_iter
-    synth_config["ruler_config"]["eqsat_time_limit"] = eqsat_timeout
-    if binops is not None:
-        synth_config["binops"] = binops
-    if triops is not None:
-        synth_config["triops"] = triops
-    job_config = {
-        "date": date_str,
-        "name": name,
-        "memory_limit": 450,
-        "timeout": synth_timeout * 5,
-        "command": "./run.sh",
-        "metadata": {
-            "timeout": synth_timeout,
-            "eqsat_iter_limit": eqsat_iter,
-            "eqsat_timeout": eqsat_timeout,
-            "binops": binops,
-            "triops": triops,
-        },
-    }
-    json.dump(job_config, (job_dir / "config.json").open("w"), indent=2)
-    json.dump(synth_config, (job_dir / "synth.json").open("w"), indent=2)
-
-    command = [
-        "RUST_LOG=debug,egg=info,z3=off",
-        "$compgen_bin",
-        "synth",
-        "ruleset.json",
-        "--config",
-        "synth.json",
-    ]
-
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", " ".join(command)]))
-    # make the run script executable
-    os.chmod(str(job_dir / "run.sh"), 0o777)
-
-
-def dict_from_dir(path, pat="*.json", key=None):
-    path = path.expanduser().resolve()
-    assert path.exists()
-
-    res = {}
-
-    for p in path.glob(pat):
-        k = p.stem
-        if key is not None and isinstance(key, Callable):
-            k = key(p)
-        res[k] = p.expanduser().resolve()
-
-    return res
-
-
-rulesets = dict_from_dir(Path("../experiments/rulesets"))
-configs = dict_from_dir(Path("../experiments/configs"))
-
-
-def make_config(alpha=15, beta=6, timeout=180, prune=True):
+def make_config(alpha=15, beta=6, timeout=180, prune=True) -> Dict[str, Any]:
     return {
         "total_node_limit": 2000000000,
         "total_iter_limit": 4000,
@@ -441,8 +173,234 @@ def make_config(alpha=15, beta=6, timeout=180, prune=True):
     }
 
 
+def mat_mul(
+    jobs_dir: Path,
+    size: Tuple[int, int, int, int],
+    ruleset: Path,
+    compile: Dict[str, Any],
+    costfn: str = "alternative",
+    key=None,
+    timeout=60 * 30,
+    memlimit=220,
+    after: str | None = None,
+):
+    a_rows, a_cols, b_rows, b_cols = size
+    job_dir = make_job_dir(
+        jobs_dir,
+        f"mat-mul_{a_rows}x{a_cols}_{b_rows}x{b_cols}",
+        {
+            "key": key,
+            "memory_limit": memlimit,
+            "timeout": timeout,
+            "command": "./run.sh",
+            "after": after,
+            "metadata": {
+                "rules.json": str(ruleset),
+                "compile.json": compile_name(compile),
+                "costfn": costfn,
+            },
+        },
+        [compgen_run("mat-mul", costfn)],
+    )
+    shutil.copy(ruleset, job_dir / "rules.json")
+    create_compile_config(compile, job_dir / "compile.json")
+
+    params = {
+        "A-rows": a_rows,
+        "A-cols": a_cols,
+        "B-rows": b_rows,
+        "B-cols": b_cols,
+        "reg-size": 4,
+    }
+    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
+
+
+def make_2d_conv(
+    jobs_dir: Path,
+    size: Tuple[int, int, int, int],
+    ruleset,
+    compile: Dict[str, Any],
+    costfn: str = "alternative",
+    key=None,
+    timeout=60 * 30,
+    memlimit=220,
+    after: str | None = None,
+):
+    irows, icols, frows, fcols = size
+    job_dir = make_job_dir(
+        jobs_dir,
+        f"2d-conv_{irows}x{icols}_{frows}x{fcols}",
+        {
+            "key": key,
+            "memory_limit": memlimit,
+            "timeout": timeout,
+            "command": "./run.sh",
+            "after": after,
+            "metadata": {
+                "rules.json": str(ruleset),
+                "compile.json": compile_name(compile),
+                "costfn": costfn,
+            },
+        },
+        [compgen_run("2d-conv", costfn)],
+    )
+
+    params = {
+        "input-rows": irows,
+        "input-cols": icols,
+        "filter-rows": frows,
+        "filter-cols": fcols,
+        "reg-size": 4,
+    }
+    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
+
+    shutil.copy(ruleset, job_dir / "rules.json")
+    create_compile_config(compile, job_dir / "compile.json")
+
+
+def q_prod(
+    jobs_dir: Path,
+    ruleset,
+    compile: Dict[str, Any],
+    costfn: str = "alternative",
+    key=None,
+    timeout=60 * 30,
+    memlimit=220,
+    after: str | None = None,
+):
+    job_dir = make_job_dir(
+        jobs_dir,
+        "q-prod",
+        {
+            "key": key,
+            "memory_limit": memlimit,
+            "timeout": timeout,
+            "command": "./run.sh",
+            "after": after,
+            "metadata": {
+                "rules.json": str(ruleset),
+                "compile.json": compile_name(compile),
+                "costfn": costfn,
+            },
+        },
+        [compgen_run("q-prod", costfn)],
+    )
+
+    params = {"reg-size": 4}
+    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
+
+    shutil.copy(ruleset, job_dir / "rules.json")
+    create_compile_config(compile, job_dir / "compile.json")
+
+
+def qr_decomp(
+    jobs_dir: Path,
+    N: int,
+    ruleset,
+    compile: Dict[str, Any],
+    costfn: str = "alternative",
+    key: str | None = None,
+    timeout=60 * 30,
+    memlimit: int = 220,
+    after: str | None = None,
+):
+    job_dir = make_job_dir(
+        jobs_dir,
+        f"qr-decomp_{N}",
+        {
+            "key": key,
+            "memory_limit": memlimit,
+            "timeout": timeout,
+            "command": "./run.sh",
+            "after": after,
+            "metadata": {
+                "rules.json": str(ruleset),
+                "compile.json": compile_name(compile),
+                "costfn": costfn,
+            },
+        },
+        [compgen_run("qr-decomp", costfn)],
+    )
+
+    params = {"N": N, "reg-size": 4}
+    json.dump(params, (job_dir / "params.json").open("w"), indent=2)
+
+    shutil.copy(ruleset, job_dir / "rules.json")
+    create_compile_config(compile, job_dir / "compile.json")
+
+
+def make_synthesis(
+    jobs_dir: Path,
+    synth_timeout: int,
+    name: str = "synthesis",
+    eqsat_iter: int = 3,
+    eqsat_timeout: int = 60,
+    binops: List[str] | None = None,
+    triops: List[str] | None = None,
+    memlimit: int = 450,
+    after: str | None = None,
+):
+    synth_config = json.load((Path("synthesis") / "base.json").open("r"))
+    synth_config["ruler_config"]["abs_timeout"] = synth_timeout
+    synth_config["ruler_config"]["eqsat_iter_limit"] = eqsat_iter
+    synth_config["ruler_config"]["eqsat_time_limit"] = eqsat_timeout
+    if binops is not None:
+        synth_config["binops"] = binops
+    if triops is not None:
+        synth_config["triops"] = triops
+
+    job_dir = make_job_dir(
+        jobs_dir,
+        f"{name}-{synth_timeout}",
+        {
+            "memory_limit": memlimit,
+            "timeout": synth_timeout * 5,
+            "command": "./run.sh",
+            "after": after,
+            "metadata": {
+                "timeout": synth_timeout,
+                "eqsat_iter_limit": eqsat_iter,
+                "eqsat_timeout": eqsat_timeout,
+                "binops": binops,
+                "triops": triops,
+            },
+        },
+        [
+            "RUST_LOG=debug,egg=info,z3=off",
+            "$compgen_bin",
+            "synth",
+            "ruleset.json",
+            "--config",
+            "synth.json",
+        ],
+    )
+
+    json.dump(synth_config, (job_dir / "synth.json").open("w"), indent=2)
+
+
+def dict_from_dir(path: Path, pat: str = "*.json", key=None) -> Dict[str, Path]:
+    path = path.expanduser().resolve()
+    assert path.exists()
+
+    res = {}
+
+    for p in path.glob(pat):
+        k = p.stem
+        if key is not None and isinstance(key, Callable):
+            k = str(key(p))
+        res[k] = p.expanduser().resolve()
+
+    return res
+
+
+# rulesets = dict_from_dir(Path("../experiments/rulesets"))
+# configs = dict_from_dir(Path("../experiments/configs"))
+
+
 @job()
-def overall_performance():
+def overall_performance(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
     """
     This measures the overall performance of the compiler in terms of
     1) How good are the results of the compiler?
@@ -452,107 +410,104 @@ def overall_performance():
     This is a run with all of the benchmarks that Dios uses.
     """
 
+    assert rulesets is not None
+
     mat_mul_sizes = [
-        [2, 2, 2, 2],
-        [2, 3, 3, 3],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [8, 8, 8, 8],
-        [10, 10, 10, 10],
-        [16, 16, 16, 16],
-        [18, 18, 18, 18],
-        [20, 20, 20, 20],
+        (2, 2, 2, 2),
+        (2, 3, 3, 3),
+        (3, 3, 3, 3),
+        (4, 4, 4, 4),
+        (8, 8, 8, 8),
+        (10, 10, 10, 10),
+        (16, 16, 16, 16),
+        (18, 18, 18, 18),
+        (20, 20, 20, 20),
     ]
     conv_2d_sizes = [
-        [3, 3, 2, 2],
-        [3, 3, 3, 3],
-        [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        [16, 16, 4, 4],
-        [18, 18, 2, 2],
-        [18, 18, 3, 3],
-        [18, 18, 4, 4],
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+        (10, 10, 2, 2),
+        (10, 10, 3, 3),
+        (10, 10, 4, 4),
+        (16, 16, 2, 2),
+        (16, 16, 3, 3),
+        (16, 16, 4, 4),
+        (18, 18, 2, 2),
+        (18, 18, 3, 3),
+        (18, 18, 4, 4),
     ]
-    q_prod_params = [0]
     qr_decomp_sizes = [3, 4]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = [make_config(alpha=15, beta=6, timeout=180)]
 
     # create all the jobs
-    for size, c in itertools.product(mat_mul_sizes, cs):
+    for size in mat_mul_sizes:
         mat_mul(
             Path("jobs"),
-            *size,
+            size,
             ruleset,
-            c,
-            "alternative",
+            make_config(alpha=15, beta=6, timeout=180),
             key="performance",
-            timeout=c["timeout"] * 20,
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
         )
 
-    for size, c in itertools.product(conv_2d_sizes, cs):
+    for size in conv_2d_sizes:
         make_2d_conv(
             Path("jobs"),
-            *size,
+            size,
             ruleset,
-            c,
-            "alternative",
+            make_config(alpha=15, beta=6, timeout=180),
             key="performance",
-            timeout=c["timeout"] * 20,
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
         )
 
-    for _, c in itertools.product(q_prod_params, cs):
-        q_prod(
-            Path("jobs"),
-            ruleset,
-            c,
-            "alternative",
-            key="performance",
-            timeout=c["timeout"] * 20,
-        )
+    q_prod(
+        Path("jobs"),
+        ruleset,
+        make_config(alpha=15, beta=6, timeout=180),
+        key="performance",
+        timeout=3000,
+        memlimit=memlimit,
+        after=after,
+    )
 
-    for size, c in itertools.product(qr_decomp_sizes, cs):
+    for size in qr_decomp_sizes:
         qr_decomp(
             Path("jobs"),
             size,
             ruleset,
-            c,
-            "alternative",
+            make_config(alpha=15, beta=6, timeout=180),
             key="performance",
             timeout=10000,
+            memlimit=memlimit,
+            after=after,
         )
 
 
 @job()
-def diospyros():
+def diospyros(after=None, memlimit=220, **_):
     """
     Run diospyros experiments.
     """
 
-    datestr = make_datestr()
-
-    job_dir = unique_name(Path("jobs") / f"{datestr}-diospyros", 0)
-
-    config = {
-        "date": datestr,
-        "name": "diospyros",
-        "memory_limit": 220,
-        "timeout": 10000,
-        "command": "./run.sh",
-        "key": "diospyros",
-        "metadata": {"timeout": 180},
-    }
-
-    run_sh = "\n".join(
+    make_job_dir(
+        Path("jobs"),
+        "diospyros",
+        {
+            "memory_limit": memlimit,
+            "timeout": 10000,
+            "command": "./run.sh",
+            "after": after,
+            "key": "diospyros",
+            "metadata": {"timeout": 180},
+        },
         [
-            "#!/usr/bin/env bash",
-            "",
             'export PATH="/root/.cargo/bin:/root/racket/bin:$PATH"',
             "root_dir=$(pwd)",
             "git clone https://github.com/cucapra/diospyros.git",
@@ -569,38 +524,34 @@ def diospyros():
             ),
             "cd $root_dir",
             "rm -rf diospyros",
-        ]
+        ],
     )
-
-    job_dir.mkdir(exist_ok=False)
-    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines(run_sh)
-    os.chmod(str(job_dir / "run.sh"), 0o777)
 
 
 @job()
-def pruning():
+def pruning(rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, **_):
     """
     This experiment is meant to show that pruning dramatically decreases
     the how long it takes to find a low-cost program.
     """
 
+    assert rulesets is not None
+
     params = [
-        [3, 3, 2, 2],
-        [3, 3, 3, 3],
-        [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        [16, 16, 4, 4],
-        [18, 18, 2, 2],
-        [18, 18, 3, 3],
-        [18, 18, 4, 4],
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+        (10, 10, 2, 2),
+        (10, 10, 3, 3),
+        (10, 10, 4, 4),
+        (16, 16, 2, 2),
+        (16, 16, 3, 3),
+        (16, 16, 4, 4),
+        (18, 18, 2, 2),
+        (18, 18, 3, 3),
+        (18, 18, 4, 4),
     ]
     timeout = 360
 
@@ -608,99 +559,29 @@ def pruning():
         # pruning config
         make_2d_conv(
             Path("jobs"),
-            *p,
+            p,
             rulesets["ruleset_timeout86400"],
-            # configs["loop_alt_cost_t360"],
             make_config(timeout=timeout, prune=True),
-            "alternative",
             key="pruning",
-            memory_limit=100,
+            after=after,
+            memlimit=memlimit,
             timeout=timeout * 7,
         )
         # no pruning config
         make_2d_conv(
             Path("jobs"),
-            *p,
+            p,
             rulesets["ruleset_timeout86400"],
-            # configs["loop_alt_cost_noprune_t360"],
             make_config(timeout=timeout, prune=False),
-            "alternative",
             key="pruning",
-            memory_limit=100,
+            after=after,
+            memlimit=memlimit,
             timeout=timeout * 7,
         )
 
 
-# @job()
-# def understand_cost_function():
-#     """
-#     1) Try looping config with more expansion iterations.
-#     2) Try looping+pruning with original cost function.
-#     """
-
-#     sizes = [
-#         [2, 2, 2, 2],
-#         [4, 4, 4, 4],
-#         [8, 8, 8, 8],
-#         [16, 16, 16, 16],
-#     ]
-
-#     for s in sizes:
-#         mat_mul(
-#             Path("jobs"),
-#             *s,
-#             rulesets["expanding_vecmac"],
-#             configs["loop_alt_cost_t1800"],
-#             "alternative",
-#             key="fix",
-#         )
-
-
-# @job()
-# def no_eqsat():
-#     """
-#     Get estimation numbers for all benchmarks with no equality saturation.
-#     In other words, what is the effect of doing just the Diospyros symbolic execution.
-#     """
-
-#     mat_mul_sizes = [
-#         [2, 2, 2, 2],
-#         [2, 3, 3, 3],
-#         [3, 3, 3, 3],
-#         [4, 4, 4, 4],
-#         [8, 8, 8, 8],
-#         [10, 10, 10, 10],
-#         [16, 16, 16, 16],
-#     ]
-#     conv_2d_sizes = [
-#         [3, 3, 2, 2],
-#         [3, 3, 3, 3],
-#         [3, 5, 3, 3],
-#         [4, 4, 3, 3],
-#         [8, 8, 3, 3],
-#         [10, 10, 2, 2],
-#         [10, 10, 3, 3],
-#         [10, 10, 4, 4],
-#         [16, 16, 2, 2],
-#         [16, 16, 3, 3],
-#         [16, 16, 4, 4],
-#     ]
-
-#     ruleset = rulesets["expanding_vecmac"]
-#     config = configs["none"]
-
-#     # create all the jobs
-#     for size in mat_mul_sizes:
-#         mat_mul(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
-
-#     for size in conv_2d_sizes:
-#         make_2d_conv(Path("jobs"), *size, ruleset, config, "alternative", key="noeqsat")
-
-#     q_prod(Path("jobs"), ruleset, config, "alternative", key="noeqsat")
-
-
 @job()
-def ruleset_synthesis():
+def ruleset_synthesis(after=None, memlimit=220, **_):
     """
     Synthesize rulesets with different timeouts.
     """
@@ -721,52 +602,63 @@ def ruleset_synthesis():
             triops=["mac"],
             eqsat_iter=3,
             eqsat_timeout=60,
+            after=after,
+            memlimit=memlimit,
         )
 
 
 @job()
-def ruleset_ablation():
+def ruleset_ablation(
+    synth_rulesets_pathname: str | None = None, after=None, memlimit=220, **_
+):
     """
     Measure the performance difference between using different rulesets.
     """
 
     conv_2d_sizes = [
-        [3, 3, 2, 2],
-        [3, 3, 3, 3],
-        [3, 5, 3, 3],
-        [4, 4, 3, 3],
-        [8, 8, 3, 3],
-        [10, 10, 2, 2],
-        [10, 10, 3, 3],
-        [10, 10, 4, 4],
-        [16, 16, 2, 2],
-        [16, 16, 3, 3],
-        [16, 16, 4, 4],
-        [18, 18, 2, 2],
-        [18, 18, 3, 3],
-        [18, 18, 4, 4],
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+        (10, 10, 2, 2),
+        (10, 10, 3, 3),
+        (10, 10, 4, 4),
+        (16, 16, 2, 2),
+        (16, 16, 3, 3),
+        (16, 16, 4, 4),
+        (18, 18, 2, 2),
+        (18, 18, 3, 3),
+        (18, 18, 4, 4),
     ]
-
-    config = make_config(timeout=1800)
 
     def read_time(p):
         config = json.load((p.parents[0] / "config.json").open("r"))
         return config["metadata"]["timeout"]
 
-    rules = dict_from_dir(
-        Path("completed") / "synthesis", pat="**/ruleset.json", key=read_time
-    )
-    rs = list(map(lambda x: rules[x], [60, 600, 6000, 60000]))
+    if synth_rulesets_pathname is None:
+        synth_rulesets_path = Path("completed") / "synthesis"
+    else:
+        synth_rulesets_path = Path(synth_rulesets_pathname)
+
+    rules = dict_from_dir(synth_rulesets_path, pat="**/ruleset.json", key=read_time)
+    rs = list(map(lambda x: rules[x], ["60", "600", "6000", "60000"]))
 
     exps = itertools.product(conv_2d_sizes, rs)
     for size, r in exps:
         make_2d_conv(
-            Path("jobs"), *size, r, config, "alternative", key="ruleset_ablation"
+            Path("jobs"),
+            size,
+            r,
+            make_config(timeout=1800),
+            key="ruleset_ablation",
+            after=after,
+            memlimit=memlimit,
         )
 
 
 @job()
-def new_instructions_ruleset():
+def new_instructions_ruleset(after=None, memlimit=450, **_):
     """
     We make these claims that it's trivial to change the spec to explore the
     design space of different instructions. Test this by generating rulesets
@@ -781,6 +673,8 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops + ["sqrtsgn"],
         triops=["mac", "muls"],
+        after=after,
+        memlimit=memlimit,
     )
     # baseline + muls
     make_synthesis(
@@ -789,6 +683,8 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops,
         triops=["mac", "muls"],
+        after=after,
+        memlimit=memlimit,
     )
     # baseline + mulsgn
     make_synthesis(
@@ -797,15 +693,20 @@ def new_instructions_ruleset():
         name="new_instructions",
         binops=binops + ["~*"],
         triops=["mac"],
+        after=after,
+        memlimit=memlimit,
     )
 
 
 @job()
-def test_instruction_ruleset():
+def test_instruction_ruleset(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
     """
     Run q-prod, qr-decomp with no fused ops, with muls, and with both fused ops
     """
-    global rulesets
+
+    assert rulesets is not None
 
     rulesets_dir = Path("instruction-rulesets")
     base_path = rulesets["ruleset_timeout86400"]
@@ -880,53 +781,60 @@ def test_instruction_ruleset():
 
 
 @job()
-def large_kernels():
-    print("Creating large kernel jobs")
+def large_kernels(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    assert rulesets is not None
 
     mat_mul_sizes = [
-        [25, 25, 25, 25],
-        [30, 30, 30, 30],
-        [40, 40, 40, 40],
+        (25, 25, 25, 25),
+        (30, 30, 30, 30),
+        (40, 40, 40, 40),
     ]
     conv_2d_sizes = [
-        [20, 20, 5, 5],
-        [30, 30, 5, 5],
-        [32, 32, 5, 5],
-        [34, 34, 5, 5],
-        [36, 36, 5, 5],
-        [38, 38, 5, 5],
-        [40, 40, 5, 5],
+        (20, 20, 5, 5),
+        (30, 30, 5, 5),
+        (32, 32, 5, 5),
+        (34, 34, 5, 5),
+        (36, 36, 5, 5),
+        (38, 38, 5, 5),
+        (40, 40, 5, 5),
     ]
     ruleset = rulesets["ruleset_timeout86400"]
-    cs = [make_config(timeout=18000)]
 
     # create all the jobs
-    for size, c in itertools.product(mat_mul_sizes, cs):
+    for size in mat_mul_sizes:
         mat_mul(
             Path("jobs"),
-            *size,
+            size,
             ruleset,
-            c,
-            "alternative",
+            make_config(timeout=18000),
             key="large",
-            timeout=c["timeout"] * 7,
+            timeout=130000,
+            after=after,
+            memlimit=memlimit,
         )
 
-    for size, c in itertools.product(conv_2d_sizes, cs):
+    for size in conv_2d_sizes:
         make_2d_conv(
             Path("jobs"),
-            *size,
+            size,
             ruleset,
-            c,
-            "alternative",
+            make_config(timeout=18000),
             key="large",
-            timeout=c["timeout"] * 7,
+            timeout=130000,
+            after=after,
+            memlimit=memlimit,
         )
 
 
 @job()
-def alpha_beta_ablation():
-    conv_2d_size = [16, 16, 4, 4]
+def alpha_beta_ablation(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    assert rulesets is not None
+
+    conv_2d_size = (16, 16, 4, 4)
     ruleset = rulesets["ruleset_timeout86400"]
     alphas = [
         -4045,
@@ -951,72 +859,73 @@ def alpha_beta_ablation():
         for alpha in alphas:
             make_2d_conv(
                 Path("jobs"),
-                *conv_2d_size,
+                conv_2d_size,
                 ruleset,
                 make_config(alpha=alpha, beta=beta),
-                "alternative",
                 key="alpha-beta",
                 timeout=1000,
+                after=after,
+                memlimit=memlimit,
             )
 
 
 @job()
-def estimate(args):
+def estimate(args, after=None, memlimit=220, **_):
     """
     Run cycle estimation on jobs that the key: `args`
     """
 
-    date_str = datetime.now().strftime("%b%d-%H%M")
-    job_dir = unique_name(Path("jobs") / f"{date_str}-estimate", 0)
-    job_dir.mkdir(exist_ok=False)
-
-    config = {
-        "date": date_str,
-        "name": "estimate",
-        "memory_limit": 220,
-        "timeout": 86400,
-        "command": "./run.sh",
-        "metadata": {
-            "params": str(args),
+    make_job_dir(
+        Path("jobs"),
+        "estimate",
+        {
+            "timeout": 86400,
+            "command": "./run.sh",
+            "memory_limit": memlimit,
+            "after": after,
+            "metadata": {
+                "params": str(args),
+            },
         },
-    }
-    json.dump(config, (job_dir / "config.json").open("w"), indent=2)
-
-    command = [
-        "export LM_LICENSE_FILE=27010@10.0.2.2",
-        "cd /root/comp-gen/server",
-        f"./process.py all completed/",
-        f"./estimate.py many latest --key {args} --xtensa /root/xtensa --dios /root/diospyros",
-    ]
-
-    with (job_dir / "run.sh").open("w") as f:
-        f.writelines("\n".join(["#!/usr/bin/env bash", "", "\n".join(command)]))
-    os.chmod(str(job_dir / "run.sh"), 0o777)
+        [
+            "export LM_LICENSE_FILE=27010@10.0.2.2",
+            "cd /root/comp-gen/server",
+            f"./process.py all completed/",
+            f"./estimate.py many latest --key {args} --xtensa /root/xtensa --dios /root/diospyros",
+        ],
+    )
 
 
 @click.command()
-@click.argument("job_name", nargs=-1)
-def cli(job_name):
+@click.argument("job_name", type=click.Choice(list(JOBS.keys())))
+@click.option("--rulesets", type=click.Path(exists=True), default="rulesets")
+@click.option("--after", type=str)
+@click.option("--memlimit", type=int)
+def cli(job_name: str, rulesets: str, after: str, memlimit: int):
     available_jobs = "\n".join(map(lambda x: f" - {x}", JOBS.keys()))
 
-    if len(job_name) == 0:
-        print(f"Available jobs:\n{available_jobs}")
+    if ":" in job_name:
+        job, args = job_name.split(":")
+        args = (args,)
+    else:
+        job = job_name
+        args = ()
+
+    kwargs = {
+        "rulesets": dict_from_dir(Path(rulesets)),
+    }
+
+    if after is not None:
+        kwargs = {**kwargs, "after": after}
+
+    if memlimit is not None:
+        kwargs = {**kwargs, "memlimit": memlimit}
+
+    if job in JOBS:
+        JOBS[job](*args, **kwargs)
+    else:
+        print(f"`{job}` is not a known job! Available jobs:\n{available_jobs}")
         return
-
-    for name in job_name:
-        if ":" in name:
-            job, args = name.split(":")
-            args = (args,)
-        else:
-            job = name
-            args = ()
-
-        if job in JOBS:
-            JOBS[job](*args)
-        else:
-            raise Exception(
-                f"`{job}` is not a known job! Available jobs:\n{available_jobs}"
-            )
 
 
 if __name__ == "__main__":
