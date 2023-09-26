@@ -13,16 +13,39 @@ Many of our experiments require large amounts of memory to complete, and access 
 
 For each figure, we will split instructions into how to generate the data, and how to make the plot. We will provide the data so that you can generate the plots without waiting for all the experiments to run.
 
-* TODO Software Prerequisites
+* Software Prerequisites
 
 You will need the following software to replicate our results.
 
 ** Podman or Docker (for re-running experiments)
-** Python
+
+The experiment server is containerized, so you need a client to run the container. Podman and Docker will both work, and have the same CLI interface. Choose whatever you prefer.
+
+OS specific instructions for installing podman can be found here: https://podman.io/get-started
+
+OS specific Instructions for installing docker can be found here: https://www.docker.com/get-started/
+
 ** R (for making plots)
+
+*** Mac Installation
+
+I recommend that you use [[https://brew.sh/][brew]] to install R.
+
+=brew install r=
+
+If you don't want to do that for some reason. The R binaries are here: https://cran.r-project.org/bin/macosx/
+
+*** Linux Installation
+
+Refer to your distributions instructions on how to install R.
+
 ** AWSCLI (optional dependency)
 
-This makes it easier to run experiments on EC2 machines.
+This makes it easier to run experiments on EC2 machines. You can name machines and pass their names to various scripts instead of their IP addresses.
+
+Installation instructions are here: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+Then you will have to connect the CLI to your account:  https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
 
 * Starting the experiment server
 
@@ -120,6 +143,17 @@ docker run --rm -d \
 :PROPERTIES:
 :header-args:async-shell: :name aec :results none :dir (sgt/dir "server")
 :END:
+
+This section provides a guide on how to generate all of the data needed for the figures presented in the paper, as well as how to generate the plots themselves. For every experiment, the workflow is to
+1) generate "jobs" that run the experiments
+2) give jobs to the experiment server
+3) gather completed jobs and generate figures
+
+We have provided all of the data that we used in the paper, so that you can generate the figures without waiting for all the experiments to finish.
+
+For some jobs, you will also need to run cycle estimation. This requires access to the proprietary Xtensa toolchain. They offer educational licenses for free. [[id:setup_xtensa][Here]] are instructions for setting up the tools. For the purposes of artifact evaluation, we will provide a server with the necessary tools installed.
+
+Most of the larger kernels require large amounts of memory. To fully reproduce our results, you will need a machine with XXX ram.
 
 ** Overall performance (Figure 4 & 5)
 
@@ -320,7 +354,7 @@ CLOSED: [2023-09-19 Tue 11:29]
 
 This section is for the brave who want to build the experiment server container (or run the server outside of a container). 
 
-** Building a container with =buildah=
+** Building experiment server container with =buildah=
 :PROPERTIES:
 :header-args:async-shell: :name buildah :results none
 :END:
@@ -332,4 +366,10 @@ buildah unshare ./aec/fedora-build-image.sh
 #+end_src
 
 If you want to build and run the server from scratch, read the =fedora-build-image= script to see what all the dependencies are.
+
+** TODO Setting up =XtensaTools=
+:PROPERTIES:
+:ID: setup_xtensa
+:END:
+
 
