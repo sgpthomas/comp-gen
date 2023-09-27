@@ -112,10 +112,10 @@ class Job:
         self.memory_limit = data["memory_limit"]
         self.command = data["command"]
         self.key: str | None = None
-        if "key" in data and isinstance(str, data["key"]):
+        if "key" in data and isinstance(data["key"], str):
             self.key = data["key"]
         self.after: str | None = None
-        if "after" in data and isinstance(str, data["after"]):
+        if "after" in data and isinstance(data["after"], str):
             self.after = data["after"]
         self.start_time = None
         if "timeout" in data:

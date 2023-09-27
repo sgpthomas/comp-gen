@@ -897,7 +897,7 @@ def estimate(args, after=None, memlimit=220, **_):
 
 
 @click.command()
-@click.argument("job_name", type=click.Choice(list(JOBS.keys())))
+@click.argument("job_name", type=str)
 @click.option("--rulesets", type=click.Path(exists=True), default="rulesets")
 @click.option("--after", type=str)
 @click.option("--memlimit", type=int)
@@ -910,6 +910,10 @@ def cli(job_name: str, rulesets: str, after: str, memlimit: int):
     else:
         job = job_name
         args = ()
+
+    if job not in available_jobs:
+        print(f"`{job}` is not a known job! Available jobs:\n{available_jobs}")
+        return
 
     kwargs = {
         "rulesets": dict_from_dir(Path(rulesets)),
