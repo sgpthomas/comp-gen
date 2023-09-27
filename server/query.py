@@ -545,7 +545,9 @@ def update(name, time, commit, diff):
         >> display()
     )
 
-    out = Path("figs") / "data" / f"{name}.csv"
+    data_dir = Path("figs") / "data"
+    data_dir.mkdir(exist_ok=True)
+    out = data_dir / f"{name}.csv"
 
     if diff and out.exists():
         print("Old version:")

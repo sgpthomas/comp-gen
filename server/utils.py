@@ -24,7 +24,14 @@ def sorter(a):
 
         return a.map(per_key)
     elif a.name == "date":
-        return a.map(lambda r: datetime.strptime(r, "%b%d-%H%M"))
+        formats = ["%b%d-%H%M", "%b%d"]
+        for f in formats:
+            try:
+                return a.map(lambda r: datetime.strptime(r, f))
+            except ValueError:
+                pass
+        # if we couldn't format the date,
+        return a
     else:
         return a
 

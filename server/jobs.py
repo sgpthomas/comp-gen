@@ -496,7 +496,7 @@ def diospyros(after=None, memlimit=220, **_):
     Run diospyros experiments.
     """
 
-    make_job_dir(
+    job_dir = make_job_dir(
         Path("jobs"),
         "diospyros",
         {
@@ -511,6 +511,7 @@ def diospyros(after=None, memlimit=220, **_):
             'export PATH="/root/.cargo/bin:/root/racket/bin:$PATH"',
             "root_dir=$(pwd)",
             "git clone https://github.com/cucapra/diospyros.git",
+            "cp asplos_parameters.json diospyros/evaluation/asplos_parameters.json",
             "cd diospyros",
             "make",
             " ".join(
@@ -525,6 +526,80 @@ def diospyros(after=None, memlimit=220, **_):
             "cd $root_dir",
             "rm -rf diospyros",
         ],
+    )
+
+    # we are using more sizes than diospyros originally ran
+    # update the asplos-parameters.json file to reflect the
+    # sizes that we actually want to run
+
+    mat_mul_sizes = [
+        (2, 2, 2, 2),
+        (2, 3, 3, 3),
+        (3, 3, 3, 3),
+        (4, 4, 4, 4),
+        (8, 8, 8, 8),
+        (10, 10, 10, 10),
+        (16, 16, 16, 16),
+        (18, 18, 18, 18),
+        (20, 20, 20, 20),
+    ]
+    conv_2d_sizes = [
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+        (10, 10, 2, 2),
+        (10, 10, 3, 3),
+        (10, 10, 4, 4),
+        (16, 16, 2, 2),
+        (16, 16, 3, 3),
+        (16, 16, 4, 4),
+        (18, 18, 2, 2),
+        (18, 18, 3, 3),
+        (18, 18, 4, 4),
+    ]
+    qr_decomp_sizes = [3, 4]
+
+    experiment_params = {"mat-mul": [], "2d-conv": [], "q-prod": [], "qr-decomp": []}
+    for s in mat_mul_sizes:
+        arows, acols, brows, bcols = s
+        experiment_params["mat-mul"] += [
+            {
+                "A-rows": arows,
+                "A-cols": acols,
+                "B-rows": brows,
+                "B-rows": bcols,
+                "reg-size": 4,
+            }
+        ]
+
+    for s in conv_2d_sizes:
+        irows, icols, frows, fcols = s
+        experiment_params["2d-conv"] += [
+            {
+                "input-rows": irows,
+                "input-cols": icols,
+                "filter-rows": frows,
+                "filter-cols": fcols,
+                "reg-size": 4,
+            }
+        ]
+
+    experiment_params["q-prod"] += [{"reg-size": 4}]
+
+    for N in qr_decomp_sizes:
+        experiment_params["qr-decomp"] += [
+            {
+                "N": N,
+                "reg-size": 4,
+            }
+        ]
+
+    json.dump(
+        experiment_params,
+        (job_dir / "asplos_parameters.json").open("w"),
+        indent=2,
     )
 
 

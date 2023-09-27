@@ -17,14 +17,6 @@ For each figure, we will split instructions into how to generate the data, and h
 
 You will need the following software to replicate our results.
 
-** Podman or Docker (for re-running experiments)
-
-The experiment server is containerized, so you need a client to run the container. Podman and Docker will both work, and have the same CLI interface. Choose whatever you prefer.
-
-OS specific instructions for installing podman can be found here: https://podman.io/get-started
-
-OS specific Instructions for installing docker can be found here: https://www.docker.com/get-started/
-
 ** R (for making plots)
 
 *** Mac Installation
@@ -35,9 +27,28 @@ I recommend that you use [[https://brew.sh/][brew]] to install R.
 
 If you don't want to do that for some reason. The R binaries are here: https://cran.r-project.org/bin/macosx/
 
+You can install the necessary dependencies by running:
+
+#+begin_src async-shell
+./server/figs/R/install.R
+#+end_src
+
 *** Linux Installation
 
 Refer to your distributions instructions on how to install R.
+
+** Python
+
+Install the python requirements.
+
+#+begin_src async-shell
+pip3 install click psutil pandas dfply
+#+end_src
+
+** System dependencies
+
+- =rsync=
+- =pdflatex=
 
 ** AWSCLI (optional dependency)
 
@@ -46,6 +57,14 @@ This makes it easier to run experiments on EC2 machines. You can name machines a
 Installation instructions are here: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 
 Then you will have to connect the CLI to your account:  https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
+
+** Podman or Docker (for re-running experiments)
+
+The experiment server is containerized, so you need a client to run the container. Podman and Docker will both work, and have the same CLI interface. Choose whatever you prefer.
+
+OS specific instructions for installing podman can be found here: https://podman.io/get-started
+
+OS specific Instructions for installing docker can be found here: https://www.docker.com/get-started/
 
 * Starting the experiment server
 
@@ -161,7 +180,7 @@ Most of the larger kernels require large amounts of memory. To fully reproduce o
 
 These figures explore how well the programs that an Isaria compiler generates performs compared against Diospyros, and some other tools. We look at both the estimated cycles of compiled programs as well as how long it took to generate them.
 
-*** TODO Generate data
+*** Generate data
 
 *ST:* probably don't need to generate diospyros data again
 
@@ -188,21 +207,58 @@ Once the experiments have finished (there are no jobs left in the jobs directory
 ./sync.py download --ip <ip-of-machine> --clean
 #+end_src
 
-Then, we can collate the data.
+Then, we can collate the data. TODO, maybe add more words here?
 
 #+begin_src async-shell
-# ./query.py update est_cycles -t latest
-./query.py update diospyros -t latest
+./query.py update est_cycles -t latest --commit
+./query.py update diospyros -t latest --commit
 #+end_src
 
-*** TODO Make Plots
+*** Make Plots
 
+Navigate to =server/figs= and then running the following two commands will generate the cycle performance graph and the compile time graph.
 
+#+begin_src async-shell :dir (sgt/dir "server" "figs")
+./R/generate.R cycle_performance
+./R/generate.R compile_time
+#+end_src
+
+These are generated as pdfs in =server/figs=.
 
 ** Exploration of the effect of pruning (Figure 6)
 
 *** Generate data
+
+#+begin_src async-shell
+./jobs.py pruning
+./jobs.py "estimate:pruning" --after pruning
+#+end_src
+
+Upload the jobs to the server.
+
+#+begin_src async-shell
+./sync.py upload --ip <ip-of-machine> --clean
+#+end_src
+
+Once they are finished, you can download them.
+
+#+begin_src async-shell
+./sync.py download --ip <ip-of-machine> --clean
+#+end_src
+
+Finally, run the pruning query over the returned data.
+
+#+begin_src async-shell
+./query.py update pruning -t latest --commit
+#+end_src
+
 *** Make Plots
+
+You can generate the pruning figure with the following command:
+
+#+begin_src async-shell :dir (sgt/dir "server" "figs")
+./R/generate.R pruning
+#+end_src
 
 ** Exploration of time spent generating rules (Figure 7)
 
