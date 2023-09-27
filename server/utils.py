@@ -17,7 +17,10 @@ def sorter(a):
                 a, b, c, d = int(a), int(b), int(c), int(d)
                 return ((a * b) ** 2) + (c * d)
             else:
-                return int(el)
+                try:
+                    return int(el)
+                except ValueError:
+                    return -1
 
         return a.map(per_key)
     elif a.name == "date":
