@@ -367,9 +367,81 @@ buildah unshare ./aec/fedora-build-image.sh
 
 If you want to build and run the server from scratch, read the =fedora-build-image= script to see what all the dependencies are.
 
-** TODO Setting up =XtensaTools=
+** Setting up =XtensaTools=
 :PROPERTIES:
 :ID: setup_xtensa
 :END:
 
+*** Setup XtensaTools
 
+You first need to download the files. Login to the [[https://xpg.cadence.com/cdns-xpg-web/faces/login.xhtml?exp=true][XPG cadence portal]] and then go to the XPG View tab to select the version that you want to install. We did our testing on =RI-2021.8=.
+
+We don't want to have to go through the Xplorer IDE to compile and simulate kernels. So we just need to download the =tools/Xtensa Tools/Xtensa Tools 14.08 for Linux= file by navigating to it, and then pressing the green download button.
+
+You'll also want to download =refernece-cores/Fusion G3 DSP cores for Linux=.
+
+Finally, navigate to the XPG License Manager, and download the license server software. I'm using =v11.15=
+
+You should now have the following files:
+
+#+begin_example
+XtensaTools_RI_2021_8_linux.tgz
+XRC_FUSIONG3-linux.xws
+licserv_linux_x64_v11_15.tgz
+#+end_example
+
+Copy these files into a directory named =xtensa=. Extract all of them. The =.xws= file is a zip archive in disguise. You can use =unzip= to extract it's contents.
+
+#+begin_src async-shell
+tar xvf XtensaTools_RI_2021_8_linux.tgz
+unzip XRC_FUSIONG3-linux.xws
+tar xvf licserv_linux_x64_v11_15.tgz
+#+end_src
+
+*** Start License server
+
+The last thing that we need to do, is get a license and start the license server.
+
+**** Find machine host-id
+
+You need the host-id of the machine you want to run the license server on to cut the license keys.
+
+#+begin_src async-shell
+./x64_lsb/lmutil lmhostid
+#+end_src
+
+This will give you the host-id. If you get this error: =./x64_lsb/lmutil: No such file or directory=, then you have to create a symlink as per the following instructions.
+
+***** Fix dynamically linked binaries
+
+The binaries distributed with the license server expect =/lib64/ld-lsb-x86-64.so.3= to exist. For whatever reason, this doesn't exist on the version of Ubuntu that I used. If you run into this, you can link =/lib64/ld-linux-x86-64.so.2= to =/lib64/ld-lsb-x86-64.so.3= which solves the problem.
+
+#+begin_src async-shell
+ln -sf /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
+#+end_src
+
+
+**** Cut License keys
+
+In the XPG License Manager web interface, press =Add new host=, give it a name, use =Linux MAC= and =floating server= and then enter the host id that you found in the previous step. Then create the host.
+
+Once the host is created, click manage. Add =( + 1 )= for the =New allocation on this host= for all rows, and then press =Cut=. Save to file, and then copy into the =xtensa= directory.
+
+Open the license file, and make the following edits:
+
+1) Change the line starting with =SERVER= to =SERVER <hostname> <host-id> 27010=, filling in hostname with the hostname of the machine you are running on. The =host-id= should already be correct.
+2) Change the line starting with =VENDOR xtensad= so that it points to the =x64_lsb= directory inside of the =xtensa= directory. My VENDOR line is =VENDOR xtensad /home/ubuntu/xtensa/x64_lsb/=.
+
+**** Start server
+
+The server expects =/usr/tmp/.flexlm= to exist. You can create it with the command
+
+#+begin_src async-shell
+sudo mkdir -p /usr/tmp/.flexlm
+#+end_src
+
+Finally, we are all setup to start the server.
+
+#+begin_src async-shell
+./x64_lsb/lmgrd -c <LICENSE_FILE>
+#+end_src
