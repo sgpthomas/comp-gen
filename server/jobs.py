@@ -225,8 +225,11 @@ def make_2d_conv(
     timeout=60 * 30,
     memlimit=220,
     after: str | None = None,
+    metadata: Dict[str, Any] | None = None,
 ):
     irows, icols, frows, fcols = size
+    if metadata is None:
+        metadata = {}
     job_dir = make_job_dir(
         jobs_dir,
         f"2d-conv_{irows}x{icols}_{frows}x{fcols}",
@@ -240,6 +243,7 @@ def make_2d_conv(
                 "rules.json": str(ruleset),
                 "compile.json": compile_name(compile),
                 "costfn": costfn,
+                **metadata,
             },
         },
         [compgen_run("2d-conv", costfn)],
@@ -641,6 +645,7 @@ def pruning(rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, *
             after=after,
             memlimit=memlimit,
             timeout=timeout * 7,
+            metadata={"pruning": True},
         )
         # no pruning config
         make_2d_conv(
@@ -652,6 +657,7 @@ def pruning(rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, *
             after=after,
             memlimit=memlimit,
             timeout=timeout * 7,
+            metadata={"pruning": False},
         )
 
 
@@ -684,7 +690,7 @@ def ruleset_synthesis(after=None, memlimit=220, **_):
 
 @job()
 def ruleset_ablation(
-    synth_rulesets_pathname: str | None = None, after=None, memlimit=220, **_
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
 ):
     """
     Measure the performance difference between using different rulesets.
@@ -707,17 +713,15 @@ def ruleset_ablation(
         (18, 18, 4, 4),
     ]
 
-    def read_time(p):
-        config = json.load((p.parents[0] / "config.json").open("r"))
-        return config["metadata"]["timeout"]
-
-    if synth_rulesets_pathname is None:
-        synth_rulesets_path = Path("completed") / "synthesis"
+    if rulesets is not None:
+        rs = list(
+            map(
+                lambda x: rulesets[x],
+                ["timeout_60", "timeout_600", "timeout_6000", "timeout_60000"],
+            )
+        )
     else:
-        synth_rulesets_path = Path(synth_rulesets_pathname)
-
-    rules = dict_from_dir(synth_rulesets_path, pat="**/ruleset.json", key=read_time)
-    rs = list(map(lambda x: rules[x], ["60", "600", "6000", "60000"]))
+        raise NotImplementedError()
 
     exps = itertools.product(conv_2d_sizes, rs)
     for size, r in exps:

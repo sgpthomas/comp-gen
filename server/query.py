@@ -213,8 +213,14 @@ def phase_iterations(exp_path, phase):
 
 def pruning_ruleset(exp_path):
     config = json.load((exp_path / "config.json").open("r"))
-    print(exp_path)
-    return not ("noprune" in config["metadata"]["compile.json"])
+    if "pruning" in config["metadata"]:
+        return config["metadata"]["pruning"]
+    else:
+        # for older cases where I hadn't set the metadata key properly yet
+        compile_json = json.load((exp_path / "compile.json").open("r"))
+        fresh_egraph = compile_json["phase"]["phases"][0]["phases"][0]["fresh_egraph"]
+        # fresh_egraph -> yes pruning
+        return fresh_egraph
 
 
 def extract_alpha_beta(exp_path):

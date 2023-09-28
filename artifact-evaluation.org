@@ -3,8 +3,6 @@
 Website: https://sites.google.com/view/asplos24aec/home
 HotCRP: https://asplos24aec-spring.hotcrp.com/
 
-(forgive the wording for now, I'll improve later)
-
 Here are the instructions to:
 1) reproduce the figures in our paper
 2) demonstrate the robustness of our artifact by showing how to extend it
@@ -13,13 +11,19 @@ Many of our experiments require large amounts of memory to complete, and access 
 
 For each figure, we will split instructions into how to generate the data, and how to make the plot. We will provide the data so that you can generate the plots without waiting for all the experiments to run.
 
-* Software Prerequisites
+Unless otherwise specified, we assume that all commands are executed from the root of the git repository for =comp-gen=.
+
+* Setup
+
+** Software Prerequisites
 
 You will need the following software to replicate our results.
 
-** R (for making plots)
+*** R (for making plots)
 
-*** Mac Installation
+We use =ggplot= in =R= to generate the figures in the paper.
+
+**** Mac Installation
 
 I recommend that you use [[https://brew.sh/][brew]] to install R.
 
@@ -27,30 +31,33 @@ I recommend that you use [[https://brew.sh/][brew]] to install R.
 
 If you don't want to do that for some reason. The R binaries are here: https://cran.r-project.org/bin/macosx/
 
-You can install the necessary dependencies by running:
+**** Linux Installation
+
+Refer to your distributions instructions on how to install R. Your distribution probably packages R to make it easy to install.
+
+**** Installing R packages
+
+Once you have R installed, there are a few R packages that we need. Running the following script will download and install the necessary packages.
 
 #+begin_src async-shell
 ./server/figs/R/install.R
 #+end_src
 
-*** Linux Installation
+*** Python
 
-Refer to your distributions instructions on how to install R.
-
-** Python
-
-Install the python requirements.
+We use python for several of the data management scripts. Your OS probably comes with some version of python3. Then, you'll need the following python packages.
 
 #+begin_src async-shell
 pip3 install click psutil pandas dfply
 #+end_src
 
-** System dependencies
+*** System dependencies
 
-- =rsync=
-- =pdflatex=
+The =sync.py= script assumes that you have =rsync= installed and available on the path.
 
-** AWSCLI (optional dependency)
+We generate our figures with tikz. You'll need =pdflatex= to compile the figures into a pdf.
+
+*** AWSCLI (optional dependency)
 
 This makes it easier to run experiments on EC2 machines. You can name machines and pass their names to various scripts instead of their IP addresses.
 
@@ -58,7 +65,9 @@ Installation instructions are here: https://docs.aws.amazon.com/cli/latest/userg
 
 Then you will have to connect the CLI to your account:  https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
 
-** Podman or Docker (for re-running experiments)
+*** Podman or Docker (for re-running experiments)
+
+You don't need this unless you are setting up the experiment server yourself. 
 
 The experiment server is containerized, so you need a client to run the container. Podman and Docker will both work, and have the same CLI interface. Choose whatever you prefer.
 
@@ -66,7 +75,7 @@ OS specific instructions for installing podman can be found here: https://podman
 
 OS specific Instructions for installing docker can be found here: https://www.docker.com/get-started/
 
-* Starting the experiment server
+** Starting the experiment server
 
 Ignore this if you are part of the AEC committee. You should have already been provided login access to a running server.
 
@@ -74,7 +83,7 @@ Otherwise, you will need to setup the experiment server. You can run locally on 
 
 The server is distributed as a container, with all of it's dependencies bundled. This should hopefully make it easy to set up. All you need is a container manager. I prefer =podman=, but =docker= should work the same.
 
-** Podman
+*** Podman
 
 Instructions for installing podman are here: https://podman.io/docs/installation
 
@@ -93,17 +102,17 @@ mkdir -p completed jobs
 If you don't have an =Xtensa= installation setup, you will not be able to run cycle estimation, but you can still run Isaria. In this case, start the server with:
 
 #+begin_src async-shell
-podman run --rm -d \
+podman run -d \
        -v ./completed:/root/comp-gen/server/completed \
        -v ./jobs:/root/comp-gen/server/jobs \
        --name isaria \
        ghcr.io/sgpthomas/isaria-aec
 #+end_src
 
-Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation.
+Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation. The server assumes that you have a =lmgrd= license server running on the host using port =27010=.
 
 #+begin_src async-shell
-podman run --rm -d \
+podman run -d \
        -v ./completed:/root/comp-gen/server/completed \
        -v ./jobs:/root/comp-gen/server/jobs \
        -v ./xtensa:/root/xtensa \
@@ -112,15 +121,7 @@ podman run --rm -d \
        ghcr.io/sgpthomas/isaria-aec
 #+end_src
 
-You will also need to start the license server on the host (not inside container). You can do that with:
-
-#+begin_src async-shell
-./x64_lsb/lmgrd -c LICENSE \
-                -z # add -z if you want to start the license daemon attached to a TTY
-                   # this is useful for debugging
-#+end_src
-
-** TODO Docker
+*** TODO Docker
 
 *WARNING*: untested
 
@@ -176,13 +177,16 @@ For some jobs, you will also need to run cycle estimation. This requires access 
 
 Most of the larger kernels require large amounts of memory. To fully reproduce our results, you will need a machine with XXX ram.
 
+All commands in this section are relative to =comp-gen/server=.
+
 ** Overall performance (Figure 4 & 5)
 
 These figures explore how well the programs that an Isaria compiler generates performs compared against Diospyros, and some other tools. We look at both the estimated cycles of compiled programs as well as how long it took to generate them.
 
 *** Generate data
 
-*ST:* probably don't need to generate diospyros data again
+Time estimate: XXX minutes
+Memory requirements: XXX gb
 
 #+begin_src async-shell
 # generates jobs that run Isaria on all benchmarks
@@ -190,9 +194,6 @@ These figures explore how well the programs that an Isaria compiler generates pe
 
 # generates a job that runs cycle estimation on all benchmarks
 ./jobs.py "estimate:performance" --after performance
-
-# generates a job that reproduces the original Diospyros numbers
-# ./jobs.py diospyros
 #+end_src
 
 If the experiment server is running locally, =./jobs.py= will put jobs into the correct location be default. Otherwise, you have to copy them to the server yourself.
@@ -257,12 +258,54 @@ Finally, run the pruning query over the returned data.
 You can generate the pruning figure with the following command:
 
 #+begin_src async-shell :dir (sgt/dir "server" "figs")
+cd figs
 ./R/generate.R pruning
 #+end_src
 
 ** Exploration of time spent generating rules (Figure 7)
 
+Impact of the timeout for rule generation on performance of kernels compiled by Isaria. Investing more time into rule generation has little impact for small kernels, although larger kernels benefit from finding more vectorization rules.
+
 *** Generate Data
+
+There are two stages to the data generation. We first need to generate rulesets. You can skip this step and just use the provided rulesets if you don't want to spend the time generating new rulesets.
+
+#+begin_src async-shell
+./jobs.py ruleset_synthesis
+#+end_src
+
+If you want to use the provided rulesets, use the following command to generate some new jobs.
+
+#+begin_src async-shell
+./jobs.py ruleset_ablation --rulesets rulesets/ablation
+# ./jobs.py "estimate:ruleset_ablation"
+#+end_src
+
+*TODO:* Otherwise, this command will use the generated rulesets.
+
+#+begin_src async-shell
+TODO
+#+end_src
+
+Generate the estimation jobs for ruleset_ablation
+
+#+begin_src async-shell
+./jobs.py "estimate:ruleset_ablation" --after ruleset_ablation
+#+end_src
+
+Then you can do the standard thing of uploading the jobs, waiting for them to complete, and then downloading the results.
+
+#+begin_src async-shell
+./sync.py upload --ip <ip-of-machine> --clean
+./sync.py download --ip <ip-of-machine> --clean
+#+end_src
+
+Finally, you can run the query to extract the data that we need from the results.
+
+#+begin_src async-shell
+./query.py update ruleset_ablation -t latest --commit
+#+end_src
+
 *** Make Plots
 
 ** Adding new instructions (Table 2)
@@ -275,18 +318,19 @@ You can generate the pruning figure with the following command:
 *** Generate Data
 *** Make Plots
 
-* Generating all the data
+* Old
+** Generating all the data
 :PROPERTIES:
 :header-args:async-shell: :name jobs :results none :dir (sgt/dir "server")
 :END:
 
-** DONE Overall Performance (Figure 4)
+*** DONE Overall Performance (Figure 4)
 CLOSED: [2023-09-19 Tue 10:19]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
 :END:
 
-*** Comp-gen Numbers
+**** Comp-gen Numbers
 
 First generate the jobs.
 
@@ -302,7 +346,7 @@ Then copy them to the server. The =--clean= flag removes the local copies of the
 ./sync.py upload --name isaria --dir "~/jobs" --clean
 #+end_src
 
-*** Diospyros Numbers
+**** Diospyros Numbers
 
 #+begin_src async-shell
 ./jobs.py diospyros
@@ -312,7 +356,7 @@ Then copy them to the server. The =--clean= flag removes the local copies of the
 ./sync.py upload --name isaria --dir "~/jobs" --clean
 #+end_src
 
-*** Estimation
+**** Estimation
 
 Run the estimation job
 
@@ -321,13 +365,13 @@ Run the estimation job
 ./sync.py update --name isaria --dir "~/jobs" --clean
 #+end_src
 
-*** Download results
+**** Download results
 
 #+begin_src async-shell
 ./sync.py download --name isaria --dir "~/completed"
 #+end_src
 
-** DONE Compilation Time (Figure 5)
+*** DONE Compilation Time (Figure 5)
 CLOSED: [2023-09-20 Wed 10:09]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-09-20 Wed 10:09]
@@ -335,7 +379,7 @@ CLOSED: [2023-09-20 Wed 10:09]
 
 This uses the overall performance numbers. No new experiments needed.
 
-** DONE Pruning (Figure 6)
+*** DONE Pruning (Figure 6)
 CLOSED: [2023-09-19 Tue 10:19]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
@@ -353,7 +397,7 @@ Upload the jobs.
 ./sync.py upload --name isaria --dir "~/jobs" --clean
 #+end_src
 
-** TODO Ruleset Ablation (Figure 7)
+*** TODO Ruleset Ablation (Figure 7)
 
 We first need to synthesize rulesets.
 
@@ -377,7 +421,7 @@ And generate estimation for them. This requires the rulesets existing. If they d
 ./jobs.py "estimate:ruleset_ablation"
 #+end_src
 
-** TODO New Instructions (Table 2)
+*** TODO New Instructions (Table 2)
 
 This generates the new rulesets.
 
@@ -391,11 +435,11 @@ And this runs Isaria on them. However, this job seems wack. Because I'm adding r
 ./jobs.py test_instruction_ruleset
 #+end_src
 
-** TODO Rule Distribution (Figure 8)
+*** TODO Rule Distribution (Figure 8)
 
 This doesn't require any more experiments. We can just grab one of the rule_distribution.csv that we have generated from above. Or maybe we should just generate it from the ruleset directly. I should probably do that.
 
-** DONE Alpha Beta Ablation (Figure 9)
+*** DONE Alpha Beta Ablation (Figure 9)
 CLOSED: [2023-09-19 Tue 11:29]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2023-09-19 Tue 11:29]
@@ -405,11 +449,13 @@ CLOSED: [2023-09-19 Tue 11:29]
 ./jobs.py alpha_beta_ablation
 #+end_src
 
-* Making Figures
-* Making a change
+* TODO Making a change
+
+TODO write this section.
+
 * Nitty-Gritty details
 
-This section is for the brave who want to build the experiment server container (or run the server outside of a container). 
+This section is for the brave who want to build the experiment server container (or run the server outside of a container), and setup an =xtensa= installation for performing cycle estimates.
 
 ** Building experiment server container with =buildah=
 :PROPERTIES:

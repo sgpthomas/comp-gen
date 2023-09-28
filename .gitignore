@@ -18,3 +18,5 @@ Cargo.lock
 /server/figs/*.jpg
 /server/figs/*.png
 /server/figs/*.svg
+/server/figs/*.pdf
+/server/figs/_old_data_/

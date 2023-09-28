@@ -179,7 +179,7 @@ class Job:
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
-        parent_dir.mkdir(exist_ok=True)
+        parent_dir.mkdir(exist_ok=True, parents=True)
         results = generate_unique_exp_id(parent_dir)
 
         # copy over results, job config, and params.json
@@ -232,7 +232,7 @@ def single_run(config: GlobalConfig, alive: Dict[Job, subprocess.Popen], update=
     queued_jobs: List[Job] = list(config.list_jobs())
     # the unique set of keys for queued jobs
     queued_keys: Set[str] = set([j.key for j in queued_jobs if j.key is not None])
-    print(f"Considering {len(queued_jobs)} jobs of type {list(queued_keys)}")
+    print(f"Considering {len(queued_jobs)} jobs")
 
     for job in queued_jobs:
         # start a job if:
