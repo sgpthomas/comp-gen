@@ -370,12 +370,16 @@ def make_synthesis(
             },
         },
         [
-            "RUST_LOG=debug,egg=info,z3=off",
-            "$compgen_bin",
-            "synth",
-            "ruleset.json",
-            "--config",
-            "synth.json",
+            " ".join(
+                [
+                    "RUST_LOG=debug,egg=info,z3=off",
+                    "$compgen_bin",
+                    "synth",
+                    "ruleset.json",
+                    "--config",
+                    "synth.json",
+                ]
+            )
         ],
     )
 

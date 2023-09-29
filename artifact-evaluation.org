@@ -278,7 +278,7 @@ If you want to use the provided rulesets, use the following command to generate 
 
 #+begin_src async-shell
 ./jobs.py ruleset_ablation --rulesets rulesets/ablation
-# ./jobs.py "estimate:ruleset_ablation"
+./jobs.py "estimate:ruleset_ablation"
 #+end_src
 
 *TODO:* Otherwise, this command will use the generated rulesets.
@@ -456,6 +456,15 @@ TODO write this section.
 * Nitty-Gritty details
 
 This section is for the brave who want to build the experiment server container (or run the server outside of a container), and setup an =xtensa= installation for performing cycle estimates.
+
+** Building plotting container with =buildah=
+:PROPERTIES:
+:header-args:async-shell: :name buildah :results none
+:END:
+
+#+begin_src async-shell
+buildah unshare ./aec/fedora-build-figure-image.sh
+#+end_src
 
 ** Building experiment server container with =buildah=
 :PROPERTIES:
