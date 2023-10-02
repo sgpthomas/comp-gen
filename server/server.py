@@ -179,6 +179,7 @@ class Job:
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
+        print("debug", parent_dir, self.dir)
         for _ in range(5):
             try:
                 parent_dir.mkdir(exist_ok=True, parents=True)
