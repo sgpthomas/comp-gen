@@ -32,26 +32,58 @@ podman pull ghcr.io/sgpthomas/isaria-aec-client
 Commands to make figures.
 
 #+begin_src async-shell
-mkdir output
-podman run -it \
-       -v ./output:/home/aec/comp-gen/output \
-       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py make-figure 4
-
-podman run -it \
-       -v ./output:/home/aec/comp-gen/output \
-       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py make-figure 5
+./run.sh podman ./aec.py make figure4
+./run.sh podman ./aec.py make figure5
 #+end_src
+
+This will put the figures into =output=. Take a look at them there.
 
 Commands to generate data.
 
-#+begin_src async-shell
-podman run -it \
-       -v ./output:/home/aec/comp-gen/output \
-       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py gen-data --quick overall
+Estimated Time: ~600 seconds
 
-podman run -it \
-       -v ./output:/home/aec/comp-gen/output \
-       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py gen-data --all overall
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data overall --ip <server-ip>
+#+end_src
+
+Once you have the data, you can rerun the make figure commands to see figures with the new data.
+
+* Effects of Pruning (Figure 6)
+
+Generate the figures
+
+#+begin_src async-shell
+./run.sh podman ./aec.py make figure6
+#+end_src
+
+Estimated Time: 800 seconds
+
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data pruning --ip <server-ip>
+#+end_src
+
+* Exploration of time spent generating rules (Figure 7)
+
+#+begin_src async-shell
+./run.sh podman ./aec.py make figure7
+#+end_src
+
+Estimated Time: XXX minutes
+
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data ruleset_ablation --ip <server-ip>
+#+end_src
+
+* Adding new instructions (Table 2)
+
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data new_instructions --ip <server-ip>
+#+end_src
+
+* Exploring the effect of alpha and beta (Figures 8 & 9)
+
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data alpha_beta --ip <server-ip>
 #+end_src
 
 * Reproducing paper results

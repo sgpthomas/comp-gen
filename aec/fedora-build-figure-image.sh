@@ -73,3 +73,8 @@ buildah config --workingdir /home/aec/comp-gen $cont
 # install R and python deps
 buildah run $cont -- pip3 install click psutil pandas dfply
 buildah run $cont -- sudo ./server/figs/R/install.R
+
+buildah commit $cont isaria-aec-client
+buildah rm $cont
+
+podman push isaria-aec-client ghcr.io/sgpthomas/isaria-aec-client:latest

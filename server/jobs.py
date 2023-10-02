@@ -401,8 +401,84 @@ def dict_from_dir(path: Path, pat: str = "*.json", key=None) -> Dict[str, Path]:
     return res
 
 
-# rulesets = dict_from_dir(Path("../experiments/rulesets"))
-# configs = dict_from_dir(Path("../experiments/configs"))
+@job()
+def fast_overall_performance(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    """
+    This measures the overall performance of the compiler in terms of
+    1) How good are the results of the compiler?
+    2) How fast is the compiler?
+    3) How well does the compiler scale?
+
+    This is a run with all of the benchmarks that Dios uses.
+    """
+
+    assert rulesets is not None
+
+    mat_mul_sizes = [
+        (2, 2, 2, 2),
+        (2, 3, 3, 3),
+        (3, 3, 3, 3),
+        (4, 4, 4, 4),
+        (8, 8, 8, 8),
+    ]
+    conv_2d_sizes = [
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+    ]
+    qr_decomp_sizes = [3]
+    ruleset = rulesets["ruleset_timeout86400"]
+
+    # create all the jobs
+    for size in mat_mul_sizes:
+        mat_mul(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance",
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
+        )
+
+    for size in conv_2d_sizes:
+        make_2d_conv(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance",
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
+        )
+
+    q_prod(
+        Path("jobs"),
+        ruleset,
+        make_config(alpha=15, beta=6, timeout=180),
+        key="performance",
+        timeout=3000,
+        memlimit=memlimit,
+        after=after,
+    )
+
+    for size in qr_decomp_sizes:
+        qr_decomp(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance",
+            timeout=10000,
+            memlimit=memlimit,
+            after=after,
+        )
 
 
 @job()
@@ -612,6 +688,53 @@ def diospyros(after=None, memlimit=220, **_):
 
 
 @job()
+def fast_pruning(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, **_
+):
+    """
+    This experiment is meant to show that pruning dramatically decreases
+    the how long it takes to find a low-cost program.
+    """
+
+    assert rulesets is not None
+
+    params = [
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+    ]
+    timeout = 360
+
+    for p in params:
+        # pruning config
+        make_2d_conv(
+            Path("jobs"),
+            p,
+            rulesets["ruleset_timeout86400"],
+            make_config(timeout=timeout, prune=True),
+            key="pruning",
+            after=after,
+            memlimit=memlimit,
+            timeout=timeout * 7,
+            metadata={"pruning": True},
+        )
+        # no pruning config
+        make_2d_conv(
+            Path("jobs"),
+            p,
+            rulesets["ruleset_timeout86400"],
+            make_config(timeout=timeout, prune=False),
+            key="pruning",
+            after=after,
+            memlimit=memlimit,
+            timeout=timeout * 7,
+            metadata={"pruning": False},
+        )
+
+
+@job()
 def pruning(rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, **_):
     """
     This experiment is meant to show that pruning dramatically decreases
@@ -687,6 +810,45 @@ def ruleset_synthesis(after=None, memlimit=220, **_):
             triops=["mac"],
             eqsat_iter=3,
             eqsat_timeout=60,
+            after=after,
+            memlimit=memlimit,
+        )
+
+
+@job()
+def fast_ruleset_ablation(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    """
+    Measure the performance difference between using different rulesets.
+    """
+
+    conv_2d_sizes = [
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+    ]
+
+    if rulesets is not None:
+        rs = list(
+            map(
+                lambda x: rulesets[x],
+                ["timeout_60", "timeout_600", "timeout_6000", "timeout_60000"],
+            )
+        )
+    else:
+        raise NotImplementedError()
+
+    exps = itertools.product(conv_2d_sizes, rs)
+    for size, r in exps:
+        make_2d_conv(
+            Path("jobs"),
+            size,
+            r,
+            make_config(timeout=1800),
+            key="ruleset_ablation",
             after=after,
             memlimit=memlimit,
         )
@@ -909,6 +1071,36 @@ def large_kernels(
             after=after,
             memlimit=memlimit,
         )
+
+
+@job()
+def fast_alpha_beta_ablation(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    assert rulesets is not None
+
+    conv_2d_size = (16, 16, 4, 4)
+    ruleset = rulesets["ruleset_timeout86400"]
+    alphas = [
+        -10,
+        -1,
+        -0.5,
+        0.5,
+        10,
+    ]
+    betas = [0, 10, 20]
+    for beta in betas:
+        for alpha in alphas:
+            make_2d_conv(
+                Path("jobs"),
+                conv_2d_size,
+                ruleset,
+                make_config(alpha=alpha, beta=beta),
+                key="alpha-beta",
+                timeout=1000,
+                after=after,
+                memlimit=memlimit,
+            )
 
 
 @job()

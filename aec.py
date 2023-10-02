@@ -2,10 +2,19 @@
 
 import subprocess as sp
 import sys
+import time
 from pathlib import Path
 from typing import List
 
 import click
+
+EXPERIMENTS = [
+    "overall",
+    "pruning",
+    "ruleset_ablation",
+    "new_instructions",
+    "alpha_beta",
+]
 
 
 def check_data(data: List[str], *, experiment_name: str):
@@ -22,6 +31,39 @@ def check_data(data: List[str], *, experiment_name: str):
 def call_generate(name: str, destination: str):
     sp.run(f"./R/generate.R {name}", shell=True, cwd="server/figs")
     sp.run(f"cp server/figs/{name}.pdf output/{destination}.pdf", shell=True)
+
+
+def jobs(job_name, **kwargs):
+    kwstr = " ".join([f"--{key} {value}" for key, value in kwargs.items()])
+    sp.run(f"./jobs.py {job_name} {kwstr}", shell=True, cwd="server")
+
+
+def sync(cmd: str, *args, name: str | None = None, ip: str | None = None):
+    if name is not None:
+        return sp.run(
+            f"./sync.py {cmd} --name {name} {' '.join(args)}", shell=True, cwd="server"
+        )
+    elif ip is not None:
+        return sp.run(
+            f"./sync.py {cmd} --ip {ip} {' '.join(args)}", shell=True, cwd="server"
+        )
+    else:
+        print("You need to provide at least one of `--name` or `--ip`.")
+        sys.exit(-1)
+
+
+def query(name):
+    return sp.run(
+        f"./query.py update {name} -t latest --commit", shell=True, cwd="server"
+    )
+
+
+def wait_then_process(query, *, name, ip):
+    while sync("check", name=name, ip=ip).returncode != 0:
+        print("Jobs still running...")
+        time.sleep(5)
+
+    _process_data(query, ip, name)
 
 
 def _make_figure(fig: str):
@@ -79,6 +121,28 @@ def _make_figure(fig: str):
             raise Exception("Unreachable")
 
 
+def _process_data(experiment, ip, name):
+    sync("download", "--clean", name=name, ip=ip)
+    match experiment:
+        case "overall":
+            query("est_cycles")
+
+        case "pruning":
+            query("pruning")
+
+        case "ruleset_ablation":
+            query("ruleset_ablation")
+
+        case "new_instructions":
+            query("instruction")
+
+        case "alpha_beta":
+            query("alpha_beta")
+
+        case _:
+            raise Exception("Unreachable")
+
+
 @click.group()
 def cli():
     pass
@@ -102,6 +166,85 @@ def cli():
 )
 def make(fig: str):
     _make_figure(fig)
+
+
+@cli.command()
+@click.argument("experiment", type=click.Choice(EXPERIMENTS))
+@click.option("--all", is_flag=True)
+@click.option("--no-wait", is_flag=True)
+@click.option("--ip", type=str)
+@click.option("--name", type=str)
+def gen_data(experiment, all, no_wait, ip, name):
+    match experiment:
+        case "overall":
+            if all:
+                jobs("overall_performance")
+            else:
+                jobs("fast_overall_performance")
+
+            jobs("estimate:performance", after="performance")
+            sync("upload", "--clean", name=name, ip=ip)
+
+            if not no_wait:
+                wait_then_process("overall", name=name, ip=ip)
+
+        case "pruning":
+            if all:
+                jobs("pruning")
+            else:
+                jobs("fast_pruning")
+
+            jobs("estimate:pruning", after="pruning")
+            sync("upload", "--clean", name=name, ip=ip)
+
+            if not no_wait:
+                wait_then_process("pruning", name=name, ip=ip)
+
+        case "ruleset_ablation":
+            if all:
+                raise NotImplementedError("Not yet tested")
+                # jobs("ruleset_synthesis")
+                # jobs("ruleset_ablation", rulesets="rulesets/ablation")
+            else:
+                jobs("fast_ruleset_ablation", rulesets="rulesets/ablation")
+
+            jobs("estimate:ruleset_ablation", after="ruleset_ablation")
+            sync("upload", "--clean", name=name, ip=ip)
+
+            if not no_wait:
+                wait_then_process("ruleset_ablation", name=name, ip=ip)
+
+        case "new_instructions":
+            if all:
+                raise NotImplementedError("Not yet tested")
+            else:
+                # jobs("")
+                pass
+
+            sync("upload", "--clean", name=name, ip=ip)
+
+        case "alpha_beta":
+            if all:
+                jobs("alpha_beta_ablation")
+            else:
+                jobs("fast_alpha_beta_ablation")
+
+            jobs("estimate:alpha-beta", after="alpha-beta")
+            sync("upload", "--clean", name=name, ip=ip)
+
+            if not no_wait:
+                wait_then_process("alpha_beta", name=name, ip=ip)
+
+        case _:
+            raise Exception("Unreachable")
+
+
+@cli.command()
+@click.argument("experiment", type=click.Choice(EXPERIMENTS))
+@click.option("--ip", type=str)
+@click.option("--name", type=str)
+def process_data(experiment, ip, name):
+    _process_data(experiment, ip, name)
 
 
 if __name__ == "__main__":
