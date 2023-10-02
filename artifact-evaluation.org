@@ -68,7 +68,7 @@ Estimated Time: 800 seconds
 ./run.sh podman ./aec.py make figure7
 #+end_src
 
-Estimated Time: XXX minutes
+Estimated Time: 40 minutes (I might want to make this shorter)
 
 #+begin_src async-shell
 ./run.sh podman ./aec.py gen-data ruleset_ablation --ip <server-ip>
@@ -454,13 +454,12 @@ This will give you the host-id. If you get this error: =./x64_lsb/lmutil: No suc
 The binaries distributed with the license server expect =/lib64/ld-lsb-x86-64.so.3= to exist. For whatever reason, this doesn't exist on the version of Ubuntu that I used. If you run into this, you can link =/lib64/ld-linux-x86-64.so.2= to =/lib64/ld-lsb-x86-64.so.3= which solves the problem.
 
 #+begin_src async-shell
-ln -sf /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
+sudo ln -sf /lib64/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
 #+end_src
-
 
 **** Cut License keys
 
-In the XPG License Manager web interface, press =Add new host=, give it a name, use =Linux MAC= and =floating server= and then enter the host id that you found in the previous step. Then create the host.
+In the XPG License Manager web interface, press =Add new host=, give it a name, use =Linux MAC= and =floating server= and then enter the host id that you found in the previous step. Then =Save New Host=.
 
 Once the host is created, click manage. Add =( + 1 )= for the =New allocation on this host= for all rows, and then press =Cut=. Save to file, and then copy into the =xtensa= directory.
 
@@ -482,3 +481,24 @@ Finally, we are all setup to start the server.
 #+begin_src async-shell
 ./x64_lsb/lmgrd -c <LICENSE_FILE>
 #+end_src
+** Starting the server
+
+You first need to pull the container image from the registry.
+
+#+begin_src async-shell
+podman pull ghcr.io/sgpthomas/isaria-aec:latest
+#+end_src
+
+Then you can start the server.
+
+#+begin_src async-shell
+mkdir -p jobs completed
+podman run --rm -it \
+       -v ./completed:/root/comp-gen/server/completed:U \
+       -v ./jobs:/root/comp-gen/server/jobs:U \
+       -v ./xtensa:/root/xtensa:U \
+       --network slirp4netns:allow_host_loopback=true \
+       --name isaria \
+       ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
