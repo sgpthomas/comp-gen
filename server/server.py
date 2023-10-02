@@ -179,7 +179,13 @@ class Job:
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
-        parent_dir.mkdir(exist_ok=True, parents=True)
+        for _ in range(5):
+            try:
+                parent_dir.mkdir(exist_ok=True, parents=True)
+                break
+            except FileNotFoundError:
+                print("Something went wrong. Waiting 5s and then trying again...")
+                time.sleep(5)
         results = generate_unique_exp_id(parent_dir)
 
         # copy over results, job config, and params.json
