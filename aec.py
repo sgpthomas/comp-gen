@@ -24,14 +24,14 @@ def call_generate(name: str):
     sp.run(f"cp server/figs/{name}.pdf output", shell=True)
 
 
-@click.group()
-def cli():
-    pass
+def _make_figure(fig: str):
+    """
+    Pull this out as a separate function so that we can call
+    it without exiting. The click command functions exit the
+    process when the function finishes, making it impossible
+    to implement the 'all' case the way that I do here.
+    """
 
-
-@cli.command()
-@click.argument("fig", type=click.Choice(["4", "5", "6", "7", "8", "9", "all"]))
-def make_figure(fig: int):
     match fig:
         case "4":
             check_data(
@@ -74,6 +74,17 @@ def make_figure(fig: int):
             make_figure("9")
         case _:
             raise Exception("Unreachable")
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument("fig", type=click.Choice(["4", "5", "6", "7", "8", "9", "all"]))
+def make_figure(fig: str):
+    _make_figure(fig)
 
 
 if __name__ == "__main__":
