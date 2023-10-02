@@ -30,7 +30,7 @@ def cli():
 
 
 @cli.command()
-@click.argument("fig", type=click.Choice(["4", "5", "6", "7", "8", "9"]))
+@click.argument("fig", type=click.Choice(["4", "5", "6", "7", "8", "9", "all"]))
 def make_figure(fig: int):
     match fig:
         case "4":
@@ -65,6 +65,13 @@ def make_figure(fig: int):
         case "9":
             check_data(["alpha_beta.csv"], experiment_name="ruleset_distribution")
             call_generate("alpha_beta")
+        case "all":
+            make_figure("4")
+            make_figure("5")
+            make_figure("6")
+            make_figure("7")
+            make_figure("8")
+            make_figure("9")
         case _:
             raise Exception("Unreachable")
 
