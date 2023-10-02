@@ -15,150 +15,43 @@ Unless otherwise specified, we assume that all commands are executed from the ro
 
 * Setup
 
-** Software Prerequisites
+Space requirements: XXX Gb
 
-You will need the following software to replicate our results.
+All of the tools that you need to run experiments and generate the figures in the paper are containerized. So you need to install either [[https://podman.io/get-started][Podman]] or [[https://www.docker.com/get-started/][Docker]] to manage containers.
 
-*** R (for making plots)
+All the instructions assume that you are using =podman=, but arguments to commands will be identical if you are using =docker=. You only need to replace =podman= with =docker= in all the given commands.
 
-We use =ggplot= in =R= to generate the figures in the paper.
-
-**** Mac Installation
-
-I recommend that you use [[https://brew.sh/][brew]] to install R.
-
-=brew install r=
-
-If you don't want to do that for some reason. The R binaries are here: https://cran.r-project.org/bin/macosx/
-
-**** Linux Installation
-
-Refer to your distributions instructions on how to install R. Your distribution probably packages R to make it easy to install.
-
-**** Installing R packages
-
-Once you have R installed, there are a few R packages that we need. Running the following script will download and install the necessary packages.
+Setting everything up is as simple as:
 
 #+begin_src async-shell
-./server/figs/R/install.R
+podman pull ghcr.io/sgpthomas/isaria-aec-client
 #+end_src
 
-*** Python
+* Performance and Compile Time (Figures 4 & 5)
 
-We use python for several of the data management scripts. Your OS probably comes with some version of python3. Then, you'll need the following python packages.
+Commands to make figures.
 
 #+begin_src async-shell
-pip3 install click psutil pandas dfply
+mkdir output
+podman run -it \
+       -v ./output:/home/aec/comp-gen/output \
+       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py make-figure 4
+
+podman run -it \
+       -v ./output:/home/aec/comp-gen/output \
+       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py make-figure 5
 #+end_src
 
-*** System dependencies
-
-The =sync.py= script assumes that you have =rsync= installed and available on the path.
-
-We generate our figures with tikz. You'll need =pdflatex= to compile the figures into a pdf.
-
-*** AWSCLI (optional dependency)
-
-This makes it easier to run experiments on EC2 machines. You can name machines and pass their names to various scripts instead of their IP addresses.
-
-Installation instructions are here: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-
-Then you will have to connect the CLI to your account:  https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
-
-*** Podman or Docker (for re-running experiments)
-
-You don't need this unless you are setting up the experiment server yourself. 
-
-The experiment server is containerized, so you need a client to run the container. Podman and Docker will both work, and have the same CLI interface. Choose whatever you prefer.
-
-OS specific instructions for installing podman can be found here: https://podman.io/get-started
-
-OS specific Instructions for installing docker can be found here: https://www.docker.com/get-started/
-
-** Starting the experiment server
-
-Ignore this if you are part of the AEC committee. You should have already been provided login access to a running server.
-
-Otherwise, you will need to setup the experiment server. You can run locally on your machine, or remotely on a machine with more resources.
-
-The server is distributed as a container, with all of it's dependencies bundled. This should hopefully make it easy to set up. All you need is a container manager. I prefer =podman=, but =docker= should work the same.
-
-*** Podman
-
-Instructions for installing podman are here: https://podman.io/docs/installation
-
-Then, download the Isaria image.
+Commands to generate data.
 
 #+begin_src async-shell
-podman pull ghcr.io/sgpthomas/isaria-aec:latest
-#+end_src
+podman run -it \
+       -v ./output:/home/aec/comp-gen/output \
+       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py gen-data --quick overall
 
-You will need to make two directories on the host to hold queued jobs and completed jobs.
-
-#+begin_src async-shell
-mkdir -p completed jobs
-#+end_src
-
-If you don't have an =Xtensa= installation setup, you will not be able to run cycle estimation, but you can still run Isaria. In this case, start the server with:
-
-#+begin_src async-shell
-podman run -d \
-       -v ./completed:/root/comp-gen/server/completed \
-       -v ./jobs:/root/comp-gen/server/jobs \
-       --name isaria \
-       ghcr.io/sgpthomas/isaria-aec
-#+end_src
-
-Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation. The server assumes that you have a =lmgrd= license server running on the host using port =27010=.
-
-#+begin_src async-shell
-podman run -d \
-       -v ./completed:/root/comp-gen/server/completed \
-       -v ./jobs:/root/comp-gen/server/jobs \
-       -v ./xtensa:/root/xtensa \
-       --network slirp4netns:allow_host_loopback=true \
-       --name isaria \
-       ghcr.io/sgpthomas/isaria-aec
-#+end_src
-
-*** TODO Docker
-
-*WARNING*: untested
-
-Instructions for installing docker are here: https://www.docker.com/get-started/.
-
-Then, download the Isaria image.
-
-#+begin_src async-shell
-docker pull ghcr.io/sgpthomas/isaria-aec:latest
-#+end_src
-
-You will need to make two directories on the host to hold queued jobs and completed jobs.
-
-#+begin_src async-shell
-mkdir -p completed jobs
-#+end_src
-
-If you don't have an =Xtensa= installation setup, you will not be able to run cycle estimation, but you can still run Isaria. Start the server with:
-
-#+begin_src async-shell
-docker run --rm -d \
-       -v ./completed:/root/comp-gen/server/completed \
-       -v ./jobs:/root/comp-gen/server/jobs \
-       --name isaria \
-       ghcr.io/sgpthomas/isaria-aec
-#+end_src
-
-Otherwise, if you do have an =Xtensa= installation, the following command will start the server with the capability of performing cycle-estimation.
-
-#+begin_src async-shell
-docker run --rm -d \
-       -v ./completed:/root/comp-gen/server/completed \
-       -v ./jobs:/root/comp-gen/server/jobs \
-       -v ./xtensa:/root/xtensa \
-       --network slirp4netns:allow_host_loopback=true \
-       --name isaria \
-       ghcr.io/sgpthomas/isaria-aec
+podman run -it \
+       -v ./output:/home/aec/comp-gen/output \
+       ghcr.io/sgpthomas/isaria-aec-client -- ./aec.py gen-data --all overall
 #+end_src
 
 * Reproducing paper results

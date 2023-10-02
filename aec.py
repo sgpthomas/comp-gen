@@ -8,15 +8,20 @@ from typing import List
 import click
 
 
-def check_files(files: List[str], *, experiment_name: str):
-    for f in files:
-        if not Path(f).exists():
+def check_data(data: List[str], *, experiment_name: str):
+    for d in data:
+        if not (Path("server/figs/data") / d).exists():
             print(
                 "The necessary data for this command does not exist. "
-                + f"Run\n  `./aec.py gen-data {experiment_name}`"
+                + f"Run\n  ./aec.py gen-data {experiment_name}"
                 + "\nto generate the data for this figure."
             )
             sys.exit(-1)
+
+
+def call_generate(name: str):
+    sp.run(f"./R/generate.R {name}", shell=True, cwd="server/figs")
+    sp.run(f"cp server/figs/{name}.pdf output", shell=True)
 
 
 @click.group()
@@ -29,22 +34,37 @@ def cli():
 def make_figure(fig: int):
     match fig:
         case "4":
-            check_files(
-                ["server/figs/data/diospyros.csv", "server/figs/data/est_cycles.csv"],
+            check_data(
+                ["diospyros.csv", "est_cycles.csv"],
                 experiment_name="overall",
             )
-            sp.run("./R/generate.R cycle_performance", shell=True, cwd="server/figs")
-            sp.run("cp server/figs/cycle_performance.pdf output", shell=True)
+            call_generate("cycle_performance")
         case "5":
-            print("hi")
+            check_data(
+                ["diospyros.csv", "est_cycles.csv"],
+                experiment_name="overall",
+            )
+            call_generate("compile_time")
         case "6":
-            print("hi")
+            check_data(
+                ["pruning.csv"],
+                experiment_name="pruning",
+            )
+            call_generate("pruning")
         case "7":
-            print("hi")
+            check_data(
+                ["ruleset_ablation.csv", "diospyros.csv"],
+                experiment_name="ruleset_ablation",
+            )
+            call_generate("ruleset_ablation")
         case "8":
-            print("hi")
+            check_data(
+                ["rule_distribution.csv"], experiment_name="ruleset_distribution"
+            )
+            call_generate("ruleset_distribution")
         case "9":
-            print("hi")
+            check_data(["alpha_beta.csv"], experiment_name="ruleset_distribution")
+            call_generate("alpha_beta")
         case _:
             raise Exception("Unreachable")
 

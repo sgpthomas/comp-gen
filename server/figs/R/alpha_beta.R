@@ -22,15 +22,6 @@ alpha_beta <- function(alpha_v=15, beta_v=12) {
       fill = NA,
       color="salmon", lwd=0.7
     ) +
-    ## geom_text(
-    ##   aes(
-    ##     x = as.factor(beta_v),
-    ##     y = as.factor(alpha_v),
-    ##     label = (data %>% filter(alpha==alpha_v) %>% filter(beta==beta_v / 2))$exp
-    ##   ),
-    ##   color = "white",
-    ##   size = 2
-    ## ) +
     labs(
       title="Estimated Cycles for 2d-conv $16^2 \\times 4^2$",
       x="$\\beta$ (aggregate cost)",
@@ -65,7 +56,6 @@ alpha_beta <- function(alpha_v=15, beta_v=12) {
       panel.spacing.x = unit(0.4, "lines"),
 
       strip.background = element_blank(),
-      ## strip.text = element_text(size=8, face="bold", margin=margin(0, 0, 4, 0)),
 
       plot.title = element_text(size=8, face="bold", hjust=0.5),
       plot.margin = margin(1, 0, 1, 0)

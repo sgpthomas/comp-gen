@@ -21,7 +21,7 @@ piecewise <- function(L, H, W, gm=1, inv=F) {
 }
 
 rule_distribution <- function(alpha_v=12, beta_v=10) {
-  data <- read.csv("../completed/mat-mul_30x30_30x30/1/rule_distribution.csv")
+  data <- read.csv("data/rule_distribution.csv")
 
   ## function the determines which phase a rule falls into
   f <- function(avg, diff) {

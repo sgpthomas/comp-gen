@@ -12,6 +12,7 @@ packages=(bash coreutils sudo make cmake shadow-utils \
                libjpeg-turbo-devel gdal gdal-devel proj proj-devel \
                geos geos-devel)
 
+
 # if the -r flag is passed, redownload packages
 case "$1" in
     -r|--refresh)
@@ -21,10 +22,12 @@ case "$1" in
                 --setopt cachedir="$HOME/.var/cache/dnf" \
                 --setopt install_weak_deps=false -y \
                 --downloadonly \
-                ${core_packages[@]} ${packages[@]}
+                ${packages[@]}
         fi
     ;;
 esac
+
+buildah config --env TZ="Etc/UTC" $cont
 
 # install packages from the cache
 dnf install --installroot $contmnt \
@@ -34,6 +37,8 @@ dnf install --installroot $contmnt \
     --setopt install_weak_deps=false -y \
     -C \
     ${packages[@]}
+
+echo "Done installing packages"
 
 # make aec user, give it sudo access, and make it the default user for the container,
 # give wheel group password-less access to sudo
