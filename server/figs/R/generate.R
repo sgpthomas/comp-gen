@@ -49,7 +49,7 @@ if (fig_name == "cycle_performance") {
   ruleset_ablation()
   
 # rule distribution
-} else if (fig_name == "rule_distribution") {
+} else if (fig_name == "ruleset_distribution") {
   tikz(filename=filename, width=3.3, height=2, standAlone=T)
   alpha_v <- 15
   beta_v <- 12
