@@ -71,9 +71,26 @@ def do_download(ip, remote_path, clean=False):
     )
 
     if clean:
+        subprocess.run(f"ssh ubuntu@{ip} 'rm -rfv {remote_path}*'", shell=True)
         print("Cleaning completed")
-        subprocess.run(["ssh", f"ubuntu@{ip}", "rm", "-r", remote_path])
-        subprocess.run(["ssh", f"ubuntu@{ip}", "mkdir", remote_path])
+
+
+def do_check(ip, remote_path):
+    # print("Downloading completed", end="...", flush=True)
+
+    # normalize the remote path so that rsync doesn't create completed/completed/*
+    remote_path = str(Path(remote_path)) + "/"
+
+    output = subprocess.run(
+        ["ssh", f"ubuntu@{ip}", "ls", remote_path], capture_output=True
+    )
+
+    if len(output.stdout) > 0:
+        print("In progress")
+        sys.exit(-1)
+    else:
+        print("Completed")
+        sys.exit(0)
 
 
 def resolve_name_ip(name, ip):
@@ -122,6 +139,15 @@ def upload(name, ip, dir, clean):
 def download(name, ip, dir, clean):
     ip = resolve_name_ip(name, ip)
     do_download(ip, dir, clean=clean)
+
+
+@cli.command()
+@click.option("--name")
+@click.option("--ip")
+@click.option("--dir", default="~/jobs")
+def check(name, ip, dir):
+    ip = resolve_name_ip(name, ip)
+    do_check(ip, dir)
 
 
 if __name__ == "__main__":

@@ -179,8 +179,6 @@ class Job:
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
-        print("debug", parent_dir, self.dir, os.getcwd())
-        subprocess.run(f"mkdir -p {parent_dir}", shell=True)
         parent_dir.mkdir(exist_ok=True, parents=True)
         results = generate_unique_exp_id(parent_dir)
 
