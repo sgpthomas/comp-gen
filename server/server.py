@@ -183,6 +183,7 @@ class Job:
         for i in range(5):
             try:
                 parent_dir.mkdir(exist_ok=True, parents=True)
+                subprocess.run(f"mkdir -p {parent_dir}", shell=True)
                 results = generate_unique_exp_id(parent_dir)
 
                 # copy over results, job config, and params.json
