@@ -179,21 +179,24 @@ class Job:
 
     def complete(self):
         parent_dir = self.global_config.completed / self.name
-        print("debug", parent_dir, self.dir)
-        for _ in range(5):
+        print("debug", parent_dir, self.dir, os.getcwd())
+        for i in range(5):
             try:
                 parent_dir.mkdir(exist_ok=True, parents=True)
-                break
-            except FileNotFoundError:
+                results = generate_unique_exp_id(parent_dir)
+
+                # copy over results, job config, and params.json
+                shutil.copytree(self.dir, results)
+
+                # remove the job directory
+                shutil.rmtree(self.dir)
+                return
+            except FileNotFoundError as e:
                 print("Something went wrong. Waiting 5s and then trying again...")
+                if i == 4:
+                    raise e
+
                 time.sleep(5)
-        results = generate_unique_exp_id(parent_dir)
-
-        # copy over results, job config, and params.json
-        shutil.copytree(self.dir, results)
-
-        # remove the job directory
-        shutil.rmtree(self.dir)
 
     def __eq__(self, obj):
         return isinstance(obj, Job) and self.dir == obj.dir
