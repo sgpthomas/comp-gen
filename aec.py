@@ -19,9 +19,9 @@ def check_data(data: List[str], *, experiment_name: str):
             sys.exit(-1)
 
 
-def call_generate(name: str):
+def call_generate(name: str, destination: str):
     sp.run(f"./R/generate.R {name}", shell=True, cwd="server/figs")
-    sp.run(f"cp server/figs/{name}.pdf output", shell=True)
+    sp.run(f"cp server/figs/{name}.pdf output/{destination}.pdf", shell=True)
 
 
 def _make_figure(fig: str):
@@ -38,40 +38,40 @@ def _make_figure(fig: str):
                 ["diospyros.csv", "est_cycles.csv"],
                 experiment_name="overall",
             )
-            call_generate("cycle_performance")
+            call_generate("cycle_performance", "figure4")
         case "5":
             check_data(
                 ["diospyros.csv", "est_cycles.csv"],
                 experiment_name="overall",
             )
-            call_generate("compile_time")
+            call_generate("compile_time", "figure5")
         case "6":
             check_data(
                 ["pruning.csv"],
                 experiment_name="pruning",
             )
-            call_generate("pruning")
+            call_generate("pruning", "figure6")
         case "7":
             check_data(
                 ["ruleset_ablation.csv", "diospyros.csv"],
                 experiment_name="ruleset_ablation",
             )
-            call_generate("ruleset_ablation")
+            call_generate("ruleset_ablation", "figure7")
         case "8":
             check_data(
                 ["rule_distribution.csv"], experiment_name="ruleset_distribution"
             )
-            call_generate("ruleset_distribution")
+            call_generate("ruleset_distribution", "figure8")
         case "9":
             check_data(["alpha_beta.csv"], experiment_name="ruleset_distribution")
-            call_generate("alpha_beta")
+            call_generate("alpha_beta", "figure9")
         case "all":
-            make_figure("4")
-            make_figure("5")
-            make_figure("6")
-            make_figure("7")
-            make_figure("8")
-            make_figure("9")
+            _make_figure("4")
+            _make_figure("5")
+            _make_figure("6")
+            _make_figure("7")
+            _make_figure("8")
+            _make_figure("9")
         case _:
             raise Exception("Unreachable")
 
