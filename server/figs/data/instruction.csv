@@ -1,0 +1,5 @@
+index,date,benchmark,param,exp,rules,cycles,cost,dir
+0,Apr18-1245,qr-decomp,3,75,sqrtsgn_muls,1174,127927554.695,completed/qr-decomp_3/75
+1,Apr18-1245,qr-decomp,3,78,base,1198,161993024.56,completed/qr-decomp_3/78
+2,Apr18-1245,qr-decomp,3,76,sqrtsgn,1178,127927556.695,completed/qr-decomp_3/76
+3,Apr18-1245,qr-decomp,3,77,muls,1192,161992964.56,completed/qr-decomp_3/77

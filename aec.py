@@ -33,38 +33,41 @@ def _make_figure(fig: str):
     """
 
     match fig:
-        case "4":
+        case "figure4":
             check_data(
                 ["diospyros.csv", "est_cycles.csv"],
                 experiment_name="overall",
             )
             call_generate("cycle_performance", "figure4")
-        case "5":
+        case "figure5":
             check_data(
                 ["diospyros.csv", "est_cycles.csv"],
                 experiment_name="overall",
             )
             call_generate("compile_time", "figure5")
-        case "6":
+        case "figure6":
             check_data(
                 ["pruning.csv"],
                 experiment_name="pruning",
             )
             call_generate("pruning", "figure6")
-        case "7":
+        case "figure7":
             check_data(
                 ["ruleset_ablation.csv", "diospyros.csv"],
                 experiment_name="ruleset_ablation",
             )
             call_generate("ruleset_ablation", "figure7")
-        case "8":
+        case "figure8":
             check_data(
                 ["rule_distribution.csv"], experiment_name="ruleset_distribution"
             )
             call_generate("ruleset_distribution", "figure8")
-        case "9":
+        case "figure9":
             check_data(["alpha_beta.csv"], experiment_name="ruleset_distribution")
             call_generate("alpha_beta", "figure9")
+        case "table2":
+            check_data(["instruction.csv"], experiment_name="instruction_ablation")
+            call_generate("instruction_ablation", "table2")
         case "all":
             _make_figure("4")
             _make_figure("5")
@@ -82,8 +85,22 @@ def cli():
 
 
 @cli.command()
-@click.argument("fig", type=click.Choice(["4", "5", "6", "7", "8", "9", "all"]))
-def make_figure(fig: str):
+@click.argument(
+    "fig",
+    type=click.Choice(
+        [
+            "table2",
+            "figure4",
+            "figure5",
+            "figure6",
+            "figure7",
+            "figure8",
+            "figure9",
+            "all",
+        ]
+    ),
+)
+def make(fig: str):
     _make_figure(fig)
 
 

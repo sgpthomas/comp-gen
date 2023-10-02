@@ -292,34 +292,8 @@ CLOSED: [2023-04-18 Tue 14:34]
 
 #+header: :results output file :file instruction.tex
 #+begin_src R 
-data <- read_csv(
-  "data/instruction.csv",
-  show_col_types=F,
-  progress=F,
-  col_names=T
-) %>%
-  filter(benchmark == "qr-decomp") %>%
-  mutate(
-    muls=if_else(str_detect(rules, "muls"), "VecMulSub", "No VecMulSub"),
-    sqrtsgn=if_else(str_detect(rules, "sqrtsgn"), "VecSqrtSgn", "No VecSqrtSgn"),
-    speedup=(1198.0 / cycles) * 100,
-    show=if_else(speedup >= 100,
-                 str_c("+", round(speedup-100, 1), "%"),
-                 str_c("-", 100-speedup, "%"))
-  ) %>%
-  select(muls, sqrtsgn, show) %>%
-  pivot_wider(names_from=muls, values_from=show) %>%
-  mutate(` `=sqrtsgn) %>%
-  select(` `, `MULS`, `No MULS`)
-
-print(xtable(
-  data,
-  caption=str_c(
-    "Cycle estimates for QR-Decomp for all",
-    " combinations of including MAC and MULS instructions."
-  ),
-  label="tab:instruction"
-), include.rownames=FALSE)
+source("R/instruction_ablation.R")
+instruction_ablation()
 #+end_src
 
 #+RESULTS:
