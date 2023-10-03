@@ -1078,16 +1078,15 @@ def fast_alpha_beta_ablation(
 ):
     assert rulesets is not None
 
-    conv_2d_size = (16, 16, 4, 4)
+    conv_2d_size = (8, 8, 3, 3)
     ruleset = rulesets["ruleset_timeout86400"]
     alphas = [
         -10,
         -1,
-        -0.5,
-        0.5,
+        1,
         10,
     ]
-    betas = [0, 10, 20]
+    betas = [10, 20]
     for beta in betas:
         for alpha in alphas:
             make_2d_conv(

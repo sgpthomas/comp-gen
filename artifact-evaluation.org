@@ -141,6 +141,15 @@ Once the command has completed, you can regenerate the figures.
 ./run.sh ./aec.py gen-data alpha_beta --ip $EXP_SERVER
 #+end_src
 
+* Cleanup
+
+After you are done playing with the artifact, you can remove the container.
+
+#+begin_src async-shell
+podman stop isaria
+podman rm isaria
+#+end_src
+
 * Nitty-Gritty details
 
 This section is for the brave who want to build the experiment server container (or run the server outside of a container), and setup an =xtensa= installation for performing cycle estimates. This is not needed for the AEC committee because I have set everything up for them. However, if anybody else wants to run this in the future, these instructions will be necessary.
