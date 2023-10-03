@@ -40,14 +40,20 @@ def jobs(job_name, **kwargs):
     sp.run(f"./jobs.py {job_name} {kwstr}", shell=True, cwd="server")
 
 
-def sync(cmd: str, *args, name: str | None = None, ip: str | None = None):
+def sync(cmd: str, *args, name: str | None = None, ip: str | None = None, **kwargs):
     if name is not None:
         return sp.run(
-            f"./sync.py {cmd} --name {name} {' '.join(args)}", shell=True, cwd="server"
+            f"./sync.py {cmd} --name {name} {' '.join(args)}",
+            shell=True,
+            cwd="server",
+            **kwargs,
         )
     elif ip is not None:
         return sp.run(
-            f"./sync.py {cmd} --ip {ip} {' '.join(args)}", shell=True, cwd="server"
+            f"./sync.py {cmd} --ip {ip} {' '.join(args)}",
+            shell=True,
+            cwd="server",
+            **kwargs,
         )
     else:
         print("You need to provide at least one of `--name` or `--ip`.")
@@ -62,12 +68,13 @@ def query(name):
 
 def wait_then_process(query, *, name, ip, estimated_time=None):
     start_time = datetime.datetime.now()
-    while sync("check", name=name, ip=ip).returncode != 0:
+    while sync("check", name=name, ip=ip, capture_output=True).returncode != 0:
         delta = datetime.datetime.now() - start_time
+        print(f"Jobs running for {delta.seconds}s", end="", flush=True)
         if estimated_time is not None:
-            print(f"Jobs running for {delta.seconds}s/~{estimated_time}s")
+            print(f" [Estimated total ~{estimated_time}s]", flush=True)
         else:
-            print(f"Jobs running for {delta.seconds}s")
+            print("", flush=True)
 
         time.sleep(5)
 

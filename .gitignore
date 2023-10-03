@@ -24,3 +24,5 @@ Cargo.lock
 /server/jobs/
 /server/completed.tar
 /output/
+*.pem
+/aec/output/

@@ -36,14 +36,13 @@ if ! podman container exists isaria; then
     # copy ssh key into container
     $container_manager container exec isaria mkdir -p /home/aec/.ssh
     $container_manager container cp aec.pem isaria:/home/aec/.ssh/aec.pem
-    $container_manager container exec isaria ssh-add /home/aec/.ssh/aec.pem
 
     # setup jobs / completed
     $container_manager container exec isaria mkdir server/jobs server/completed
 fi
 
 # run the command in the container
-$container_manager container exec isaria $@
+$container_manager container exec isaria bash -c "eval \$(ssh-agent -s) && ssh-add /home/aec/.ssh/aec.pem && $*"
 
 # copy results of output from container to host
 $container_manager container cp isaria:output .
