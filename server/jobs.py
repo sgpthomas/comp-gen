@@ -950,66 +950,6 @@ def test_instruction_ruleset(
 
     assert rulesets is not None
 
-    rulesets_dir = Path("instruction-rulesets")
-    base_path = rulesets["ruleset_timeout86400"]
-
-    muls_path = Path("completed") / "synthesis" / "10" / "ruleset.json"
-    base_ruleset = json.load(base_path.open("r"))
-    muls_ruleset = json.load(muls_path.open("r"))
-
-    extra = [
-        {
-            "lhs": "(* (sqrt ?a) (sgn (neg ?b)))",
-            "rhs": "(sqrtsgn ?a ?b)",
-            "bidirectional": True,
-        },
-        {
-            "lhs": "(Vec (sqrtsgn ?a ?b))",
-            "rhs": "(VecSqrtSgn (Vec ?a) (Vec ?b))",
-            "bidirectional": True,
-        },
-    ]
-    base_eqs = base_ruleset["eqs"]
-
-    def includes(ruleset, ops):
-        return list(
-            filter(lambda r: all([op in r["lhs"] + r["rhs"] for op in ops]), ruleset)
-        )
-
-    subprocess.run("rm instruction-rulesets/*", shell=True)
-
-    json.dump(
-        {"params": {}, "eqs": base_eqs},
-        (rulesets_dir / "base.json").open("w"),
-        indent=2,
-    )
-    json.dump(
-        {
-            "params": {},
-            "eqs": base_eqs + extra,
-        },
-        (rulesets_dir / "sqrtsgn.json").open("w"),
-        indent=2,
-    )
-    json.dump(
-        {
-            "params": {},
-            "eqs": base_eqs + includes(muls_ruleset["eqs"], ["VecMULS"]),
-        },
-        (rulesets_dir / "muls.json").open("w"),
-        indent=2,
-    )
-    json.dump(
-        {
-            "params": {},
-            "eqs": base_eqs + includes(muls_ruleset["eqs"], ["VecMULS"]) + extra,
-        },
-        (rulesets_dir / "sqrtsgn_muls.json").open("w"),
-        indent=2,
-    )
-
-    rulesets = dict_from_dir(Path("instruction-rulesets"))
-
     for _, r in rulesets.items():
         qr_decomp(
             Path("jobs"),

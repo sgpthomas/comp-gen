@@ -242,10 +242,19 @@ def gen_data(experiment, all, no_wait, ip, name):
             if all:
                 raise NotImplementedError("Not yet tested")
             else:
-                # jobs("")
+                jobs("test_instruction_ruleset", rulesets="rulesets/instructions")
                 pass
 
+            jobs("estimate:instruction", after="instruction")
             sync("upload", "--clean", name=name, ip=ip)
+
+            if not no_wait:
+                wait_then_process(
+                    "instruction",
+                    name=name,
+                    ip=ip,
+                    estimated_time=600 if not all else None,
+                )
 
         case "alpha_beta":
             if all:

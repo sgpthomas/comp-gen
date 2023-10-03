@@ -25,5 +25,9 @@ echo "Pulling changes..."
 git pull -r
 cargo build --release --manifest-path=dios-lang/Cargo.toml
 
+cd /root/diospyros
+git pull -r
+make
+
 cd /root/comp-gen/server
 python3 server.py
