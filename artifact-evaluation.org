@@ -49,7 +49,7 @@ cd isaria
 Then download the following script and make it runnable.
 
 #+begin_src async-shell
-wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/mac-run.sh run.sh
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/aec/mac-run.sh -O run.sh
 chmod +x run.sh
 #+end_src
 
@@ -158,21 +158,12 @@ Once the command has completed, you can regenerate the figures.
 *** Run experiments (Short time: xxx minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
-./run.sh ./aec.py gen-data alpha_beta --ip <server-ip>
+./run.sh ./aec.py gen-data alpha_beta --ip $EXP_SERVER
 #+end_src
 
 * Nitty-Gritty details
 
-This section is for the brave who want to build the experiment server container (or run the server outside of a container), and setup an =xtensa= installation for performing cycle estimates.
-
-** Building plotting container with =buildah=
-:PROPERTIES:
-:header-args:async-shell: :name buildah :results none
-:END:
-
-#+begin_src async-shell
-buildah unshare ./aec/fedora-build-figure-image.sh
-#+end_src
+This section is for the brave who want to build the experiment server container (or run the server outside of a container), and setup an =xtensa= installation for performing cycle estimates. This is not needed for the AEC committee because I have set everything up for them. However, if anybody else wants to run this in the future, these instructions will be necessary.
 
 ** Building experiment server container with =buildah=
 :PROPERTIES:
@@ -283,5 +274,14 @@ podman run --rm -it \
        --network slirp4netns:allow_host_loopback=true \
        --name isaria \
        ghcr.io/sgpthomas/isaria-aec
+#+end_src
+
+** Building plotting container with =buildah=
+:PROPERTIES:
+:header-args:async-shell: :name buildah :results none
+:END:
+
+#+begin_src async-shell
+buildah unshare ./aec/fedora-build-figure-image.sh
 #+end_src
 
