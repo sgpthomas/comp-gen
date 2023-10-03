@@ -27,7 +27,7 @@ cd isaria
 Then download the following script and make it runnable.
 
 #+begin_src async-shell
-wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/run.sh
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/aec/run.sh
 chmod +x run.sh
 #+end_src
 
