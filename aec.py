@@ -217,7 +217,7 @@ def gen_data(experiment, all, no_wait, ip, name):
 
             if not no_wait:
                 wait_then_process(
-                    "pruning", name=name, ip=ip, estimated_time=780 if not all else None
+                    "pruning", name=name, ip=ip, estimated_time=930 if not all else None
                 )
 
         case "ruleset_ablation":

@@ -60,7 +60,7 @@ This will put two pdfs into =output/=. Take a look at them there.
 
 Now that we know how to make the figures, we can turn our attention to generating the data.
 
-*** Running experiments (Short time: 10 minutes, Long time: XXX minutes)
+*** Running experiments (Estimated time: 10 minutes)
 
 As part of the AEC committee, you have been provided with a server ip. Otherwise, you will need to setup an experiment server as described in the nitty gritty details section. Plug the server ip into the following command. This will run a short version of the experiments needed for figures 4 and 5.
 
@@ -88,7 +88,7 @@ Run the following command to generate the figure using the pre-existing data.
 ./run.sh ./aec.py make figure6
 #+end_src
 
-*** Running experiments (Short time: 13 minutes, Long time: xxx minutes)
+*** Running experiments (Estimated time: 15 minutes)
 
 Running the following command will launch the pruning experiments.
 
@@ -106,7 +106,7 @@ Once the command has completed, you can regenerate the figures.
 ./run.sh ./aec.py make figure7
 #+end_src
 
-*** Running experiments (Short time: 40 minutes, Long time: xxx minutes)
+*** Running experiments (Estimated time: 10 minutes)
 
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data ruleset_ablation --ip $EXP_SERVER
@@ -120,7 +120,7 @@ Once the command has completed, you can regenerate the figures.
 ./run.sh ./aec.py make table2
 #+end_src
 
-*** Running experiments (Short time: xxx minutes, Long time: xxx minutes)
+*** Running experiments (Estimated time: 10 minutes)
 
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data new_instructions --ip <server-ip>
@@ -135,7 +135,7 @@ Once the command has completed, you can regenerate the figures.
 ./run.sh ./aec.py make figure9
 #+end_src
 
-*** Run experiments (Short time: xxx minutes, Long time: xxx minutes)
+*** Run experiments (Estimated time: 10 minutes)
 
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data alpha_beta --ip $EXP_SERVER
