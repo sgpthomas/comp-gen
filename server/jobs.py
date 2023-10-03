@@ -789,7 +789,7 @@ def pruning(rulesets: Dict[str, Path] | None = None, after=None, memlimit=100, *
 
 
 @job()
-def ruleset_synthesis(after=None, memlimit=220, **_):
+def ruleset_synthesis(after=None, memlimit=450, **_):
     """
     Synthesize rulesets with different timeouts.
     """
