@@ -13,21 +13,15 @@ For each figure, we will split instructions into how to generate the data, and h
 
 Space requirements: 10 Gb
 
-All of the tools that you need to run experiments and generate the figures in the paper are containerized. So you need to install either [[https://podman.io/get-started][Podman]] or [[https://www.docker.com/get-started/][Docker]] to manage containers.
+Linux and Mac OS are the only supported operating systems.
 
-All the instructions assume that you are using =podman=, but arguments to commands will be identical if you are using =docker=. You only need to replace =podman= with =docker= in all the given commands.
+For both operating systems, you will need to install either [[https://podman.io/get-started][Podman]] or [[https://www.docker.com/get-started/][Docker]]. I prefer =podman=, but both will work identically. If you have both installed, the scripts will automatically use =podman=.
 
-If you are on an x86 based machine, setting everything up is as simple as running:
+Once you have one of these tools installed, follow the instructions for your operating system.
 
-#+begin_src async-shell
-podman pull ghcr.io/sgpthomas/isaria-aec-client
-#+end_src
+** Linux
 
-If you are on an ARM based machine, then run this:
-
-#+begin_src async-shell
-podman pull ghcr.io/sgpthomas/isaria-aec-client/arm
-#+end_src
+Make a directory to work in.
 
 #+begin_src async-shell
 mkdir isaria
@@ -37,108 +31,134 @@ cd isaria
 Then download the following script and make it runnable.
 
 #+begin_src async-shell
-wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/run.sh
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/linux-run.sh run.sh
 chmod +x run.sh
 #+end_src
 
-This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container.
+This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container. The first time you run it, it will download a container for you. Subsequent runs will be much faster.
 
-* Performance and Compile Time (Figures 4 & 5)
+** Mac
 
-** Making figures
+Make a directory to work in.
+
+#+begin_src async-shell
+mkdir isaria
+cd isaria
+#+end_src
+
+Then download the following script and make it runnable.
+
+#+begin_src async-shell
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/mac-run.sh run.sh
+chmod +x run.sh
+#+end_src
+
+This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container. The first time you run it, it will download a container for you. Subsequent runs will be much faster.
+
+If you are using =podman=. Make sure that you have started the virtual machine with
+
+#+begin_src async-shell
+podman machine init
+podman machine start
+#+end_src
+
+* Reproducing our figures
+** Performance and Compile Time (Figures 4 & 5)
+
+*** Making figures
 
 So that you can generate the plots without waiting for all of the experiments to finish, we have provided the data that we used inside of the container. You can use this to generate our figures.
 
 To make figure 4 and 5, run the following commands.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py make figure4
-./run.sh podman ./aec.py make figure5
+./run.sh ./aec.py make figure4
+./run.sh ./aec.py make figure5
 #+end_src
 
 This will put two pdfs into =output/=. Take a look at them there.
 
 Now that we know how to make the figures, we can turn our attention to generating the data.
 
-** Running experiments (Short time: 10 minutes, Long time: XXX minutes)
+*** Running experiments (Short time: 10 minutes, Long time: XXX minutes)
 
 As part of the AEC committee, you have been provided with a server ip. Otherwise, you will need to setup an experiment server as described in the nitty gritty details section. Plug the server ip into the following command. This will run a short version of the experiments needed for figures 4 and 5.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data overall --ip $EXP_SERVER
+./run.sh ./aec.py gen-data overall --ip $EXP_SERVER
 #+end_src
 
 If you want to run the complete experiments and generate all the data, run the following command. Adding =--all= works the same way for all of the other experiments described in this document.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data overall --ip $EXP_SERVER --all
+./run.sh ./aec.py gen-data overall --ip $EXP_SERVER --all
 #+end_src
 
 Once you have generated the data, you can rerun the commands above to remake the figures. Unless you rerun the full experiments, the new figures will not have as many benchmarks as the figures in the paper.
 
-* Effects of Pruning (Figure 6)
+** Effects of Pruning (Figure 6)
 
 The flow for generating figure 6 and the data for it, is identical to the previous figures.
 
-** Make figure
+*** Make figure
 
 Run the following command to generate the figure using the pre-existing data.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py make figure6
+./run.sh ./aec.py make figure6
 #+end_src
 
-** Running experiments (Short time: 13 minutes, Long time: xxx minutes)
+*** Running experiments (Short time: 13 minutes, Long time: xxx minutes)
 
 Running the following command will launch the pruning experiments.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data pruning --ip $EXP_SERVER
+./run.sh ./aec.py gen-data pruning --ip $EXP_SERVER
 #+end_src
 
 Once the command has completed, you can regenerate the figures.
 
-* Exploration of time spent generating rules (Figure 7)
+** Exploration of time spent generating rules (Figure 7)
 
-** Make figure
+*** Make figure
 
 #+begin_src async-shell
-./run.sh podman ./aec.py make figure7
+./run.sh ./aec.py make figure7
 #+end_src
 
-** Running experiments (Short time: 40 minutes, Long time: xxx minutes)
+*** Running experiments (Short time: 40 minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data ruleset_ablation --ip $EXP_SERVER
+./run.sh ./aec.py gen-data ruleset_ablation --ip $EXP_SERVER
 #+end_src
 
-* Adding new instructions (Table 2)
+** Adding new instructions (Table 2)
 
-** Make table
+*** Make table
 
 #+begin_src async-shell
-./run.sh podman ./aec.py make table2
+./run.sh ./aec.py make table2
 #+end_src
 
-** Running experiments (Short time: xxx minutes, Long time: xxx minutes)
+*** Running experiments (Short time: xxx minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data new_instructions --ip <server-ip>
+./run.sh ./aec.py gen-data new_instructions --ip <server-ip>
 #+end_src
 
-* Exploring the effect of alpha and beta (Figures 8 & 9)
+** Exploring the effect of alpha and beta (Figures 8 & 9)
 
-** Make figure
+*** Make figure
 
 #+begin_src async-shell
-./run.sh podman ./aec.py make figure8
-./run.sh podman ./aec.py make figure9
+./run.sh ./aec.py make figure8
+./run.sh ./aec.py make figure9
 #+end_src
 
-** Run experiments (Short time: xxx minutes, Long time: xxx minutes)
+*** Run experiments (Short time: xxx minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data alpha_beta --ip <server-ip>
+./run.sh ./aec.py gen-data alpha_beta --ip <server-ip>
 #+end_src
 
 * Nitty-Gritty details

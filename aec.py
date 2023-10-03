@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import datetime
 import subprocess as sp
 import sys
 import time
@@ -59,9 +60,15 @@ def query(name):
     )
 
 
-def wait_then_process(query, *, name, ip):
+def wait_then_process(query, *, name, ip, estimated_time=None):
+    start_time = datetime.datetime.now()
     while sync("check", name=name, ip=ip).returncode != 0:
-        print("Jobs still running...")
+        delta = datetime.datetime.now() - start_time
+        if estimated_time is not None:
+            print(f"Jobs running for {delta.seconds}s/~{estimated_time}s")
+        else:
+            print(f"Jobs running for {delta.seconds}s")
+
         time.sleep(5)
 
     _process_data(query, ip, name)
@@ -188,7 +195,9 @@ def gen_data(experiment, all, no_wait, ip, name):
             sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
-                wait_then_process("overall", name=name, ip=ip)
+                wait_then_process(
+                    "overall", name=name, ip=ip, estimated_time=600 if not all else None
+                )
 
         case "pruning":
             if all:
@@ -200,7 +209,9 @@ def gen_data(experiment, all, no_wait, ip, name):
             sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
-                wait_then_process("pruning", name=name, ip=ip)
+                wait_then_process(
+                    "pruning", name=name, ip=ip, estimated_time=780 if not all else None
+                )
 
         case "ruleset_ablation":
             if all:
@@ -214,7 +225,12 @@ def gen_data(experiment, all, no_wait, ip, name):
             sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
-                wait_then_process("ruleset_ablation", name=name, ip=ip)
+                wait_then_process(
+                    "ruleset_ablation",
+                    name=name,
+                    ip=ip,
+                    estimated_time=2400 if not all else None,
+                )
 
         case "new_instructions":
             if all:
