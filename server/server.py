@@ -276,6 +276,14 @@ def single_run(config: GlobalConfig, alive: Dict[Job, subprocess.Popen], update=
             assert job.start_time is not None
             time_diff = time.time() - job.start_time
 
+            # if the job folder vanishes, kill the job
+            if not job.dir.exists():
+                print("Job disappeared!")
+                proc.terminate()
+                print("Waiting for process to die", end="...")
+                proc.wait()
+                print("Dead!!!")
+
             # record memory usage
             memory_csv.touch()
             with memory_csv.open("a") as f:
@@ -306,7 +314,8 @@ def single_run(config: GlobalConfig, alive: Dict[Job, subprocess.Popen], update=
         # if the job isn't alive, add it to the dead list
         else:
             print("Job is dead: ", job)
-            job.complete()
+            if job.dir.exists():
+                job.complete()
             dead += [job]
 
     # remove all the dead processes
