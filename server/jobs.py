@@ -703,9 +703,8 @@ def fast_pruning(
         (3, 3, 3, 3),
         (3, 5, 3, 3),
         (4, 4, 3, 3),
-        (8, 8, 3, 3),
     ]
-    timeout = 360
+    timeout = 180
 
     for p in params:
         # pruning config

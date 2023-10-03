@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set +e
 
 mkdir -p output
 
@@ -29,6 +29,13 @@ esac
 # start the container in the background
 if ! podman container exists isaria; then
     echo "No isaria container found. Starting a new one"
+    if [ -e aec.pem ]; then
+        chmod 400 aec.pem
+    else
+        echo "No aec.pem file"
+        exit -1
+    fi
+
     $container_manager container run -it --rm -d --name isaria $image bash
 
     $container_manager container exec isaria git pull -r

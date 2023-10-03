@@ -17,11 +17,7 @@ Linux and Mac OS are the only supported operating systems.
 
 For both operating systems, you will need to install either [[https://podman.io/get-started][Podman]] or [[https://www.docker.com/get-started/][Docker]]. I prefer =podman=, but both will work identically. If you have both installed, the scripts will automatically use =podman=.
 
-Once you have one of these tools installed, follow the instructions for your operating system.
-
-** Linux
-
-Make a directory to work in.
+Once you have one of these tools installed, make a directory to work in.
 
 #+begin_src async-shell
 mkdir isaria
@@ -31,31 +27,15 @@ cd isaria
 Then download the following script and make it runnable.
 
 #+begin_src async-shell
-wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/linux-run.sh run.sh
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/run.sh
 chmod +x run.sh
 #+end_src
 
 This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container. The first time you run it, it will download a container for you. Subsequent runs will be much faster.
 
-** Mac
+** Mac Specific
 
-Make a directory to work in.
-
-#+begin_src async-shell
-mkdir isaria
-cd isaria
-#+end_src
-
-Then download the following script and make it runnable.
-
-#+begin_src async-shell
-wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/aec/mac-run.sh -O run.sh
-chmod +x run.sh
-#+end_src
-
-This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container. The first time you run it, it will download a container for you. Subsequent runs will be much faster.
-
-If you are using =podman=. Make sure that you have started the virtual machine with
+If you are on a Mac and using =podman=, then you also have to make sure that the =podman= virtual machine is downloaded and running.
 
 #+begin_src async-shell
 podman machine init
