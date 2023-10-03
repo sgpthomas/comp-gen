@@ -33,6 +33,12 @@ chmod +x run.sh
 
 This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container. The first time you run it, it will download a container for you. Subsequent runs will be much faster.
 
+Copy the provided key into the =isaria= directory that you made. Make sure that it is named exactly =aec.pem=. Then export an environment variable with the IP of the provided server.
+
+#+begin_src async-shell
+export EXP_SERVER=<provided-ip>
+#+end_src
+
 ** Mac Specific
 
 If you are on a Mac and using =podman=, then you also have to make sure that the =podman= virtual machine is downloaded and running.
