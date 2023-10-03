@@ -44,13 +44,15 @@ if (fig_name == "cycle_performance") {
 # pruning
 } else if (fig_name == "pruning") {
   tikz(filename=filename, width=3.3, height=2, standAlone=T)
-  pruning()
+  p <- pruning()
+  print(p)
   dev.off()
 
 # ruleset ablation
 } else if (fig_name == "ruleset_ablation") {
   tikz(filename=filename, width=3.3, height=2, standAlone=T)
-  ruleset_ablation()
+  p <- ruleset_ablation()
+  print(p)
   dev.off()
   
 # rule distribution
@@ -58,7 +60,8 @@ if (fig_name == "cycle_performance") {
   tikz(filename=filename, width=3.3, height=2, standAlone=T)
   alpha_v <- 15
   beta_v <- 12
-  rule_distribution(alpha=alpha_v, beta=beta_v)
+  p <- rule_distribution(alpha=alpha_v, beta=beta_v)
+  print(p)
   dev.off()
 
 # alpha beta
@@ -66,7 +69,8 @@ if (fig_name == "cycle_performance") {
   tikz(filename=filename, width=3.3, height=2, standAlone=T)
   alpha_v <- 15
   beta_v <- 12
-  alpha_beta(alpha=alpha_v, beta=beta_v)
+  p <- alpha_beta(alpha=alpha_v, beta=beta_v)
+  print(p)
   dev.off()
 
 } else if (fig_name == "instruction_ablation") {

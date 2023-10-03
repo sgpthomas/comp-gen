@@ -3,78 +3,124 @@
 Website: https://sites.google.com/view/asplos24aec/home
 HotCRP: https://asplos24aec-spring.hotcrp.com/
 
-Here are the instructions to:
-1) reproduce the figures in our paper
-2) demonstrate the robustness of our artifact by showing how to extend it
+Here are the instructions to reproduce all of the figures in our paper.
 
 Many of our experiments require large amounts of memory to complete, and access to proprietary tools to compile kernels for the Tensilica architecture and perform cycle estimation. Educational licenses are available for free [[https://www.cadence.com/en_US/home/company/cadence-academic-network/university-program.html][here]], but we also separate out the generation of the data from the making of plots. We provide all of the data that we used for the paper.
 
-For each figure, we will split instructions into how to generate the data, and how to make the plot. We will provide the data so that you can generate the plots without waiting for all the experiments to run.
-
-Unless otherwise specified, we assume that all commands are executed from the root of the git repository for =comp-gen=.
+For each figure, we will split instructions into how to generate the data, and how to make the plot. Because our larger kernels can take a long time to run, we provide the data so that you can generate the plots without waiting for all the experiments to run.
 
 * Setup
 
-Space requirements: XXX Gb
+Space requirements: 10 Gb
 
 All of the tools that you need to run experiments and generate the figures in the paper are containerized. So you need to install either [[https://podman.io/get-started][Podman]] or [[https://www.docker.com/get-started/][Docker]] to manage containers.
 
 All the instructions assume that you are using =podman=, but arguments to commands will be identical if you are using =docker=. You only need to replace =podman= with =docker= in all the given commands.
 
-Setting everything up is as simple as:
+If you are on an x86 based machine, setting everything up is as simple as running:
 
 #+begin_src async-shell
 podman pull ghcr.io/sgpthomas/isaria-aec-client
 #+end_src
 
+If you are on an ARM based machine, then run this:
+
+#+begin_src async-shell
+podman pull ghcr.io/sgpthomas/isaria-aec-client/arm
+#+end_src
+
+#+begin_src async-shell
+mkdir isaria
+cd isaria
+#+end_src
+
+Then download the following script and make it runnable.
+
+#+begin_src async-shell
+wget https://raw.githubusercontent.com/sgpthomas/comp-gen/main/run.sh
+chmod +x run.sh
+#+end_src
+
+This is a simple helper script that handles some of the more complicated configuration of running commands inside of a container.
+
 * Performance and Compile Time (Figures 4 & 5)
 
-Commands to make figures.
+** Making figures
+
+So that you can generate the plots without waiting for all of the experiments to finish, we have provided the data that we used inside of the container. You can use this to generate our figures.
+
+To make figure 4 and 5, run the following commands.
 
 #+begin_src async-shell
 ./run.sh podman ./aec.py make figure4
 ./run.sh podman ./aec.py make figure5
 #+end_src
 
-This will put the figures into =output=. Take a look at them there.
+This will put two pdfs into =output/=. Take a look at them there.
 
-Commands to generate data.
+Now that we know how to make the figures, we can turn our attention to generating the data.
 
-Estimated Time: ~600 seconds
+** Running experiments (Short time: 10 minutes, Long time: XXX minutes)
+
+As part of the AEC committee, you have been provided with a server ip. Otherwise, you will need to setup an experiment server as described in the nitty gritty details section. Plug the server ip into the following command. This will run a short version of the experiments needed for figures 4 and 5.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data overall --ip <server-ip>
+./run.sh podman ./aec.py gen-data overall --ip $EXP_SERVER
 #+end_src
 
-Once you have the data, you can rerun the make figure commands to see figures with the new data.
+If you want to run the complete experiments and generate all the data, run the following command. Adding =--all= works the same way for all of the other experiments described in this document.
+
+#+begin_src async-shell
+./run.sh podman ./aec.py gen-data overall --ip $EXP_SERVER --all
+#+end_src
+
+Once you have generated the data, you can rerun the commands above to remake the figures. Unless you rerun the full experiments, the new figures will not have as many benchmarks as the figures in the paper.
 
 * Effects of Pruning (Figure 6)
 
-Generate the figures
+The flow for generating figure 6 and the data for it, is identical to the previous figures.
+
+** Make figure
+
+Run the following command to generate the figure using the pre-existing data.
 
 #+begin_src async-shell
 ./run.sh podman ./aec.py make figure6
 #+end_src
 
-Estimated Time: 800 seconds
+** Running experiments (Short time: 13 minutes, Long time: xxx minutes)
+
+Running the following command will launch the pruning experiments.
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data pruning --ip <server-ip>
+./run.sh podman ./aec.py gen-data pruning --ip $EXP_SERVER
 #+end_src
 
+Once the command has completed, you can regenerate the figures.
+
 * Exploration of time spent generating rules (Figure 7)
+
+** Make figure
 
 #+begin_src async-shell
 ./run.sh podman ./aec.py make figure7
 #+end_src
 
-Estimated Time: 40 minutes (I might want to make this shorter)
+** Running experiments (Short time: 40 minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
-./run.sh podman ./aec.py gen-data ruleset_ablation --ip <server-ip>
+./run.sh podman ./aec.py gen-data ruleset_ablation --ip $EXP_SERVER
 #+end_src
 
 * Adding new instructions (Table 2)
+
+** Make table
+
+#+begin_src async-shell
+./run.sh podman ./aec.py make table2
+#+end_src
+
+** Running experiments (Short time: xxx minutes, Long time: xxx minutes)
 
 #+begin_src async-shell
 ./run.sh podman ./aec.py gen-data new_instructions --ip <server-ip>
@@ -82,301 +128,18 @@ Estimated Time: 40 minutes (I might want to make this shorter)
 
 * Exploring the effect of alpha and beta (Figures 8 & 9)
 
+** Make figure
+
+#+begin_src async-shell
+./run.sh podman ./aec.py make figure8
+./run.sh podman ./aec.py make figure9
+#+end_src
+
+** Run experiments (Short time: xxx minutes, Long time: xxx minutes)
+
 #+begin_src async-shell
 ./run.sh podman ./aec.py gen-data alpha_beta --ip <server-ip>
 #+end_src
-
-* Reproducing paper results
-:PROPERTIES:
-:header-args:async-shell: :name aec :results none :dir (sgt/dir "server")
-:END:
-
-This section provides a guide on how to generate all of the data needed for the figures presented in the paper, as well as how to generate the plots themselves. For every experiment, the workflow is to
-1) generate "jobs" that run the experiments
-2) give jobs to the experiment server
-3) gather completed jobs and generate figures
-
-We have provided all of the data that we used in the paper, so that you can generate the figures without waiting for all the experiments to finish.
-
-For some jobs, you will also need to run cycle estimation. This requires access to the proprietary Xtensa toolchain. They offer educational licenses for free. [[id:setup_xtensa][Here]] are instructions for setting up the tools. For the purposes of artifact evaluation, we will provide a server with the necessary tools installed.
-
-Most of the larger kernels require large amounts of memory. To fully reproduce our results, you will need a machine with XXX ram.
-
-All commands in this section are relative to =comp-gen/server=.
-
-** Overall performance (Figure 4 & 5)
-
-These figures explore how well the programs that an Isaria compiler generates performs compared against Diospyros, and some other tools. We look at both the estimated cycles of compiled programs as well as how long it took to generate them.
-
-*** Generate data
-
-Time estimate: XXX minutes
-Memory requirements: XXX gb
-
-#+begin_src async-shell
-# generates jobs that run Isaria on all benchmarks
-./jobs.py overall_performance
-
-# generates a job that runs cycle estimation on all benchmarks
-./jobs.py "estimate:performance" --after performance
-#+end_src
-
-If the experiment server is running locally, =./jobs.py= will put jobs into the correct location be default. Otherwise, you have to copy them to the server yourself.
-
-#+begin_src async-shell
-./sync.py upload --ip <ip-of-machine> --clean
-#+end_src
-
-Once the experiments have finished (there are no jobs left in the jobs directory), you can copy the data locally again with:
-
-#+begin_src async-shell
-./sync.py download --ip <ip-of-machine> --clean
-#+end_src
-
-Then, we can collate the data. TODO, maybe add more words here?
-
-#+begin_src async-shell
-./query.py update est_cycles -t latest --commit
-./query.py update diospyros -t latest --commit
-#+end_src
-
-*** Make Plots
-
-Navigate to =server/figs= and then running the following two commands will generate the cycle performance graph and the compile time graph.
-
-#+begin_src async-shell :dir (sgt/dir "server" "figs")
-./R/generate.R cycle_performance
-./R/generate.R compile_time
-#+end_src
-
-These are generated as pdfs in =server/figs=.
-
-** Exploration of the effect of pruning (Figure 6)
-
-*** Generate data
-
-#+begin_src async-shell
-./jobs.py pruning
-./jobs.py "estimate:pruning" --after pruning
-#+end_src
-
-Upload the jobs to the server.
-
-#+begin_src async-shell
-./sync.py upload --ip <ip-of-machine> --clean
-#+end_src
-
-Once they are finished, you can download them.
-
-#+begin_src async-shell
-./sync.py download --ip <ip-of-machine> --clean
-#+end_src
-
-Finally, run the pruning query over the returned data.
-
-#+begin_src async-shell
-./query.py update pruning -t latest --commit
-#+end_src
-
-*** Make Plots
-
-You can generate the pruning figure with the following command:
-
-#+begin_src async-shell :dir (sgt/dir "server" "figs")
-cd figs
-./R/generate.R pruning
-#+end_src
-
-** Exploration of time spent generating rules (Figure 7)
-
-Impact of the timeout for rule generation on performance of kernels compiled by Isaria. Investing more time into rule generation has little impact for small kernels, although larger kernels benefit from finding more vectorization rules.
-
-*** Generate Data
-
-There are two stages to the data generation. We first need to generate rulesets. You can skip this step and just use the provided rulesets if you don't want to spend the time generating new rulesets.
-
-#+begin_src async-shell
-./jobs.py ruleset_synthesis
-#+end_src
-
-If you want to use the provided rulesets, use the following command to generate some new jobs.
-
-#+begin_src async-shell
-./jobs.py ruleset_ablation --rulesets rulesets/ablation
-./jobs.py "estimate:ruleset_ablation"
-#+end_src
-
-*TODO:* Otherwise, this command will use the generated rulesets.
-
-#+begin_src async-shell
-TODO
-#+end_src
-
-Generate the estimation jobs for ruleset_ablation
-
-#+begin_src async-shell
-./jobs.py "estimate:ruleset_ablation" --after ruleset_ablation
-#+end_src
-
-Then you can do the standard thing of uploading the jobs, waiting for them to complete, and then downloading the results.
-
-#+begin_src async-shell
-./sync.py upload --ip <ip-of-machine> --clean
-./sync.py download --ip <ip-of-machine> --clean
-#+end_src
-
-Finally, you can run the query to extract the data that we need from the results.
-
-#+begin_src async-shell
-./query.py update ruleset_ablation -t latest --commit
-#+end_src
-
-*** Make Plots
-
-** Adding new instructions (Table 2)
-
-*** Generate Data
-*** Make Plots
-
-** Exploring the effect of alpha and beta parameters (Figure 8 & 9)
-
-*** Generate Data
-*** Make Plots
-
-* Old
-** Generating all the data
-:PROPERTIES:
-:header-args:async-shell: :name jobs :results none :dir (sgt/dir "server")
-:END:
-
-*** DONE Overall Performance (Figure 4)
-CLOSED: [2023-09-19 Tue 10:19]
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
-:END:
-
-**** Comp-gen Numbers
-
-First generate the jobs.
-
-#+begin_src async-shell
-./jobs.py overall_performance
-#+end_src
-
-Take a look at what is generated in =server/jobs=
-
-Then copy them to the server. The =--clean= flag removes the local copies of the jobs once they have been uploaded to the server.
-
-#+begin_src async-shell
-./sync.py upload --name isaria --dir "~/jobs" --clean
-#+end_src
-
-**** Diospyros Numbers
-
-#+begin_src async-shell
-./jobs.py diospyros
-#+end_src
-
-#+begin_src async-shell
-./sync.py upload --name isaria --dir "~/jobs" --clean
-#+end_src
-
-**** Estimation
-
-Run the estimation job
-
-#+begin_src async-shell
-./jobs.py "estimate:performance"
-./sync.py update --name isaria --dir "~/jobs" --clean
-#+end_src
-
-**** Download results
-
-#+begin_src async-shell
-./sync.py download --name isaria --dir "~/completed"
-#+end_src
-
-*** DONE Compilation Time (Figure 5)
-CLOSED: [2023-09-20 Wed 10:09]
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2023-09-20 Wed 10:09]
-:END:
-
-This uses the overall performance numbers. No new experiments needed.
-
-*** DONE Pruning (Figure 6)
-CLOSED: [2023-09-19 Tue 10:19]
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2023-09-19 Tue 10:19]
-:END:
-
-This needs the pruning experiments.
-
-#+begin_src async-shell
-./jobs.py pruning
-#+end_src
-
-Upload the jobs.
-
-#+begin_src async-shell
-./sync.py upload --name isaria --dir "~/jobs" --clean
-#+end_src
-
-*** TODO Ruleset Ablation (Figure 7)
-
-We first need to synthesize rulesets.
-
-The following command will generate the jobs needed for that.
-
-#+begin_src async-shell
-./jobs.py ruleset_synthesis
-#+end_src
-
-Then we need to compile them with Isaria.
-
-And generate estimation for them. This requires the rulesets existing. If they don't, the job creation can't exist. I would like to be able to start these jobs with the rulesets pre-existing. I probably should put them somewhere else, and then have the person copy them to the right location and name them the right things? Or maybe I don't need them to name them the right things.
-
-*TODO*: run this after running ruleset synthesis
-
-#+begin_src async-shell
-./jobs.py ruleset_ablation
-#+end_src
-
-#+begin_src async-shell
-./jobs.py "estimate:ruleset_ablation"
-#+end_src
-
-*** TODO New Instructions (Table 2)
-
-This generates the new rulesets.
-
-#+begin_src async-shell
-./jobs.py new_instructions_ruleset
-#+end_src
-
-And this runs Isaria on them. However, this job seems wack. Because I'm adding rules?? And hardcoding the synthesis path. I should probably change it.
-
-#+begin_src async-shell
-./jobs.py test_instruction_ruleset
-#+end_src
-
-*** TODO Rule Distribution (Figure 8)
-
-This doesn't require any more experiments. We can just grab one of the rule_distribution.csv that we have generated from above. Or maybe we should just generate it from the ruleset directly. I should probably do that.
-
-*** DONE Alpha Beta Ablation (Figure 9)
-CLOSED: [2023-09-19 Tue 11:29]
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2023-09-19 Tue 11:29]
-:END:
-
-#+begin_src async-shell
-./jobs.py alpha_beta_ablation
-#+end_src
-
-* TODO Making a change
-
-TODO write this section.
 
 * Nitty-Gritty details
 

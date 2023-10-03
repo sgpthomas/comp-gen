@@ -111,12 +111,13 @@ def _make_figure(fig: str):
             check_data(["instruction.csv"], experiment_name="instruction_ablation")
             call_generate("instruction_ablation", "table2")
         case "all":
-            _make_figure("4")
-            _make_figure("5")
-            _make_figure("6")
-            _make_figure("7")
-            _make_figure("8")
-            _make_figure("9")
+            _make_figure("figure4")
+            _make_figure("figure5")
+            _make_figure("figure6")
+            _make_figure("figure7")
+            _make_figure("figure8")
+            _make_figure("figure9")
+            _make_figure("table2")
         case _:
             raise Exception("Unreachable")
 

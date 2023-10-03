@@ -13,7 +13,6 @@ pruning <- function() {
       params=rewrite_params(params)
     ) %>%
     select(params, cycles, time) %>%
-    
     pivot_longer(
       cols = -c(params),
       names_to="name",
@@ -87,5 +86,5 @@ pruning <- function() {
       panel.grid.minor.y = element_line(color="grey", linewidth=0.1),
 
       plot.margin = margin(1, 0, 1, 0)
-      )
+    )
 }
