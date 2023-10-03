@@ -823,8 +823,6 @@ def fast_ruleset_ablation(
     """
 
     conv_2d_sizes = [
-        (3, 3, 2, 2),
-        (3, 3, 3, 3),
         (3, 5, 3, 3),
         (4, 4, 3, 3),
         (8, 8, 3, 3),
@@ -834,7 +832,7 @@ def fast_ruleset_ablation(
         rs = list(
             map(
                 lambda x: rulesets[x],
-                ["timeout_60", "timeout_600", "timeout_6000", "timeout_60000"],
+                ["timeout_600", "timeout_6000", "timeout_60000"],
             )
         )
     else:
@@ -846,7 +844,7 @@ def fast_ruleset_ablation(
             Path("jobs"),
             size,
             r,
-            make_config(timeout=1800),
+            make_config(timeout=180),
             key="ruleset_ablation",
             after=after,
             memlimit=memlimit,

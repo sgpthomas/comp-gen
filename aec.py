@@ -222,9 +222,8 @@ def gen_data(experiment, all, no_wait, ip, name):
 
         case "ruleset_ablation":
             if all:
-                raise NotImplementedError("Not yet tested")
                 # jobs("ruleset_synthesis")
-                # jobs("ruleset_ablation", rulesets="rulesets/ablation")
+                jobs("ruleset_ablation", rulesets="rulesets/ablation")
             else:
                 jobs("fast_ruleset_ablation", rulesets="rulesets/ablation")
 
@@ -236,7 +235,7 @@ def gen_data(experiment, all, no_wait, ip, name):
                     "ruleset_ablation",
                     name=name,
                     ip=ip,
-                    estimated_time=2400 if not all else None,
+                    estimated_time=600 if not all else None,
                 )
 
         case "new_instructions":
@@ -258,7 +257,12 @@ def gen_data(experiment, all, no_wait, ip, name):
             sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
-                wait_then_process("alpha_beta", name=name, ip=ip)
+                wait_then_process(
+                    "alpha_beta",
+                    name=name,
+                    ip=ip,
+                    estimated_time=600 if not all else None,
+                )
 
         case _:
             raise Exception("Unreachable")

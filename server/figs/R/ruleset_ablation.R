@@ -33,13 +33,12 @@ ruleset_ablation <- function() {
     filter(ruleset > 0) %>%
     filter(ruleset != 43200) %>%
     filter(ruleset != 86400) %>%
-    print(n=100) %>%
     mutate(
       # calculate speedup against the second item in every group
       ## across(cycles:cost, ~ .[1] / .)
       cycles=baseline / cycles
       ## across(cycles:cost, ~ .[3] / .)
-    ) %>% print(n=10)
+    )
 
   data %>%
     ggplot(aes(
@@ -67,7 +66,7 @@ ruleset_ablation <- function() {
     scale_y_continuous(
       labels=c("0.25$\\times$", "1$\\times$", "4$\\times$", "16$\\times$"),
       breaks=c(0.25, 1, 4, 16),
-      limits=c(0.1, 16),
+      limits=c(0.1, 32),
       expand=c(0, 0),
       trans="log2"
     ) +
