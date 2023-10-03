@@ -30,6 +30,7 @@ def check_data(data: List[str], *, experiment_name: str):
 
 def call_generate(name: str, destination: str):
     sp.run(f"./R/generate.R {name}", shell=True, cwd="server/figs")
+    sp.run("mkdir -p output", shell=True)
     sp.run(f"cp server/figs/{name}.pdf output/{destination}.pdf", shell=True)
 
 
