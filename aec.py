@@ -155,8 +155,8 @@ def _process_data(experiment, ip, name):
         case "alpha_beta":
             query("alpha_beta")
 
-        case _:
-            raise Exception("Unreachable")
+        case x:
+            raise Exception(f"Unreachable: {x}")
 
 
 @click.group()
@@ -250,10 +250,10 @@ def gen_data(experiment, all, no_wait, ip, name):
 
             if not no_wait:
                 wait_then_process(
-                    "instruction",
+                    "new_instructions",
                     name=name,
                     ip=ip,
-                    estimated_time=600 if not all else None,
+                    estimated_time=500 if not all else None,
                 )
 
         case "alpha_beta":

@@ -1,5 +1,5 @@
-index,date,benchmark,param,exp,rules,cycles,cost,dir
-0,Apr18-1245,qr-decomp,3,75,sqrtsgn_muls,1174,127927554.695,completed/qr-decomp_3/75
-1,Apr18-1245,qr-decomp,3,78,base,1198,161993024.56,completed/qr-decomp_3/78
-2,Apr18-1245,qr-decomp,3,76,sqrtsgn,1178,127927556.695,completed/qr-decomp_3/76
-3,Apr18-1245,qr-decomp,3,77,muls,1192,161992964.56,completed/qr-decomp_3/77
+index,date,benchmark,params,exp,rules,cycles,cost,dir
+0,Oct03-1605,qr-decomp,3,Oct03-2106-L7RQN,sqrtsgn_muls,489,129431966.98899996,completed/qr-decomp_3/Oct03-2106-L7RQN
+1,Oct03-1605,qr-decomp,3,Oct03-2112-EIJNQ,muls,482,163521473.221,completed/qr-decomp_3/Oct03-2112-EIJNQ
+2,Oct03-1605,qr-decomp,3,Oct03-2112-OIPAT,base,508,163521481.221,completed/qr-decomp_3/Oct03-2112-OIPAT
+3,Oct03-1605,qr-decomp,3,Oct03-2106-6AGZY,sqrtsgn,484,129431969.98899996,completed/qr-decomp_3/Oct03-2106-6AGZY

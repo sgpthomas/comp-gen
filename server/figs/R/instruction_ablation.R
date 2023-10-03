@@ -14,12 +14,15 @@ instruction_ablation <- function() {
     show_col_types=F,
     progress=F,
     col_names=T
-  ) %>%
-    filter(benchmark == "qr-decomp") %>%
+  ) %>% filter(benchmark == "qr-decomp")
+
+  base <- (data %>% filter(rules == "base"))$cycles
+
+  data <- data %>%
     mutate(
       muls=if_else(str_detect(rules, "muls"), "VecMulSub", "No VecMulSub"),
       sqrtsgn=if_else(str_detect(rules, "sqrtsgn"), "VecSqrtSgn", "No VecSqrtSgn"),
-      speedup=(1198.0 / cycles) * 100,
+      speedup=(base / cycles) * 100,
       show=if_else(speedup >= 100,
                    str_c("+", round(speedup-100, 1), "%"),
                    str_c("-", 100-speedup, "%"))
