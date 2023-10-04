@@ -31,3 +31,12 @@ Cargo.lock
 *.synctex.gz
 /aec/latex/ae.pdf
 /aec/latex/*.out
+
+# don't track changes to data files
+/server/figs/data/alpha_beta.csv
+/server/figs/data/diospyros.csv
+/server/figs/data/est_cycles.csv
+/server/figs/data/instruction.csv
+/server/figs/data/pruning.csv
+/server/figs/data/rule_distribution.csv
+/server/figs/data/ruleset_ablation.csv
