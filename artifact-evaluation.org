@@ -99,11 +99,13 @@ Running the following command will launch the pruning experiments.
 ./run.sh ./aec.py gen-data pruning --ip $EXP_SERVER
 #+end_src
 
-Once the command has completed, you can regenerate the figures.
+Once the command has completed, you can regenerate the figure.
 
 ** Exploration of time spent generating rules (Figure 7)
 
 *** Make figure
+
+Run the following command to generate the figure using the pre-existing data.
 
 #+begin_src async-shell
 ./run.sh ./aec.py make figure7
@@ -111,13 +113,19 @@ Once the command has completed, you can regenerate the figures.
 
 *** Running experiments (Estimated time: 10 minutes)
 
+Running the following command will launch the ruleset_ablation experiments.
+
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data ruleset_ablation --ip $EXP_SERVER
 #+end_src
 
+Once the command has completed, you can regenerate the figure.
+
 ** Adding new instructions (Table 2)
 
 *** Make table
+
+Run the following command to generate the table using the pre-existing data.
 
 #+begin_src async-shell
 ./run.sh ./aec.py make table2
@@ -125,13 +133,19 @@ Once the command has completed, you can regenerate the figures.
 
 *** Running experiments (Estimated time: 10 minutes)
 
+Running the following command will launch the new instructions experiments.
+
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data new_instructions --ip $EXP_SERVER
 #+end_src
 
+Once the command has completed, you can regenerate the figure.
+
 ** Exploring the effect of alpha and beta (Figures 8 & 9)
 
 *** Make figure
+
+Run the following commands to generate the figures using the pre-existing data.
 
 #+begin_src async-shell
 ./run.sh ./aec.py make figure8
@@ -140,9 +154,13 @@ Once the command has completed, you can regenerate the figures.
 
 *** Run experiments (Estimated time: 10 minutes)
 
+Running the following command will launch the alpha beta ablation experiments.
+
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data alpha_beta --ip $EXP_SERVER
 #+end_src
+
+Once the command has completed, you can regenerate the figures.
 
 * Cleanup
 
