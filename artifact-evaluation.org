@@ -1,8 +1,5 @@
 #+title: Artifact Evaluation ASPLOS'24 AEC Spring
 
-Website: https://sites.google.com/view/asplos24aec/home
-HotCRP: https://asplos24aec-spring.hotcrp.com/
-
 Here are the instructions to reproduce all of the figures in our paper.
 
 Many of our experiments require large amounts of memory to complete, and access to proprietary tools to compile kernels for the Tensilica architecture and perform cycle estimation. Educational licenses are available for free [[https://www.cadence.com/en_US/home/company/cadence-academic-network/university-program.html][here]], but we also separate out the generation of the data from the making of plots. We provide all of the data that we used for the paper.
