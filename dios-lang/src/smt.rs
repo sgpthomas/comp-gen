@@ -45,7 +45,6 @@ impl SmtEquals for lang::VecLang {
         // if we can translate egg to z3 for both lhs, and rhs, then
         // run the z3 solver. otherwise fallback to fuzz_equals
         if let (Some(lexpr), Some(rexpr)) = (&left, &right) {
-            debug!("z3 check {} != {}", lexpr, rexpr);
 
             // check to see if lexpr is NOT equal to rexpr.
             // if we can't find a counter example to this
@@ -53,16 +52,15 @@ impl SmtEquals for lang::VecLang {
             solver.assert(&lexpr._eq(rexpr).not());
 
             let smt = match solver.check() {
-                z3::SatResult::Unsat => true,
+                z3::SatResult::Unsat => {debug!("z3 check {} != {}", lexpr, rexpr);
+                debug!("z3 result: {}", true);true},
                 z3::SatResult::Unknown | z3::SatResult::Sat => false,
             };
-
-            debug!("z3 result: {smt}");
-
+            
             smt
         } else {
             warn!("Couldn't translate {lhs} or {rhs} to smt");
-            Self::fuzz_equals(lhs, rhs, false)
+            Self::fuzz_equals(lhs, rhs, true)
         }
     }
 }
@@ -161,6 +159,11 @@ pub fn egg_to_z3<'a>(
             // an attempt to support vector operators.
             // I think I should just be able to map them
             // on to their scalar counter parts.
+            // lang::VecLang::Add([x, y]) => {
+            //     let x_int = &buf[usize::from(*x)];
+            //     let y_int = &buf[usize::from(*y)];
+            //     buf.push(x_int + y_int);
+            // }
             lang::VecLang::VecAdd([x, y]) => {
                 let x_int = &buf[usize::from(*x)];
                 let y_int = &buf[usize::from(*y)];
@@ -250,6 +253,7 @@ pub fn egg_to_z3<'a>(
 
                 buf.push(sqrt_int * neg_sgn)
             }
+            // JB
             lang::VecLang::Vec(inner) if inner.len() == 1 => {
                 let x = inner[0];
                 let x_int = &buf[usize::from(x)];

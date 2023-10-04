@@ -36,7 +36,7 @@ Trying =comp-gen= on the [[https://github.com/bytecodealliance/rfcs/blob/main/ac
 
 ** Using Ruler 2.0
 
-Experimenting with how deeper rules change results. We have this note in the paper about increasing the number of rules that apply in each phase let's use get away with using fewer iterations of equality saturation.
+Experimenting with how deeper rules change results. We have this note in the paper about increasing the number of rules that apply in each phase let's us get away with using fewer iterations of equality saturation.
 
 In general, it seems like there is this tradeoff between how much exploration we do in rule-generation vs. at equality saturation time. Understanding what this trade-off is seems interesting and probably useful.
 

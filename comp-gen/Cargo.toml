@@ -17,4 +17,7 @@ plotlib = "0.5.1"
 ruler = { path = "../../ruler" }
 serde = "1.0.145"
 statrs = "0.16.0"
-egg = "0.9.5"
+[dependencies.egg]
+git = "https://github.com/sgpthomas/egg.git"
+branch = "update_symbol_table"
+features = ["serde-1"]

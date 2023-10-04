@@ -1,0 +1,2292 @@
+warning: unused import: `File`
+ --> /Users/benginow/Projects/isaria/comp-gen/ruler/src/logger.rs:2:29
+  |
+2 |     fs::{self, OpenOptions, File},
+  |                             ^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `ruler` (lib) generated 1 warning (run `cargo fix --lib -p ruler` to apply 1 suggestion)
+warning: unused import: `egg`
+ --> /Users/benginow/Projects/isaria/comp-gen/comp-gen/src/phases.rs:2:5
+  |
+2 | use egg::*;
+  |     ^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `egg`
+ --> /Users/benginow/Projects/isaria/comp-gen/comp-gen/src/run.rs:4:5
+  |
+4 | use egg::*;
+  |     ^^^
+
+warning: `comp-gen` (lib) generated 2 warnings
+   Compiling dios-lang v0.1.0 (/Users/benginow/Projects/isaria/comp-gen/dios-lang)
+warning: unused import: `egg::*`
+ --> src/error.rs:1:5
+  |
+1 | use egg::*;
+  |     ^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `ruler::SynthLanguage`
+ --> src/fuzz.rs:5:5
+  |
+5 |     ruler::SynthLanguage,
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `vecs_eq`
+  --> src/fuzz.rs:12:36
+   |
+12 |     synthesis::{split_into_halves, vecs_eq},
+   |                                    ^^^^^^^
+
+warning: unused import: `egg::*`
+ --> src/handwritten.rs:1:5
+  |
+1 | use egg::*;
+  |     ^^^^^^
+
+warning: unused imports: `FromOp`, `define_language`
+ --> src/lang.rs:1:17
+  |
+1 | use egg::{self, define_language, Id, Language, FromOp};
+  |                 ^^^^^^^^^^^^^^^                ^^^^^^
+
+warning: unused import: `egg::*`
+  --> src/main.rs:15:5
+   |
+15 | use egg::*;
+   |     ^^^^^^
+
+warning: unreachable statement
+   --> src/synthesis.rs:722:5
+    |
+719 |     return Ok(other_rules);
+    |     ---------------------- any code following this expression is unreachable
+...
+722 |     let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unreachable statement
+    |
+    = note: `#[warn(unreachable_code)]` on by default
+
+warning: unused import: `egg`
+ --> src/desugar.rs:3:5
+  |
+3 | use egg::*;
+  |     ^^^
+
+warning: variable `length` is assigned to, but never used
+  --> src/fuzz.rs:77:17
+   |
+77 |         let mut length = 0;
+   |                 ^^^^^^
+   |
+   = note: consider using `_length` instead
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: value assigned to `length` is never read
+  --> src/fuzz.rs:93:13
+   |
+93 |             length = cvec.len();
+   |             ^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+   = note: `#[warn(unused_assignments)]` on by default
+
+warning: function `vecs_eq` is never used
+   --> src/synthesis.rs:657:8
+    |
+657 | pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
+    |        ^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: `dios-lang` (bin "dios-lang") generated 11 warnings (run `cargo fix --bin "dios-lang"` to apply 6 suggestions)
+    Finished dev [unoptimized + debuginfo] target(s) in 4.63s
+warning: the following packages contain code that will be rejected by a future version of Rust: svg v0.7.2
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running `target/debug/dios-lang synth ruleset.json --config ../server/jobs/Sep06-1640-synthesis-259200-0/synth.json`
+[2023-09-28T02:28:36Z INFO  dios_lang::synthesis] running with config: DiosConfig {
+        constants: [
+            DiosConstant {
+                kind: "int",
+                value: 0,
+            },
+            DiosConstant {
+                kind: "int",
+                value: 1,
+            },
+        ],
+        seed_rules: [],
+        unops: [
+            "sqrt",
+            "sgn",
+            "neg",
+            "VecSgn",
+            "VecSqrt",
+            "VecNeg",
+            "Vec",
+        ],
+        binops: [
+            "/",
+            "+",
+            "*",
+            "-",
+            "VecAdd",
+            "VecMinus",
+            "VecMul",
+            "VecDiv",
+        ],
+        triops: [
+            "VecMAC",
+            "VecMULS",
+        ],
+        use_scalar: true,
+        use_vector: true,
+        variable_duplication: false,
+        vector_size: 1,
+        always_smt: true,
+        smt_fallback: true,
+    }
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] initializing variables
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] cvec size: 20
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] cvec for `a`: [Some(Int(-57)), Some(Int(-25)), Some(Int(64)), Some(Int(14)), Some(Int(97)), Some(Int(13)), Some(Int(67)), Some(Int(-36)), Some(Int(-61)), Some(Int(-16)), Some(Vec([Int(2)])), Some(Vec([Int(-42)])), Some(Vec([Int(-17)])), Some(Vec([Int(26)])), Some(Vec([Int(-54)])), Some(Vec([Int(-11)])), Some(Vec([Int(73)])), Some(Vec([Int(-32)])), Some(Vec([Int(50)])), Some(Vec([Int(-88)]))]
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] cvec for `b`: [Some(Int(-46)), Some(Int(-9)), Some(Int(-81)), Some(Int(-52)), Some(Int(-6)), Some(Int(17)), Some(Int(-49)), Some(Int(3)), Some(Int(38)), Some(Int(49)), Some(Vec([Int(-44)])), Some(Vec([Int(-95)])), Some(Vec([Int(-80)])), Some(Vec([Int(-16)])), Some(Vec([Int(-65)])), Some(Vec([Int(-77)])), Some(Vec([Int(-17)])), Some(Vec([Int(42)])), Some(Vec([Int(-55)])), Some(Vec([Int(-8)]))]
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] cvec for `c`: [Some(Int(-90)), Some(Int(-44)), Some(Int(-6)), Some(Int(28)), Some(Int(86)), Some(Int(29)), Some(Int(15)), Some(Int(94)), Some(Int(-18)), Some(Int(-15)), Some(Vec([Int(69)])), Some(Vec([Int(-36)])), Some(Vec([Int(-91)])), Some(Vec([Int(83)])), Some(Vec([Int(89)])), Some(Vec([Int(-74)])), Some(Vec([Int(-52)])), Some(Vec([Int(76)])), Some(Vec([Int(22)])), Some(Vec([Int(11)]))]
+[2023-09-28T02:28:37Z DEBUG dios_lang::synthesis] cvec for `d`: [Some(Int(20)), Some(Int(74)), Some(Int(-32)), Some(Int(-35)), Some(Int(36)), Some(Int(88)), Some(Int(78)), Some(Int(19)), Some(Int(57)), Some(Int(22)), Some(Vec([Int(-37)])), Some(Vec([Int(-43)])), Some(Vec([Int(-39)])), Some(Vec([Int(90)])), Some(Vec([Int(-35)])), Some(Vec([Int(55)])), Some(Vec([Int(35)])), Some(Vec([Int(74)])), Some(Vec([Int(-52)])), Some(Vec([Int(-3)]))]
+[2023-09-28T02:28:37Z INFO  egg::egraph] REBUILT! in 0.010s
+      Old: hc size 7664, eclasses: 7664
+      New: hc size 7664, eclasses: 7664
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:37Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:37Z INFO  egg::run] Search time: 0.000001583
+[2023-09-28T02:28:37Z INFO  egg::run] Apply time: 0.000002417
+[2023-09-28T02:28:37Z INFO  egg::egraph] REBUILT! in 0.005s
+      Old: hc size 7664, eclasses: 7664
+      New: hc size 7664, eclasses: 7664
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:37Z INFO  egg::run] Rebuild time: 0.01691125
+[2023-09-28T02:28:37Z INFO  egg::run] Size: n=7664, e=7664
+[2023-09-28T02:28:37Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:37Z INFO  egg::egraph] REBUILT! in 0.005s
+      Old: hc size 7664, eclasses: 7664
+      New: hc size 7664, eclasses: 7664
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:37Z INFO  egg::egraph] REBUILT! in 0.010s
+      Old: hc size 7664, eclasses: 7664
+      New: hc size 7664, eclasses: 7664
+      unions: 0, trimmed nodes: 0
+starting fast cvec match with 7664 eclasses
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (- c (* a b)) != (- c (* b a))
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (- c (* b a)) != (- c (* a b))
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 584, eclasses: 584
+      New: hc size 584, eclasses: 584
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.00005075
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000058666
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 584, eclasses: 581
+      New: hc size 584, eclasses: 581
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000900166
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=584, e=581
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000009916
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000018625
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 584, eclasses: 581
+      New: hc size 584, eclasses: 581
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000891416
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=584, e=581
+[2023-09-28T02:28:40Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 584, eclasses: 581
+      New: hc size 584, eclasses: 581
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 584, eclasses: 581
+      New: hc size 584, eclasses: 581
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (+ (* a b) c) != (+ (* b a) c)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (+ (* b a) c) != (+ (* a b) c)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 578, eclasses: 578
+      New: hc size 578, eclasses: 578
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000025708
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.00006
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 578, eclasses: 575
+      New: hc size 578, eclasses: 575
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000912583
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=578, e=575
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000010417
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000019917
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 578, eclasses: 575
+      New: hc size 578, eclasses: 575
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000894834
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=578, e=575
+[2023-09-28T02:28:40Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 578, eclasses: 575
+      New: hc size 578, eclasses: 575
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 578, eclasses: 575
+      New: hc size 578, eclasses: 575
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (* a b) != (* b a)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (* b a) != (* a b)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 571, eclasses: 571
+      New: hc size 571, eclasses: 571
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000123583
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000398917
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 571, eclasses: 540
+      New: hc size 571, eclasses: 525
+      unions: 15, trimmed nodes: 15
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.001082875
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=571, e=525
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000079459
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000145834
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 571, eclasses: 525
+      New: hc size 571, eclasses: 525
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000857375
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=571, e=525
+[2023-09-28T02:28:40Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 571, eclasses: 525
+      New: hc size 571, eclasses: 525
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 571, eclasses: 525
+      New: hc size 571, eclasses: 525
+      unions: 0, trimmed nodes: 15
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (+ a b) != (+ b a)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 check (+ b a) != (+ a b)
+[2023-09-28T02:28:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 558
+      New: hc size 558, eclasses: 558
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000166625
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000527125
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 559, eclasses: 518
+      New: hc size 559, eclasses: 502
+      unions: 16, trimmed nodes: 16
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.0010835
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=559, e=502
+[2023-09-28T02:28:40Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:40Z INFO  egg::run] Search time: 0.000107375
+[2023-09-28T02:28:40Z INFO  egg::run] Apply time: 0.000194708
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 559, eclasses: 502
+      New: hc size 559, eclasses: 502
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::run] Rebuild time: 0.000841209
+[2023-09-28T02:28:40Z INFO  egg::run] Size: n=559, e=502
+[2023-09-28T02:28:40Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 559, eclasses: 502
+      New: hc size 559, eclasses: 502
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 502
+      New: hc size 558, eclasses: 502
+      unions: 0, trimmed nodes: 16
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (+ a b) != (+ b a)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (+ b a) != (+ a b)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 540, eclasses: 540
+      New: hc size 540, eclasses: 540
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000246667
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000753917
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 541, eclasses: 482
+      New: hc size 541, eclasses: 456
+      unions: 26, trimmed nodes: 26
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.001233375
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=541, e=456
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000162792
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000282667
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 541, eclasses: 456
+      New: hc size 541, eclasses: 456
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.0008005
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=541, e=456
+[2023-09-28T02:28:41Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 541, eclasses: 456
+      New: hc size 541, eclasses: 456
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 540, eclasses: 456
+      New: hc size 540, eclasses: 456
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (* a b) != (* b a)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (* b a) != (* a b)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 516, eclasses: 516
+      New: hc size 516, eclasses: 516
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.00028425
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000867708
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 517, eclasses: 453
+      New: hc size 517, eclasses: 427
+      unions: 26, trimmed nodes: 26
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.001198917
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=517, e=427
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000167166
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000301709
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 517, eclasses: 427
+      New: hc size 517, eclasses: 427
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.000765083
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=517, e=427
+[2023-09-28T02:28:41Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 517, eclasses: 427
+      New: hc size 517, eclasses: 427
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 516, eclasses: 427
+      New: hc size 516, eclasses: 427
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (- (- a b)) != (- b a)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (- b a) != (- (- a b))
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 502
+      New: hc size 502, eclasses: 502
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000281125
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.00090575
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 512, eclasses: 439
+      New: hc size 512, eclasses: 416
+      unions: 23, trimmed nodes: 23
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.001140458
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=512, e=416
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000234875
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000333375
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 512, eclasses: 416
+      New: hc size 512, eclasses: 416
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.000785084
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=512, e=416
+[2023-09-28T02:28:41Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 512, eclasses: 416
+      New: hc size 512, eclasses: 416
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 416
+      New: hc size 502, eclasses: 416
+      unions: 0, trimmed nodes: 23
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (- (- a b)) != (- b a)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (- b a) != (- (- a b))
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 502
+      New: hc size 502, eclasses: 502
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000345584
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.001293875
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 538, eclasses: 431
+      New: hc size 538, eclasses: 408
+      unions: 23, trimmed nodes: 23
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.00117025
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=538, e=408
+[2023-09-28T02:28:41Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:41Z INFO  egg::run] Search time: 0.000301166
+[2023-09-28T02:28:41Z INFO  egg::run] Apply time: 0.000422083
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 538, eclasses: 408
+      New: hc size 538, eclasses: 408
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::run] Rebuild time: 0.000803958
+[2023-09-28T02:28:41Z INFO  egg::run] Size: n=538, e=408
+[2023-09-28T02:28:41Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 538, eclasses: 408
+      New: hc size 538, eclasses: 408
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 408
+      New: hc size 502, eclasses: 408
+      unions: 0, trimmed nodes: 23
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (- a (- b)) != (+ b a)
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 check (+ b a) != (- a (- b))
+[2023-09-28T02:28:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 502
+      New: hc size 502, eclasses: 502
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000457375
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.001733833
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 573, eclasses: 431
+      New: hc size 573, eclasses: 401
+      unions: 30, trimmed nodes: 33
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.001336125
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=573, e=401
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.0003905
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.000956625
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 621, eclasses: 421
+      New: hc size 621, eclasses: 421
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.000921042
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=621, e=421
+[2023-09-28T02:28:42Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 621, eclasses: 421
+      New: hc size 621, eclasses: 421
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 502, eclasses: 394
+      New: hc size 502, eclasses: 394
+      unions: 0, trimmed nodes: 23
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (- a (- b)) != (+ b a)
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (+ b a) != (- a (- b))
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 487, eclasses: 487
+      New: hc size 487, eclasses: 487
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.00041875
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.001742958
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 565, eclasses: 421
+      New: hc size 565, eclasses: 395
+      unions: 26, trimmed nodes: 28
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.001283583
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=565, e=395
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000443667
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.001140583
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 632, eclasses: 421
+      New: hc size 632, eclasses: 421
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.001004083
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=632, e=421
+[2023-09-28T02:28:42Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 632, eclasses: 421
+      New: hc size 632, eclasses: 421
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 487, eclasses: 384
+      New: hc size 487, eclasses: 384
+      unions: 0, trimmed nodes: 21
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (+ (- a) b) != (- b a)
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (- b a) != (+ (- a) b)
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 478, eclasses: 478
+      New: hc size 478, eclasses: 478
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000408292
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.00171
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 555, eclasses: 411
+      New: hc size 555, eclasses: 389
+      unions: 22, trimmed nodes: 23
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.00118925
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=555, e=389
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000427167
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.001330083
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 639, eclasses: 416
+      New: hc size 639, eclasses: 416
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.001018042
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=639, e=416
+[2023-09-28T02:28:42Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 639, eclasses: 416
+      New: hc size 639, eclasses: 416
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 478, eclasses: 378
+      New: hc size 478, eclasses: 378
+      unions: 0, trimmed nodes: 20
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (+ (- a) b) != (- b a)
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 check (- b a) != (+ (- a) b)
+[2023-09-28T02:28:42Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 472, eclasses: 472
+      New: hc size 472, eclasses: 472
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000444459
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.00192675
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 567, eclasses: 403
+      New: hc size 567, eclasses: 381
+      unions: 22, trimmed nodes: 23
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.001214667
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=567, e=381
+[2023-09-28T02:28:42Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:42Z INFO  egg::run] Search time: 0.000538208
+[2023-09-28T02:28:42Z INFO  egg::run] Apply time: 0.002044625
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 705, eclasses: 407
+      New: hc size 705, eclasses: 407
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:42Z INFO  egg::run] Rebuild time: 0.00109525
+[2023-09-28T02:28:42Z INFO  egg::run] Size: n=705, e=407
+[2023-09-28T02:28:42Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 705, eclasses: 407
+      New: hc size 705, eclasses: 407
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:42Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 472, eclasses: 370
+      New: hc size 472, eclasses: 370
+      unions: 0, trimmed nodes: 20
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 check (- (* a b)) != (* b (- a))
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 check (* b (- a)) != (- (* a b))
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 463, eclasses: 463
+      New: hc size 463, eclasses: 463
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:43Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:43Z INFO  egg::run] Search time: 0.000481417
+[2023-09-28T02:28:43Z INFO  egg::run] Apply time: 0.001872084
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 554, eclasses: 396
+      New: hc size 554, eclasses: 375
+      unions: 21, trimmed nodes: 23
+[2023-09-28T02:28:43Z INFO  egg::run] Rebuild time: 0.001184667
+[2023-09-28T02:28:43Z INFO  egg::run] Size: n=554, e=375
+[2023-09-28T02:28:43Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:43Z INFO  egg::run] Search time: 0.000554041
+[2023-09-28T02:28:43Z INFO  egg::run] Apply time: 0.001951542
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 686, eclasses: 401
+      New: hc size 686, eclasses: 401
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:43Z INFO  egg::run] Rebuild time: 0.001029125
+[2023-09-28T02:28:43Z INFO  egg::run] Size: n=686, e=401
+[2023-09-28T02:28:43Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 686, eclasses: 401
+      New: hc size 686, eclasses: 401
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 463, eclasses: 364
+      New: hc size 463, eclasses: 364
+      unions: 0, trimmed nodes: 20
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 check (* (- a) b) != (- (* b a))
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 check (- (* b a)) != (* (- a) b)
+[2023-09-28T02:28:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 447, eclasses: 447
+      New: hc size 447, eclasses: 447
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:43Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:43Z INFO  egg::run] Search time: 0.000527166
+[2023-09-28T02:28:43Z INFO  egg::run] Apply time: 0.002067583
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 538, eclasses: 375
+      New: hc size 538, eclasses: 358
+      unions: 17, trimmed nodes: 22
+[2023-09-28T02:28:43Z INFO  egg::run] Rebuild time: 0.001182625
+[2023-09-28T02:28:43Z INFO  egg::run] Size: n=538, e=358
+[2023-09-28T02:28:43Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:43Z INFO  egg::run] Search time: 0.000622459
+[2023-09-28T02:28:43Z INFO  egg::run] Apply time: 0.002025416
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 670, eclasses: 384
+      New: hc size 670, eclasses: 384
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:43Z INFO  egg::run] Rebuild time: 0.001077
+[2023-09-28T02:28:43Z INFO  egg::run] Size: n=670, e=384
+[2023-09-28T02:28:43Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 670, eclasses: 384
+      New: hc size 670, eclasses: 384
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 447, eclasses: 347
+      New: hc size 447, eclasses: 347
+      unions: 0, trimmed nodes: 19
+[2023-09-28T02:28:51Z DEBUG dios_lang::smt] z3 check (ite (= (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0) 1 (- 1))) != (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))
+[2023-09-28T02:28:51Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:51Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) != (ite (= (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0) 1 (- 1)))
+[2023-09-28T02:28:51Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:51Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 331
+      New: hc size 331, eclasses: 331
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:51Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:51Z INFO  egg::run] Search time: 0.000458042
+[2023-09-28T02:28:51Z INFO  egg::run] Apply time: 0.001850666
+[2023-09-28T02:28:51Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 431, eclasses: 277
+      New: hc size 431, eclasses: 264
+      unions: 13, trimmed nodes: 21
+[2023-09-28T02:28:51Z INFO  egg::run] Rebuild time: 0.000929167
+[2023-09-28T02:28:51Z INFO  egg::run] Size: n=431, e=264
+[2023-09-28T02:28:51Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:51Z INFO  egg::run] Search time: 0.000584375
+[2023-09-28T02:28:51Z INFO  egg::run] Apply time: 0.001870625
+[2023-09-28T02:28:51Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 545, eclasses: 286
+      New: hc size 545, eclasses: 286
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:51Z INFO  egg::run] Rebuild time: 0.0008625
+[2023-09-28T02:28:51Z INFO  egg::run] Size: n=545, e=286
+[2023-09-28T02:28:51Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:51Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 545, eclasses: 286
+      New: hc size 545, eclasses: 286
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:51Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 255
+      New: hc size 331, eclasses: 255
+      unions: 0, trimmed nodes: 18
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (ite (= (- a) 0) 0 (ite (> (- a) 0) 1 (- 1))) != (- (ite (= a 0) 0 (ite (> a 0) 1 (- 1))))
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (- (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))) != (ite (= (- a) 0) 0 (ite (> (- a) 0) 1 (- 1)))
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 331
+      New: hc size 331, eclasses: 331
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000484542
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.001927459
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 431, eclasses: 271
+      New: hc size 431, eclasses: 257
+      unions: 14, trimmed nodes: 26
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.000989834
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=431, e=257
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000628041
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.001976834
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 281
+      New: hc size 558, eclasses: 281
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.000870625
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=558, e=281
+[2023-09-28T02:28:52Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 281
+      New: hc size 558, eclasses: 281
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 248
+      New: hc size 331, eclasses: 248
+      unions: 0, trimmed nodes: 22
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (ite (= (- a) 0) 0 (ite (> (- a) 0) (- 1) 1)) != (- (ite (= a 0) 0 (ite (> a 0) (- 1) 1)))
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (- (ite (= a 0) 0 (ite (> a 0) (- 1) 1))) != (ite (= (- a) 0) 0 (ite (> (- a) 0) (- 1) 1))
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 331
+      New: hc size 331, eclasses: 331
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000529625
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.001923041
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 431, eclasses: 265
+      New: hc size 431, eclasses: 248
+      unions: 17, trimmed nodes: 30
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.001003541
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=431, e=248
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000653458
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.002045125
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 559, eclasses: 272
+      New: hc size 559, eclasses: 272
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.000868792
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=559, e=272
+[2023-09-28T02:28:52Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 559, eclasses: 272
+      New: hc size 559, eclasses: 272
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 331, eclasses: 239
+      New: hc size 331, eclasses: 239
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (sqrt a) != (sqrt a)
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (sqrt a) != (sqrt a)
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 329, eclasses: 329
+      New: hc size 329, eclasses: 329
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.00059275
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.002047875
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 429, eclasses: 259
+      New: hc size 429, eclasses: 239
+      unions: 20, trimmed nodes: 33
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.0010575
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=429, e=239
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000706875
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.002028292
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 557, eclasses: 263
+      New: hc size 557, eclasses: 263
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.000868375
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=557, e=263
+[2023-09-28T02:28:52Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 557, eclasses: 263
+      New: hc size 557, eclasses: 263
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 329, eclasses: 230
+      New: hc size 329, eclasses: 230
+      unions: 0, trimmed nodes: 29
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (- a) != (- a)
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 check (- a) != (- a)
+[2023-09-28T02:28:52Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 324, eclasses: 324
+      New: hc size 324, eclasses: 324
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.000618958
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.002098458
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 424, eclasses: 250
+      New: hc size 424, eclasses: 229
+      unions: 21, trimmed nodes: 35
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.001142375
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=424, e=229
+[2023-09-28T02:28:52Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:52Z INFO  egg::run] Search time: 0.00097775
+[2023-09-28T02:28:52Z INFO  egg::run] Apply time: 0.002227417
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 254
+      New: hc size 558, eclasses: 254
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:28:52Z INFO  egg::run] Rebuild time: 0.000894375
+[2023-09-28T02:28:52Z INFO  egg::run] Size: n=558, e=254
+[2023-09-28T02:28:52Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 558, eclasses: 254
+      New: hc size 558, eclasses: 254
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:52Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 324, eclasses: 220
+      New: hc size 324, eclasses: 220
+      unions: 0, trimmed nodes: 31
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (- a) != (- (- (- a)))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (- (- (- a))) != (- a)
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 316
+      New: hc size 316, eclasses: 316
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000633417
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002235167
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 435, eclasses: 250
+      New: hc size 435, eclasses: 231
+      unions: 19, trimmed nodes: 36
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001081417
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=435, e=231
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000843333
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002328
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 577, eclasses: 256
+      New: hc size 577, eclasses: 256
+      unions: 0, trimmed nodes: 4
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.00092075
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=577, e=256
+[2023-09-28T02:28:53Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 577, eclasses: 256
+      New: hc size 577, eclasses: 256
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 216
+      New: hc size 316, eclasses: 216
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) != (ite (= (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+                 0
+                 (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1))
+            0)
+         0
+         (ite (> (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+                      0
+                      (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1))
+                 0)
+              (- 1)
+              1))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (ite (= (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+                 0
+                 (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1))
+            0)
+         0
+         (ite (> (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+                      0
+                      (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1))
+                 0)
+              (- 1)
+              1)) != (ite (= a 0) 0 (ite (> a 0) (- 1) 1))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 316
+      New: hc size 316, eclasses: 316
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000703041
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.00249225
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 464, eclasses: 258
+      New: hc size 465, eclasses: 242
+      unions: 16, trimmed nodes: 38
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.0010865
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=465, e=242
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000945334
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002545541
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 618, eclasses: 270
+      New: hc size 618, eclasses: 270
+      unions: 0, trimmed nodes: 6
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001053916
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=618, e=270
+[2023-09-28T02:28:53Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 618, eclasses: 270
+      New: hc size 618, eclasses: 270
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 215
+      New: hc size 316, eclasses: 215
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (- a) != (- (- (- a)))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (- (- (- a))) != (- a)
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 316
+      New: hc size 316, eclasses: 316
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000716875
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002722417
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 489, eclasses: 264
+      New: hc size 491, eclasses: 249
+      unions: 15, trimmed nodes: 43
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001183792
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=491, e=249
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.001164042
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002969417
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 656, eclasses: 279
+      New: hc size 656, eclasses: 279
+      unions: 0, trimmed nodes: 8
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001045
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=656, e=279
+[2023-09-28T02:28:53Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 656, eclasses: 279
+      New: hc size 656, eclasses: 279
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 214
+      New: hc size 316, eclasses: 214
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (- (- (sqrt a))) != (sqrt a)
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (sqrt a) != (- (- (sqrt a)))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 316
+      New: hc size 316, eclasses: 316
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.00075575
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.002958667
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 517, eclasses: 275
+      New: hc size 519, eclasses: 261
+      unions: 14, trimmed nodes: 45
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001365708
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=519, e=261
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.001417
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.003183291
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 690, eclasses: 293
+      New: hc size 690, eclasses: 293
+      unions: 0, trimmed nodes: 8
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.00110725
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=690, e=293
+[2023-09-28T02:28:53Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 690, eclasses: 293
+      New: hc size 690, eclasses: 293
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 213
+      New: hc size 316, eclasses: 213
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (sqrt a) != (sqrt (- (- a)))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (sqrt (- (- a))) != (sqrt a)
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 316
+      New: hc size 316, eclasses: 316
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.000804791
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.003159417
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 528, eclasses: 277
+      New: hc size 530, eclasses: 261
+      unions: 16, trimmed nodes: 48
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001341792
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=530, e=261
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.001482792
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.003288709
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 704, eclasses: 293
+      New: hc size 704, eclasses: 293
+      unions: 0, trimmed nodes: 9
+[2023-09-28T02:28:53Z INFO  egg::run] Rebuild time: 0.001175375
+[2023-09-28T02:28:53Z INFO  egg::run] Size: n=704, e=293
+[2023-09-28T02:28:53Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 704, eclasses: 293
+      New: hc size 704, eclasses: 293
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 316, eclasses: 212
+      New: hc size 316, eclasses: 212
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (ite (= (+ a a) 0) 0 (ite (> (+ a a) 0) (- 1) 1)) != (ite (= a 0) 0 (ite (> a 0) (- 1) 1))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) != (ite (= (+ a a) 0) 0 (ite (> (+ a a) 0) (- 1) 1))
+[2023-09-28T02:28:53Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:53Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 314
+      New: hc size 314, eclasses: 314
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:53Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:53Z INFO  egg::run] Search time: 0.00083125
+[2023-09-28T02:28:53Z INFO  egg::run] Apply time: 0.003508375
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 565, eclasses: 295
+      New: hc size 567, eclasses: 279
+      unions: 16, trimmed nodes: 47
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001474
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=567, e=279
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.001650166
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.004428666
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 874, eclasses: 363
+      New: hc size 874, eclasses: 361
+      unions: 2, trimmed nodes: 21
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001465875
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=874, e=361
+[2023-09-28T02:28:54Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 874, eclasses: 361
+      New: hc size 874, eclasses: 361
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 210
+      New: hc size 314, eclasses: 210
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (sqrt a) != (sqrt (- (- a)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (sqrt (- (- a))) != (sqrt a)
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 314
+      New: hc size 314, eclasses: 314
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.00096075
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.003881042
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 587, eclasses: 296
+      New: hc size 589, eclasses: 284
+      unions: 12, trimmed nodes: 48
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001463834
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=589, e=284
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.001761917
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.004687542
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 896, eclasses: 365
+      New: hc size 896, eclasses: 364
+      unions: 1, trimmed nodes: 22
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001531083
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=896, e=364
+[2023-09-28T02:28:54Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 896, eclasses: 364
+      New: hc size 896, eclasses: 364
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 209
+      New: hc size 314, eclasses: 209
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (sqrt a) != (- (- (sqrt a)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (- (- (sqrt a))) != (sqrt a)
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 314
+      New: hc size 314, eclasses: 314
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.000908708
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.00399275
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 627, eclasses: 312
+      New: hc size 629, eclasses: 300
+      unions: 12, trimmed nodes: 53
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001520667
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=629, e=300
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.00213625
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.0049915
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 937, eclasses: 386
+      New: hc size 937, eclasses: 384
+      unions: 2, trimmed nodes: 24
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001633875
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=937, e=384
+[2023-09-28T02:28:54Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 937, eclasses: 384
+      New: hc size 937, eclasses: 384
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 208
+      New: hc size 314, eclasses: 208
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (ite (= (- (- a)) 0) 0 (ite (> (- (- a)) 0) 1 (- 1))) != (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) != (ite (= (- (- a)) 0) 0 (ite (> (- (- a)) 0) 1 (- 1)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 314
+      New: hc size 314, eclasses: 314
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.000962959
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.004387959
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 642, eclasses: 313
+      New: hc size 644, eclasses: 301
+      unions: 12, trimmed nodes: 57
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.00157425
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=644, e=301
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.00222575
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.005528459
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1010, eclasses: 420
+      New: hc size 1010, eclasses: 417
+      unions: 3, trimmed nodes: 36
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001869542
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=1010, e=417
+[2023-09-28T02:28:54Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1010, eclasses: 417
+      New: hc size 1010, eclasses: 417
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 207
+      New: hc size 314, eclasses: 207
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (ite (= (+ a a) 0) 0 (ite (> (+ a a) 0) 1 (- 1))) != (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) != (ite (= (+ a a) 0) 0 (ite (> (+ a a) 0) 1 (- 1)))
+[2023-09-28T02:28:54Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 314
+      New: hc size 314, eclasses: 314
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.001031459
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.004577709
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 696, eclasses: 339
+      New: hc size 698, eclasses: 327
+      unions: 12, trimmed nodes: 58
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.001726583
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=698, e=327
+[2023-09-28T02:28:54Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:54Z INFO  egg::run] Search time: 0.002490292
+[2023-09-28T02:28:54Z INFO  egg::run] Apply time: 0.007673458
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1286, eclasses: 550
+      New: hc size 1286, eclasses: 547
+      unions: 3, trimmed nodes: 37
+[2023-09-28T02:28:54Z INFO  egg::run] Rebuild time: 0.002348875
+[2023-09-28T02:28:54Z INFO  egg::run] Size: n=1286, e=547
+[2023-09-28T02:28:54Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1286, eclasses: 547
+      New: hc size 1286, eclasses: 547
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:54Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 314, eclasses: 206
+      New: hc size 314, eclasses: 206
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:28:57Z DEBUG dios_lang::smt] z3 check (- a a) != (ite (= (- a a) 0) 0 (ite (> (- a a) 0) 1 (- 1)))
+[2023-09-28T02:28:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:57Z DEBUG dios_lang::smt] z3 check (ite (= (- a a) 0) 0 (ite (> (- a a) 0) 1 (- 1))) != (- a a)
+[2023-09-28T02:28:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 306, eclasses: 306
+      New: hc size 306, eclasses: 306
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:57Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:57Z INFO  egg::run] Search time: 0.001148542
+[2023-09-28T02:28:57Z INFO  egg::run] Apply time: 0.004560875
+[2023-09-28T02:28:57Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 678, eclasses: 329
+      New: hc size 679, eclasses: 320
+      unions: 9, trimmed nodes: 53
+[2023-09-28T02:28:57Z INFO  egg::run] Rebuild time: 0.001560333
+[2023-09-28T02:28:57Z INFO  egg::run] Size: n=679, e=320
+[2023-09-28T02:28:57Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:57Z INFO  egg::run] Search time: 0.002475333
+[2023-09-28T02:28:57Z INFO  egg::run] Apply time: 0.007166708
+[2023-09-28T02:28:57Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1257, eclasses: 542
+      New: hc size 1257, eclasses: 539
+      unions: 3, trimmed nodes: 29
+[2023-09-28T02:28:57Z INFO  egg::run] Rebuild time: 0.002299708
+[2023-09-28T02:28:57Z INFO  egg::run] Size: n=1257, e=539
+[2023-09-28T02:28:57Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1257, eclasses: 539
+      New: hc size 1257, eclasses: 539
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 306, eclasses: 202
+      New: hc size 306, eclasses: 202
+      unions: 0, trimmed nodes: 27
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 check (ite (= (- a a) 0) 0 (ite (> (- a a) 0) (- 1) 1)) != (- a a)
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 check (- a a) != (ite (= (- a a) 0) 0 (ite (> (- a a) 0) (- 1) 1))
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 303
+      New: hc size 303, eclasses: 303
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:59Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:59Z INFO  egg::run] Search time: 0.001047916
+[2023-09-28T02:28:59Z INFO  egg::run] Apply time: 0.004365208
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 673, eclasses: 328
+      New: hc size 674, eclasses: 318
+      unions: 10, trimmed nodes: 53
+[2023-09-28T02:28:59Z INFO  egg::run] Rebuild time: 0.001573833
+[2023-09-28T02:28:59Z INFO  egg::run] Size: n=674, e=318
+[2023-09-28T02:28:59Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:59Z INFO  egg::run] Search time: 0.002413875
+[2023-09-28T02:28:59Z INFO  egg::run] Apply time: 0.007282583
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1246, eclasses: 538
+      New: hc size 1246, eclasses: 535
+      unions: 3, trimmed nodes: 28
+[2023-09-28T02:28:59Z INFO  egg::run] Rebuild time: 0.00226525
+[2023-09-28T02:28:59Z INFO  egg::run] Size: n=1246, e=535
+[2023-09-28T02:28:59Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1246, eclasses: 535
+      New: hc size 1246, eclasses: 535
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 200
+      New: hc size 303, eclasses: 200
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 check (ite (= (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0) (- 1) 1)) != (ite (= a 0) 0 (ite (> a 0) (- 1) 1))
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) != (ite (= (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) 0) (- 1) 1))
+[2023-09-28T02:28:59Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 303
+      New: hc size 303, eclasses: 303
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:59Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:28:59Z INFO  egg::run] Search time: 0.001082084
+[2023-09-28T02:28:59Z INFO  egg::run] Apply time: 0.004404084
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 675, eclasses: 327
+      New: hc size 676, eclasses: 316
+      unions: 11, trimmed nodes: 55
+[2023-09-28T02:28:59Z INFO  egg::run] Rebuild time: 0.001621292
+[2023-09-28T02:28:59Z INFO  egg::run] Size: n=676, e=316
+[2023-09-28T02:28:59Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:28:59Z INFO  egg::run] Search time: 0.002565917
+[2023-09-28T02:28:59Z INFO  egg::run] Apply time: 0.007480167
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1268, eclasses: 544
+      New: hc size 1268, eclasses: 540
+      unions: 4, trimmed nodes: 34
+[2023-09-28T02:28:59Z INFO  egg::run] Rebuild time: 0.002333125
+[2023-09-28T02:28:59Z INFO  egg::run] Size: n=1268, e=540
+[2023-09-28T02:28:59Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1268, eclasses: 540
+      New: hc size 1268, eclasses: 540
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:28:59Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 199
+      New: hc size 303, eclasses: 199
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 check (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1)) != (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 check (ite (= a 0) 0 (ite (> a 0) 1 (- 1))) != (ite (= (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0)
+         0
+         (ite (> (ite (= a 0) 0 (ite (> a 0) (- 1) 1)) 0) (- 1) 1))
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 303
+      New: hc size 303, eclasses: 303
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:00Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:00Z INFO  egg::run] Search time: 0.00117625
+[2023-09-28T02:29:00Z INFO  egg::run] Apply time: 0.004513875
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 675, eclasses: 323
+      New: hc size 676, eclasses: 313
+      unions: 10, trimmed nodes: 58
+[2023-09-28T02:29:00Z INFO  egg::run] Rebuild time: 0.001661208
+[2023-09-28T02:29:00Z INFO  egg::run] Size: n=676, e=313
+[2023-09-28T02:29:00Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:00Z INFO  egg::run] Search time: 0.002686625
+[2023-09-28T02:29:00Z INFO  egg::run] Apply time: 0.0074425
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1266, eclasses: 540
+      New: hc size 1266, eclasses: 537
+      unions: 3, trimmed nodes: 34
+[2023-09-28T02:29:00Z INFO  egg::run] Rebuild time: 0.002251667
+[2023-09-28T02:29:00Z INFO  egg::run] Size: n=1266, e=537
+[2023-09-28T02:29:00Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1266, eclasses: 537
+      New: hc size 1266, eclasses: 537
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 198
+      New: hc size 303, eclasses: 198
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 check (div (- a) a) != (div a (- a))
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 check (div a (- a)) != (div (- a) a)
+[2023-09-28T02:29:00Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 303
+      New: hc size 303, eclasses: 303
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:00Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:00Z INFO  egg::run] Search time: 0.001119084
+[2023-09-28T02:29:00Z INFO  egg::run] Apply time: 0.00455525
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 675, eclasses: 322
+      New: hc size 676, eclasses: 312
+      unions: 10, trimmed nodes: 58
+[2023-09-28T02:29:00Z INFO  egg::run] Rebuild time: 0.001594416
+[2023-09-28T02:29:00Z INFO  egg::run] Size: n=676, e=312
+[2023-09-28T02:29:00Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:00Z INFO  egg::run] Search time: 0.002756084
+[2023-09-28T02:29:00Z INFO  egg::run] Apply time: 0.007653375
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1266, eclasses: 539
+      New: hc size 1266, eclasses: 536
+      unions: 3, trimmed nodes: 34
+[2023-09-28T02:29:00Z INFO  egg::run] Rebuild time: 0.002278166
+[2023-09-28T02:29:00Z INFO  egg::run] Size: n=1266, e=536
+[2023-09-28T02:29:00Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1266, eclasses: 536
+      New: hc size 1266, eclasses: 536
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:00Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 303, eclasses: 197
+      New: hc size 303, eclasses: 197
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:29:03Z DEBUG dios_lang::smt] z3 check (div (- a) a) != (div a (- a))
+[2023-09-28T02:29:03Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:03Z DEBUG dios_lang::smt] z3 check (div a (- a)) != (div (- a) a)
+[2023-09-28T02:29:03Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:03Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 291, eclasses: 291
+      New: hc size 291, eclasses: 291
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:03Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:03Z INFO  egg::run] Search time: 0.001179375
+[2023-09-28T02:29:03Z INFO  egg::run] Apply time: 0.004492583
+[2023-09-28T02:29:03Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 639, eclasses: 300
+      New: hc size 640, eclasses: 290
+      unions: 10, trimmed nodes: 58
+[2023-09-28T02:29:03Z INFO  egg::run] Rebuild time: 0.0015635
+[2023-09-28T02:29:03Z INFO  egg::run] Size: n=640, e=290
+[2023-09-28T02:29:03Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:03Z INFO  egg::run] Search time: 0.002525125
+[2023-09-28T02:29:03Z INFO  egg::run] Apply time: 0.007004375
+[2023-09-28T02:29:03Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 1209, eclasses: 509
+      New: hc size 1209, eclasses: 507
+      unions: 2, trimmed nodes: 32
+[2023-09-28T02:29:03Z INFO  egg::run] Rebuild time: 0.002204125
+[2023-09-28T02:29:03Z INFO  egg::run] Size: n=1209, e=507
+[2023-09-28T02:29:03Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:03Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 1209, eclasses: 507
+      New: hc size 1209, eclasses: 507
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:03Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 291, eclasses: 185
+      New: hc size 291, eclasses: 185
+      unions: 0, trimmed nodes: 26
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 check (- a) != (- 0 a)
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 check (- 0 a) != (- a)
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 218, eclasses: 218
+      New: hc size 218, eclasses: 218
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:12Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:12Z INFO  egg::run] Search time: 0.000878333
+[2023-09-28T02:29:12Z INFO  egg::run] Apply time: 0.003297542
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 445, eclasses: 186
+      New: hc size 449, eclasses: 161
+      unions: 25, trimmed nodes: 74
+[2023-09-28T02:29:12Z INFO  egg::run] Rebuild time: 0.001441375
+[2023-09-28T02:29:12Z INFO  egg::run] Size: n=449, e=161
+[2023-09-28T02:29:12Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:12Z INFO  egg::run] Search time: 0.001547084
+[2023-09-28T02:29:12Z INFO  egg::run] Apply time: 0.004940125
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 807, eclasses: 259
+      New: hc size 809, eclasses: 246
+      unions: 13, trimmed nodes: 55
+[2023-09-28T02:29:12Z INFO  egg::run] Rebuild time: 0.001690458
+[2023-09-28T02:29:12Z INFO  egg::run] Size: n=809, e=246
+[2023-09-28T02:29:12Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 809, eclasses: 246
+      New: hc size 809, eclasses: 246
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 218, eclasses: 107
+      New: hc size 218, eclasses: 107
+      unions: 0, trimmed nodes: 38
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 check (- a a) != (* 0 a)
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 check (* 0 a) != (- a a)
+[2023-09-28T02:29:12Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 216
+      New: hc size 216, eclasses: 216
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:12Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:12Z INFO  egg::run] Search time: 0.0009015
+[2023-09-28T02:29:12Z INFO  egg::run] Apply time: 0.003217541
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 444, eclasses: 183
+      New: hc size 448, eclasses: 153
+      unions: 30, trimmed nodes: 86
+[2023-09-28T02:29:12Z INFO  egg::run] Rebuild time: 0.001468
+[2023-09-28T02:29:12Z INFO  egg::run] Size: n=448, e=153
+[2023-09-28T02:29:12Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:12Z INFO  egg::run] Search time: 0.001503917
+[2023-09-28T02:29:12Z INFO  egg::run] Apply time: 0.004980875
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 798, eclasses: 247
+      New: hc size 798, eclasses: 234
+      unions: 13, trimmed nodes: 55
+[2023-09-28T02:29:12Z INFO  egg::run] Rebuild time: 0.001775084
+[2023-09-28T02:29:12Z INFO  egg::run] Size: n=798, e=234
+[2023-09-28T02:29:12Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 798, eclasses: 234
+      New: hc size 798, eclasses: 234
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:12Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 102
+      New: hc size 216, eclasses: 102
+      unions: 0, trimmed nodes: 41
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 check (div a 1) != (- (- a))
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 check (- (- a)) != (div a 1)
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 216
+      New: hc size 216, eclasses: 216
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:13Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:13Z INFO  egg::run] Search time: 0.001033084
+[2023-09-28T02:29:13Z INFO  egg::run] Apply time: 0.003430958
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 444, eclasses: 179
+      New: hc size 448, eclasses: 142
+      unions: 37, trimmed nodes: 100
+[2023-09-28T02:29:13Z INFO  egg::run] Rebuild time: 0.00167375
+[2023-09-28T02:29:13Z INFO  egg::run] Size: n=448, e=142
+[2023-09-28T02:29:13Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:13Z INFO  egg::run] Search time: 0.001592125
+[2023-09-28T02:29:13Z INFO  egg::run] Apply time: 0.005052458
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 827, eclasses: 228
+      New: hc size 827, eclasses: 215
+      unions: 13, trimmed nodes: 56
+[2023-09-28T02:29:13Z INFO  egg::run] Rebuild time: 0.00173775
+[2023-09-28T02:29:13Z INFO  egg::run] Size: n=827, e=215
+[2023-09-28T02:29:13Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 827, eclasses: 215
+      New: hc size 827, eclasses: 215
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 94
+      New: hc size 216, eclasses: 94
+      unions: 0, trimmed nodes: 45
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 check (- (- a)) != (* a 1)
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 check (* a 1) != (- (- a))
+[2023-09-28T02:29:13Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 216
+      New: hc size 216, eclasses: 216
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:13Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:13Z INFO  egg::run] Search time: 0.001002
+[2023-09-28T02:29:13Z INFO  egg::run] Apply time: 0.003438
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 444, eclasses: 175
+      New: hc size 448, eclasses: 132
+      unions: 43, trimmed nodes: 114
+[2023-09-28T02:29:13Z INFO  egg::run] Rebuild time: 0.001924791
+[2023-09-28T02:29:13Z INFO  egg::run] Size: n=448, e=132
+[2023-09-28T02:29:13Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:13Z INFO  egg::run] Search time: 0.001759167
+[2023-09-28T02:29:13Z INFO  egg::run] Apply time: 0.005333458
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 848, eclasses: 210
+      New: hc size 848, eclasses: 197
+      unions: 13, trimmed nodes: 58
+[2023-09-28T02:29:13Z INFO  egg::run] Rebuild time: 0.001720625
+[2023-09-28T02:29:13Z INFO  egg::run] Size: n=848, e=197
+[2023-09-28T02:29:13Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 848, eclasses: 197
+      New: hc size 848, eclasses: 197
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:13Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 216, eclasses: 87
+      New: hc size 216, eclasses: 87
+      unions: 0, trimmed nodes: 49
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 check (- a) != (div a (- 1))
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 check (div a (- 1)) != (- a)
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 204, eclasses: 204
+      New: hc size 204, eclasses: 204
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:14Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:14Z INFO  egg::run] Search time: 0.001008041
+[2023-09-28T02:29:14Z INFO  egg::run] Apply time: 0.003481417
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 441, eclasses: 163
+      New: hc size 445, eclasses: 128
+      unions: 35, trimmed nodes: 104
+[2023-09-28T02:29:14Z INFO  egg::run] Rebuild time: 0.001646625
+[2023-09-28T02:29:14Z INFO  egg::run] Size: n=445, e=128
+[2023-09-28T02:29:14Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:14Z INFO  egg::run] Search time: 0.001813084
+[2023-09-28T02:29:14Z INFO  egg::run] Apply time: 0.006167417
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 883, eclasses: 206
+      New: hc size 883, eclasses: 193
+      unions: 13, trimmed nodes: 60
+[2023-09-28T02:29:14Z INFO  egg::run] Rebuild time: 0.001855084
+[2023-09-28T02:29:14Z INFO  egg::run] Size: n=883, e=193
+[2023-09-28T02:29:14Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 883, eclasses: 193
+      New: hc size 883, eclasses: 193
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 204, eclasses: 83
+      New: hc size 204, eclasses: 83
+      unions: 0, trimmed nodes: 42
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 check (- a) != (- 0 a)
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 check (- 0 a) != (- a)
+[2023-09-28T02:29:14Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 204, eclasses: 204
+      New: hc size 204, eclasses: 204
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:14Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:14Z INFO  egg::run] Search time: 0.001038208
+[2023-09-28T02:29:14Z INFO  egg::run] Apply time: 0.003719667
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 445, eclasses: 161
+      New: hc size 449, eclasses: 125
+      unions: 36, trimmed nodes: 108
+[2023-09-28T02:29:14Z INFO  egg::run] Rebuild time: 0.001936458
+[2023-09-28T02:29:14Z INFO  egg::run] Size: n=449, e=125
+[2023-09-28T02:29:14Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:14Z INFO  egg::run] Search time: 0.001796083
+[2023-09-28T02:29:14Z INFO  egg::run] Apply time: 0.005960459
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 890, eclasses: 201
+      New: hc size 890, eclasses: 188
+      unions: 13, trimmed nodes: 60
+[2023-09-28T02:29:14Z INFO  egg::run] Rebuild time: 0.001906541
+[2023-09-28T02:29:14Z INFO  egg::run] Size: n=890, e=188
+[2023-09-28T02:29:14Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 890, eclasses: 188
+      New: hc size 890, eclasses: 188
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:14Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 204, eclasses: 80
+      New: hc size 204, eclasses: 80
+      unions: 0, trimmed nodes: 42
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 check (div a 1) != (- (- a))
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 check (- (- a)) != (div a 1)
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 202, eclasses: 202
+      New: hc size 202, eclasses: 202
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:15Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:15Z INFO  egg::run] Search time: 0.001130084
+[2023-09-28T02:29:15Z INFO  egg::run] Apply time: 0.00371425
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 441, eclasses: 160
+      New: hc size 445, eclasses: 124
+      unions: 36, trimmed nodes: 106
+[2023-09-28T02:29:15Z INFO  egg::run] Rebuild time: 0.001666708
+[2023-09-28T02:29:15Z INFO  egg::run] Size: n=445, e=124
+[2023-09-28T02:29:15Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:15Z INFO  egg::run] Search time: 0.001757875
+[2023-09-28T02:29:15Z INFO  egg::run] Apply time: 0.005902833
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 891, eclasses: 200
+      New: hc size 891, eclasses: 187
+      unions: 13, trimmed nodes: 60
+[2023-09-28T02:29:15Z INFO  egg::run] Rebuild time: 0.001856542
+[2023-09-28T02:29:15Z INFO  egg::run] Size: n=891, e=187
+[2023-09-28T02:29:15Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 891, eclasses: 187
+      New: hc size 891, eclasses: 187
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 202, eclasses: 79
+      New: hc size 202, eclasses: 79
+      unions: 0, trimmed nodes: 42
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 check (* a 1) != (- (- a))
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 check (- (- a)) != (* a 1)
+[2023-09-28T02:29:15Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 202, eclasses: 202
+      New: hc size 202, eclasses: 202
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:15Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:15Z INFO  egg::run] Search time: 0.001013583
+[2023-09-28T02:29:15Z INFO  egg::run] Apply time: 0.003482208
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 441, eclasses: 159
+      New: hc size 445, eclasses: 123
+      unions: 36, trimmed nodes: 106
+[2023-09-28T02:29:15Z INFO  egg::run] Rebuild time: 0.001707667
+[2023-09-28T02:29:15Z INFO  egg::run] Size: n=445, e=123
+[2023-09-28T02:29:15Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:15Z INFO  egg::run] Search time: 0.001908208
+[2023-09-28T02:29:15Z INFO  egg::run] Apply time: 0.006310291
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 899, eclasses: 200
+      New: hc size 899, eclasses: 187
+      unions: 13, trimmed nodes: 60
+[2023-09-28T02:29:15Z INFO  egg::run] Rebuild time: 0.001825833
+[2023-09-28T02:29:15Z INFO  egg::run] Size: n=899, e=187
+[2023-09-28T02:29:15Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 899, eclasses: 187
+      New: hc size 899, eclasses: 187
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:15Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 202, eclasses: 78
+      New: hc size 202, eclasses: 78
+      unions: 0, trimmed nodes: 42
+[2023-09-28T02:29:16Z DEBUG dios_lang::smt] z3 check (- a a) != (* 0 (ite (= a 0) 0 (ite (> a 0) 1 (- 1))))
+[2023-09-28T02:29:16Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:16Z DEBUG dios_lang::smt] z3 check (* 0 (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))) != (- a a)
+[2023-09-28T02:29:16Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:16Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 195, eclasses: 195
+      New: hc size 195, eclasses: 195
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:16Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:16Z INFO  egg::run] Search time: 0.001017166
+[2023-09-28T02:29:16Z INFO  egg::run] Apply time: 0.00331025
+[2023-09-28T02:29:16Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 426, eclasses: 156
+      New: hc size 430, eclasses: 121
+      unions: 35, trimmed nodes: 101
+[2023-09-28T02:29:16Z INFO  egg::run] Rebuild time: 0.00161125
+[2023-09-28T02:29:16Z INFO  egg::run] Size: n=430, e=121
+[2023-09-28T02:29:16Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:16Z INFO  egg::run] Search time: 0.001891708
+[2023-09-28T02:29:16Z INFO  egg::run] Apply time: 0.006194959
+[2023-09-28T02:29:16Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 883, eclasses: 196
+      New: hc size 883, eclasses: 183
+      unions: 13, trimmed nodes: 61
+[2023-09-28T02:29:16Z INFO  egg::run] Rebuild time: 0.001819791
+[2023-09-28T02:29:16Z INFO  egg::run] Size: n=883, e=183
+[2023-09-28T02:29:16Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:16Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 883, eclasses: 183
+      New: hc size 883, eclasses: 183
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:16Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 195, eclasses: 76
+      New: hc size 195, eclasses: 76
+      unions: 0, trimmed nodes: 42
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 check (div a (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1)))) != (- (- a))
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 check (- (- a)) != (div a (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))))
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 194
+      New: hc size 194, eclasses: 194
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:19Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:19Z INFO  egg::run] Search time: 0.001068167
+[2023-09-28T02:29:19Z INFO  egg::run] Apply time: 0.0033395
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 426, eclasses: 153
+      New: hc size 431, eclasses: 120
+      unions: 33, trimmed nodes: 98
+[2023-09-28T02:29:19Z INFO  egg::run] Rebuild time: 0.001651292
+[2023-09-28T02:29:19Z INFO  egg::run] Size: n=431, e=120
+[2023-09-28T02:29:19Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:19Z INFO  egg::run] Search time: 0.0019665
+[2023-09-28T02:29:19Z INFO  egg::run] Apply time: 0.006910125
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 930, eclasses: 195
+      New: hc size 930, eclasses: 182
+      unions: 13, trimmed nodes: 63
+[2023-09-28T02:29:19Z INFO  egg::run] Rebuild time: 0.0019245
+[2023-09-28T02:29:19Z INFO  egg::run] Size: n=930, e=182
+[2023-09-28T02:29:19Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 930, eclasses: 182
+      New: hc size 930, eclasses: 182
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 75
+      New: hc size 195, eclasses: 75
+      unions: 0, trimmed nodes: 41
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 check (* (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a) != (- (- a))
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 check (- (- a)) != (* (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a)
+[2023-09-28T02:29:19Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 194
+      New: hc size 194, eclasses: 194
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:19Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:19Z INFO  egg::run] Search time: 0.001145667
+[2023-09-28T02:29:19Z INFO  egg::run] Apply time: 0.003761459
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 429, eclasses: 152
+      New: hc size 434, eclasses: 119
+      unions: 33, trimmed nodes: 98
+[2023-09-28T02:29:19Z INFO  egg::run] Rebuild time: 0.001590459
+[2023-09-28T02:29:19Z INFO  egg::run] Size: n=434, e=119
+[2023-09-28T02:29:19Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:19Z INFO  egg::run] Search time: 0.002003833
+[2023-09-28T02:29:19Z INFO  egg::run] Apply time: 0.00745225
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 986, eclasses: 194
+      New: hc size 986, eclasses: 181
+      unions: 13, trimmed nodes: 65
+[2023-09-28T02:29:19Z INFO  egg::run] Rebuild time: 0.002060916
+[2023-09-28T02:29:19Z INFO  egg::run] Size: n=986, e=181
+[2023-09-28T02:29:19Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 986, eclasses: 181
+      New: hc size 986, eclasses: 181
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:19Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 74
+      New: hc size 195, eclasses: 74
+      unions: 0, trimmed nodes: 41
+[2023-09-28T02:29:20Z DEBUG dios_lang::smt] z3 check (- a a) != (* 0 a)
+[2023-09-28T02:29:20Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:20Z DEBUG dios_lang::smt] z3 check (* 0 a) != (- a a)
+[2023-09-28T02:29:20Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:20Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 194
+      New: hc size 194, eclasses: 194
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:20Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:20Z INFO  egg::run] Search time: 0.001229666
+[2023-09-28T02:29:20Z INFO  egg::run] Apply time: 0.003791083
+[2023-09-28T02:29:20Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 429, eclasses: 151
+      New: hc size 434, eclasses: 118
+      unions: 33, trimmed nodes: 98
+[2023-09-28T02:29:20Z INFO  egg::run] Rebuild time: 0.001604125
+[2023-09-28T02:29:20Z INFO  egg::run] Size: n=434, e=118
+[2023-09-28T02:29:20Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:20Z INFO  egg::run] Search time: 0.002008125
+[2023-09-28T02:29:20Z INFO  egg::run] Apply time: 0.007452459
+[2023-09-28T02:29:20Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 990, eclasses: 194
+      New: hc size 990, eclasses: 181
+      unions: 13, trimmed nodes: 66
+[2023-09-28T02:29:20Z INFO  egg::run] Rebuild time: 0.002063417
+[2023-09-28T02:29:20Z INFO  egg::run] Size: n=990, e=181
+[2023-09-28T02:29:20Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:20Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 990, eclasses: 181
+      New: hc size 990, eclasses: 181
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:20Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 194, eclasses: 73
+      New: hc size 195, eclasses: 73
+      unions: 0, trimmed nodes: 41
+[2023-09-28T02:29:40Z DEBUG dios_lang::smt] z3 check (- (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a) != (- 1 a)
+[2023-09-28T02:29:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:40Z DEBUG dios_lang::smt] z3 check (- 1 a) != (- (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a)
+[2023-09-28T02:29:40Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 159
+      New: hc size 159, eclasses: 159
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:40Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:40Z INFO  egg::run] Search time: 0.001004167
+[2023-09-28T02:29:40Z INFO  egg::run] Apply time: 0.00287225
+[2023-09-28T02:29:40Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 357, eclasses: 133
+      New: hc size 364, eclasses: 108
+      unions: 25, trimmed nodes: 68
+[2023-09-28T02:29:40Z INFO  egg::run] Rebuild time: 0.001400375
+[2023-09-28T02:29:40Z INFO  egg::run] Size: n=364, e=108
+[2023-09-28T02:29:40Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:40Z INFO  egg::run] Search time: 0.0019245
+[2023-09-28T02:29:40Z INFO  egg::run] Apply time: 0.006743167
+[2023-09-28T02:29:40Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 862, eclasses: 169
+      New: hc size 862, eclasses: 155
+      unions: 14, trimmed nodes: 78
+[2023-09-28T02:29:40Z INFO  egg::run] Rebuild time: 0.001904583
+[2023-09-28T02:29:40Z INFO  egg::run] Size: n=862, e=155
+[2023-09-28T02:29:40Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 862, eclasses: 155
+      New: hc size 862, eclasses: 155
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:40Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 62
+      New: hc size 162, eclasses: 62
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:29:41Z DEBUG dios_lang::smt] z3 check (div (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a) != (div 1 a)
+[2023-09-28T02:29:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:41Z DEBUG dios_lang::smt] z3 check (div 1 a) != (div (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) a)
+[2023-09-28T02:29:41Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 159
+      New: hc size 159, eclasses: 159
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:41Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:41Z INFO  egg::run] Search time: 0.000999084
+[2023-09-28T02:29:41Z INFO  egg::run] Apply time: 0.002767333
+[2023-09-28T02:29:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 358, eclasses: 130
+      New: hc size 365, eclasses: 107
+      unions: 23, trimmed nodes: 66
+[2023-09-28T02:29:41Z INFO  egg::run] Rebuild time: 0.001224834
+[2023-09-28T02:29:41Z INFO  egg::run] Size: n=365, e=107
+[2023-09-28T02:29:41Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:41Z INFO  egg::run] Search time: 0.001948416
+[2023-09-28T02:29:41Z INFO  egg::run] Apply time: 0.007088334
+[2023-09-28T02:29:41Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 869, eclasses: 168
+      New: hc size 873, eclasses: 150
+      unions: 18, trimmed nodes: 106
+[2023-09-28T02:29:41Z INFO  egg::run] Rebuild time: 0.002277959
+[2023-09-28T02:29:41Z INFO  egg::run] Size: n=873, e=150
+[2023-09-28T02:29:41Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 873, eclasses: 150
+      New: hc size 873, eclasses: 150
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:41Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 61
+      New: hc size 162, eclasses: 61
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:29:43Z DEBUG dios_lang::smt] z3 check (div 0 (ite (= a 0) 0 (ite (> a 0) 1 (- 1)))) != (div 0 a)
+[2023-09-28T02:29:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:43Z DEBUG dios_lang::smt] z3 check (div 0 a) != (div 0 (ite (= a 0) 0 (ite (> a 0) 1 (- 1))))
+[2023-09-28T02:29:43Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 159
+      New: hc size 159, eclasses: 159
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:43Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:43Z INFO  egg::run] Search time: 0.001032167
+[2023-09-28T02:29:43Z INFO  egg::run] Apply time: 0.002797166
+[2023-09-28T02:29:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 362, eclasses: 131
+      New: hc size 369, eclasses: 107
+      unions: 24, trimmed nodes: 67
+[2023-09-28T02:29:43Z INFO  egg::run] Rebuild time: 0.001228125
+[2023-09-28T02:29:43Z INFO  egg::run] Size: n=369, e=107
+[2023-09-28T02:29:43Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:43Z INFO  egg::run] Search time: 0.001973042
+[2023-09-28T02:29:43Z INFO  egg::run] Apply time: 0.007031833
+[2023-09-28T02:29:43Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 882, eclasses: 169
+      New: hc size 886, eclasses: 151
+      unions: 18, trimmed nodes: 107
+[2023-09-28T02:29:43Z INFO  egg::run] Rebuild time: 0.002217334
+[2023-09-28T02:29:43Z INFO  egg::run] Size: n=886, e=151
+[2023-09-28T02:29:43Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 886, eclasses: 151
+      New: hc size 886, eclasses: 151
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:43Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 60
+      New: hc size 162, eclasses: 60
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 check (div (- 0) a) != (div 0 a)
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 check (div 0 a) != (div (- 0) a)
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 159
+      New: hc size 159, eclasses: 159
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:44Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:44Z INFO  egg::run] Search time: 0.001200667
+[2023-09-28T02:29:44Z INFO  egg::run] Apply time: 0.002913042
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 365, eclasses: 130
+      New: hc size 372, eclasses: 106
+      unions: 24, trimmed nodes: 67
+[2023-09-28T02:29:44Z INFO  egg::run] Rebuild time: 0.001261125
+[2023-09-28T02:29:44Z INFO  egg::run] Size: n=372, e=106
+[2023-09-28T02:29:44Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:44Z INFO  egg::run] Search time: 0.002090375
+[2023-09-28T02:29:44Z INFO  egg::run] Apply time: 0.006864584
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 887, eclasses: 168
+      New: hc size 891, eclasses: 150
+      unions: 18, trimmed nodes: 107
+[2023-09-28T02:29:44Z INFO  egg::run] Rebuild time: 0.002414833
+[2023-09-28T02:29:44Z INFO  egg::run] Size: n=891, e=150
+[2023-09-28T02:29:44Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 891, eclasses: 150
+      New: hc size 891, eclasses: 150
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 59
+      New: hc size 162, eclasses: 59
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 check (div 0 (- a)) != (div 0 a)
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 check (div 0 a) != (div 0 (- a))
+[2023-09-28T02:29:44Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 159
+      New: hc size 159, eclasses: 159
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:44Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:29:44Z INFO  egg::run] Search time: 0.001190125
+[2023-09-28T02:29:44Z INFO  egg::run] Apply time: 0.002937083
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 368, eclasses: 129
+      New: hc size 374, eclasses: 105
+      unions: 24, trimmed nodes: 67
+[2023-09-28T02:29:44Z INFO  egg::run] Rebuild time: 0.001246041
+[2023-09-28T02:29:44Z INFO  egg::run] Size: n=374, e=105
+[2023-09-28T02:29:44Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:29:44Z INFO  egg::run] Search time: 0.002157917
+[2023-09-28T02:29:44Z INFO  egg::run] Apply time: 0.007045
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.001s
+      Old: hc size 894, eclasses: 168
+      New: hc size 898, eclasses: 150
+      unions: 18, trimmed nodes: 109
+[2023-09-28T02:29:44Z INFO  egg::run] Rebuild time: 0.002498166
+[2023-09-28T02:29:44Z INFO  egg::run] Size: n=898, e=150
+[2023-09-28T02:29:44Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 898, eclasses: 150
+      New: hc size 898, eclasses: 150
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:29:44Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 159, eclasses: 58
+      New: hc size 162, eclasses: 58
+      unions: 0, trimmed nodes: 28
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 check (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1))) != 1
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 check 1 != (ite (= 1 0) 0 (ite (> 1 0) 1 (- 1)))
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 7, eclasses: 7
+      New: hc size 7, eclasses: 7
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:30:57Z INFO  egg::run] Search time: 0.000090167
+[2023-09-28T02:30:57Z INFO  egg::run] Apply time: 0.000249542
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 27, eclasses: 13
+      New: hc size 27, eclasses: 13
+      unions: 0, trimmed nodes: 1
+[2023-09-28T02:30:57Z INFO  egg::run] Rebuild time: 0.000078625
+[2023-09-28T02:30:57Z INFO  egg::run] Size: n=27, e=13
+[2023-09-28T02:30:57Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:30:57Z INFO  egg::run] Search time: 0.000234458
+[2023-09-28T02:30:57Z INFO  egg::run] Apply time: 0.00080575
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 89, eclasses: 19
+      New: hc size 89, eclasses: 13
+      unions: 6, trimmed nodes: 20
+[2023-09-28T02:30:57Z INFO  egg::run] Rebuild time: 0.000324
+[2023-09-28T02:30:57Z INFO  egg::run] Size: n=89, e=13
+[2023-09-28T02:30:57Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 89, eclasses: 13
+      New: hc size 89, eclasses: 13
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 7, eclasses: 5
+      New: hc size 7, eclasses: 5
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 check (- 0) != 0
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 check 0 != (- 0)
+[2023-09-28T02:30:57Z DEBUG dios_lang::smt] z3 result: true
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 7, eclasses: 7
+      New: hc size 7, eclasses: 7
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:30:57Z INFO  egg::run] Search time: 0.000095208
+[2023-09-28T02:30:57Z INFO  egg::run] Apply time: 0.000254417
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 27, eclasses: 12
+      New: hc size 27, eclasses: 11
+      unions: 1, trimmed nodes: 5
+[2023-09-28T02:30:57Z INFO  egg::run] Rebuild time: 0.000100541
+[2023-09-28T02:30:57Z INFO  egg::run] Size: n=27, e=11
+[2023-09-28T02:30:57Z INFO  egg::run] 
+    Iteration 1
+[2023-09-28T02:30:57Z INFO  egg::run] Search time: 0.000221333
+[2023-09-28T02:30:57Z INFO  egg::run] Apply time: 0.000656959
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 75, eclasses: 14
+      New: hc size 75, eclasses: 11
+      unions: 3, trimmed nodes: 14
+[2023-09-28T02:30:57Z INFO  egg::run] Rebuild time: 0.000227875
+[2023-09-28T02:30:57Z INFO  egg::run] Size: n=75, e=11
+[2023-09-28T02:30:57Z INFO  egg::run] Stopping: IterationLimit(2)
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 75, eclasses: 11
+      New: hc size 75, eclasses: 11
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 7, eclasses: 4
+      New: hc size 7, eclasses: 4
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 0, eclasses: 0
+      New: hc size 0, eclasses: 0
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::run] 
+    Iteration 0
+[2023-09-28T02:30:57Z INFO  egg::run] Search time: 0.000025875
+[2023-09-28T02:30:57Z INFO  egg::run] Apply time: 0.000041875
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 0, eclasses: 0
+      New: hc size 0, eclasses: 0
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::run] Rebuild time: 0.000008125
+[2023-09-28T02:30:57Z INFO  egg::run] Size: n=0, e=0
+[2023-09-28T02:30:57Z INFO  egg::run] Stopping: Saturated
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 0, eclasses: 0
+      New: hc size 0, eclasses: 0
+      unions: 0, trimmed nodes: 0
+[2023-09-28T02:30:57Z INFO  egg::egraph] REBUILT! in 0.000s
+      Old: hc size 0, eclasses: 0
+      New: hc size 0, eclasses: 0
+      unions: 0, trimmed nodes: 0
+Learned 54 bidirectional rewrites (108 total rewrites) in 141.103156666 using 0 prior rewrites
+(VecMULS ?c ?a ?b) <=> (VecMULS ?c ?b ?a)
+(VecMAC ?c ?a ?b) <=> (VecMAC ?c ?b ?a)
+(* ?a ?b) <=> (* ?b ?a)
+(VecAdd ?a ?b) <=> (VecAdd ?b ?a)
+(+ ?a ?b) <=> (+ ?b ?a)
+(VecMul ?a ?b) <=> (VecMul ?b ?a)
+(VecNeg (VecMinus ?a ?b)) <=> (VecMinus ?b ?a)
+(neg (- ?a ?b)) <=> (- ?b ?a)
+(- ?a (neg ?b)) <=> (+ ?b ?a)
+(VecMinus ?a (VecNeg ?b)) <=> (VecAdd ?b ?a)
+(VecAdd (VecNeg ?a) ?b) <=> (VecMinus ?b ?a)
+(+ (neg ?a) ?b) <=> (- ?b ?a)
+(VecNeg (VecMul ?a ?b)) <=> (VecMul ?b (VecNeg ?a))
+(* (neg ?a) ?b) <=> (neg (* ?b ?a))
+(sgn (sgn ?a)) <=> (sgn ?a)
+(sgn (neg ?a)) <=> (neg (sgn ?a))
+(VecSgn (VecNeg ?a)) <=> (VecNeg (VecSgn ?a))
+(Vec (sqrt ?a)) <=> (VecSqrt (Vec ?a))
+(VecNeg (Vec ?a)) <=> (Vec (neg ?a))
+(VecNeg ?a) <=> (VecNeg (VecNeg (VecNeg ?a)))
+(VecSgn ?a) <=> (VecSgn (VecSgn (VecSgn ?a)))
+(neg ?a) <=> (neg (neg (neg ?a)))
+(VecNeg (VecNeg (VecSqrt ?a))) <=> (VecSqrt ?a)
+(VecSqrt ?a) <=> (VecSqrt (VecNeg (VecNeg ?a)))
+(VecSgn (VecAdd ?a ?a)) <=> (VecSgn ?a)
+(sqrt ?a) <=> (sqrt (neg (neg ?a)))
+(sqrt ?a) <=> (neg (neg (sqrt ?a)))
+(sgn (neg (neg ?a))) <=> (sgn ?a)
+(sgn (+ ?a ?a)) <=> (sgn ?a)
+(- ?a ?a) <=> (sgn (- ?a ?a))
+(VecSgn (VecMinus ?a ?a)) <=> (VecMinus ?a ?a)
+(VecSgn (Vec (sgn ?a))) <=> (VecSgn (Vec ?a))
+(VecSgn (VecSgn (Vec ?a))) <=> (Vec (sgn ?a))
+(VecDiv (VecNeg ?a) ?a) <=> (VecDiv ?a (VecNeg ?a))
+(/ (neg ?a) ?a) <=> (/ ?a (neg ?a))
+(neg ?a) <=> (- 0 ?a)
+(- ?a ?a) <=> (* 0 ?a)
+(/ ?a 1) <=> (neg (neg ?a))
+(neg (neg ?a)) <=> (* ?a 1)
+(neg ?a) <=> (/ ?a (neg 1))
+(VecNeg ?a) <=> (VecMinus (Vec 0) ?a)
+(VecDiv ?a (Vec 1)) <=> (VecNeg (VecNeg ?a))
+(VecMul ?a (Vec 1)) <=> (VecNeg (VecNeg ?a))
+(- ?a ?a) <=> (* 0 (sgn ?a))
+(/ ?a (sgn 1)) <=> (neg (neg ?a))
+(* (sgn 1) ?a) <=> (neg (neg ?a))
+(VecMinus ?a ?a) <=> (VecMul (Vec 0) ?a)
+(- (sgn 1) ?a) <=> (- 1 ?a)
+(/ (sgn 1) ?a) <=> (/ 1 ?a)
+(/ 0 (sgn ?a)) <=> (/ 0 ?a)
+(/ (neg 0) ?a) <=> (/ 0 ?a)
+(/ 0 (neg ?a)) <=> (/ 0 ?a)
+(sgn 1) <=> 1
+(neg 0) <=> 0
+[Object {"lhs": String("(VecMULS ?c ?a ?b)"), "rhs": String("(VecMULS ?c ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMULS ?c ?b ?a)"), "rhs": String("(VecMULS ?c ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMAC ?c ?a ?b)"), "rhs": String("(VecMAC ?c ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMAC ?c ?b ?a)"), "rhs": String("(VecMAC ?c ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(* ?a ?b)"), "rhs": String("(* ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(* ?b ?a)"), "rhs": String("(* ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecAdd ?a ?b)"), "rhs": String("(VecAdd ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecAdd ?b ?a)"), "rhs": String("(VecAdd ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(+ ?a ?b)"), "rhs": String("(+ ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(+ ?b ?a)"), "rhs": String("(+ ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMul ?a ?b)"), "rhs": String("(VecMul ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMul ?b ?a)"), "rhs": String("(VecMul ?a ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecMinus ?a ?b))"), "rhs": String("(VecMinus ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus ?b ?a)"), "rhs": String("(VecNeg (VecMinus ?a ?b))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (- ?a ?b))"), "rhs": String("(- ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?b ?a)"), "rhs": String("(neg (- ?a ?b))"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?a (neg ?b))"), "rhs": String("(+ ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(+ ?b ?a)"), "rhs": String("(- ?a (neg ?b))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus ?a (VecNeg ?b))"), "rhs": String("(VecAdd ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecAdd ?b ?a)"), "rhs": String("(VecMinus ?a (VecNeg ?b))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecAdd (VecNeg ?a) ?b)"), "rhs": String("(VecMinus ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus ?b ?a)"), "rhs": String("(VecAdd (VecNeg ?a) ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(+ (neg ?a) ?b)"), "rhs": String("(- ?b ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?b ?a)"), "rhs": String("(+ (neg ?a) ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecMul ?a ?b))"), "rhs": String("(VecMul ?b (VecNeg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMul ?b (VecNeg ?a))"), "rhs": String("(VecNeg (VecMul ?a ?b))"), "bidirectional": Bool(false)}, Object {"lhs": String("(* (neg ?a) ?b)"), "rhs": String("(neg (* ?b ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (* ?b ?a))"), "rhs": String("(* (neg ?a) ?b)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn (sgn ?a))"), "rhs": String("(sgn ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn ?a)"), "rhs": String("(sgn (sgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn (neg ?a))"), "rhs": String("(neg (sgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (sgn ?a))"), "rhs": String("(sgn (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (VecNeg ?a))"), "rhs": String("(VecNeg (VecSgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecSgn ?a))"), "rhs": String("(VecSgn (VecNeg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(Vec (sqrt ?a))"), "rhs": String("(VecSqrt (Vec ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSqrt (Vec ?a))"), "rhs": String("(Vec (sqrt ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (Vec ?a))"), "rhs": String("(Vec (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(Vec (neg ?a))"), "rhs": String("(VecNeg (Vec ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg ?a)"), "rhs": String("(VecNeg (VecNeg (VecNeg ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecNeg (VecNeg ?a)))"), "rhs": String("(VecNeg ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn ?a)"), "rhs": String("(VecSgn (VecSgn (VecSgn ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (VecSgn (VecSgn ?a)))"), "rhs": String("(VecSgn ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg ?a)"), "rhs": String("(neg (neg (neg ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg (neg ?a)))"), "rhs": String("(neg ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecNeg (VecSqrt ?a)))"), "rhs": String("(VecSqrt ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSqrt ?a)"), "rhs": String("(VecNeg (VecNeg (VecSqrt ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSqrt ?a)"), "rhs": String("(VecSqrt (VecNeg (VecNeg ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSqrt (VecNeg (VecNeg ?a)))"), "rhs": String("(VecSqrt ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (VecAdd ?a ?a))"), "rhs": String("(VecSgn ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn ?a)"), "rhs": String("(VecSgn (VecAdd ?a ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sqrt ?a)"), "rhs": String("(sqrt (neg (neg ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sqrt (neg (neg ?a)))"), "rhs": String("(sqrt ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sqrt ?a)"), "rhs": String("(neg (neg (sqrt ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg (sqrt ?a)))"), "rhs": String("(sqrt ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn (neg (neg ?a)))"), "rhs": String("(sgn ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn ?a)"), "rhs": String("(sgn (neg (neg ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn (+ ?a ?a))"), "rhs": String("(sgn ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn ?a)"), "rhs": String("(sgn (+ ?a ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?a ?a)"), "rhs": String("(sgn (- ?a ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn (- ?a ?a))"), "rhs": String("(- ?a ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (VecMinus ?a ?a))"), "rhs": String("(VecMinus ?a ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus ?a ?a)"), "rhs": String("(VecSgn (VecMinus ?a ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (Vec (sgn ?a)))"), "rhs": String("(VecSgn (Vec ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (Vec ?a))"), "rhs": String("(VecSgn (Vec (sgn ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecSgn (VecSgn (Vec ?a)))"), "rhs": String("(Vec (sgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(Vec (sgn ?a))"), "rhs": String("(VecSgn (VecSgn (Vec ?a)))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecDiv (VecNeg ?a) ?a)"), "rhs": String("(VecDiv ?a (VecNeg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecDiv ?a (VecNeg ?a))"), "rhs": String("(VecDiv (VecNeg ?a) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ (neg ?a) ?a)"), "rhs": String("(/ ?a (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ ?a (neg ?a))"), "rhs": String("(/ (neg ?a) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg ?a)"), "rhs": String("(- 0 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- 0 ?a)"), "rhs": String("(neg ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?a ?a)"), "rhs": String("(* 0 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(* 0 ?a)"), "rhs": String("(- ?a ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ ?a 1)"), "rhs": String("(neg (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg ?a))"), "rhs": String("(/ ?a 1)"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg ?a))"), "rhs": String("(* ?a 1)"), "bidirectional": Bool(false)}, Object {"lhs": String("(* ?a 1)"), "rhs": String("(neg (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg ?a)"), "rhs": String("(/ ?a (neg 1))"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ ?a (neg 1))"), "rhs": String("(neg ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg ?a)"), "rhs": String("(VecMinus (Vec 0) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus (Vec 0) ?a)"), "rhs": String("(VecNeg ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecDiv ?a (Vec 1))"), "rhs": String("(VecNeg (VecNeg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecNeg ?a))"), "rhs": String("(VecDiv ?a (Vec 1))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMul ?a (Vec 1))"), "rhs": String("(VecNeg (VecNeg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecNeg (VecNeg ?a))"), "rhs": String("(VecMul ?a (Vec 1))"), "bidirectional": Bool(false)}, Object {"lhs": String("(- ?a ?a)"), "rhs": String("(* 0 (sgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(* 0 (sgn ?a))"), "rhs": String("(- ?a ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ ?a (sgn 1))"), "rhs": String("(neg (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg ?a))"), "rhs": String("(/ ?a (sgn 1))"), "bidirectional": Bool(false)}, Object {"lhs": String("(* (sgn 1) ?a)"), "rhs": String("(neg (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg (neg ?a))"), "rhs": String("(* (sgn 1) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMinus ?a ?a)"), "rhs": String("(VecMul (Vec 0) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(VecMul (Vec 0) ?a)"), "rhs": String("(VecMinus ?a ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- (sgn 1) ?a)"), "rhs": String("(- 1 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(- 1 ?a)"), "rhs": String("(- (sgn 1) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ (sgn 1) ?a)"), "rhs": String("(/ 1 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 1 ?a)"), "rhs": String("(/ (sgn 1) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 0 (sgn ?a))"), "rhs": String("(/ 0 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 0 ?a)"), "rhs": String("(/ 0 (sgn ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ (neg 0) ?a)"), "rhs": String("(/ 0 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 0 ?a)"), "rhs": String("(/ (neg 0) ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 0 (neg ?a))"), "rhs": String("(/ 0 ?a)"), "bidirectional": Bool(false)}, Object {"lhs": String("(/ 0 ?a)"), "rhs": String("(/ 0 (neg ?a))"), "bidirectional": Bool(false)}, Object {"lhs": String("(sgn 1)"), "rhs": String("1"), "bidirectional": Bool(false)}, Object {"lhs": String("1"), "rhs": String("(sgn 1)"), "bidirectional": Bool(false)}, Object {"lhs": String("(neg 0)"), "rhs": String("0"), "bidirectional": Bool(false)}, Object {"lhs": String("0"), "rhs": String("(neg 0)"), "bidirectional": Bool(false)}]

@@ -27,6 +27,8 @@ impl FuzzEquals for lang::VecLang {
         _debug: bool,
     ) -> bool {
         // TODO: hard coded again, use whatever value the synthesizer was seeded with 
+        log::debug!("FUZZING, returning false");
+        return false;
         use rand_pcg::Lcg64Xsh32;
         let mut rng = Lcg64Xsh32::new(0,0);
 
@@ -91,12 +93,18 @@ impl FuzzEquals for lang::VecLang {
             );
             length = cvec.len();
         }
+        false
 
         // TODO JB: fix this, make it actually work with the interface
         // let lvec = Self::eval_pattern(lhs, &env, length);
         // let rvec = Self::eval_pattern(rhs, &env, length);
 
+<<<<<<< HEAD
+        // vecs_eq(&lhs, &rhs)
+        // false
+=======
         // vecs_eq(&lvec, &rvec)
         true
+>>>>>>> 58a37b6cfe70b377de75db71da5e63c7630b5aef
     }
 }

@@ -1,20 +1,19 @@
 use comp_gen::ruler::{
     self, enumo::*, recipe_utils, ValidationResult,
 };
-use egg::{self, EGraph, Id, Language};
-use itertools::Itertools;
+use egg::{self, EGraph, Id};
 use log::debug;
 use num::integer::Roots;
 use rand::Rng;
 use rand_pcg::Pcg32;
 // ruler no longer has Equality and Synthesizer
 use ruler::{
-    letter, map, self_product, CVec, SynthAnalysis, SynthLanguage
+    map, self_product, CVec, SynthAnalysis, SynthLanguage
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::{path::PathBuf};
 
-use crate::{fuzz::FuzzEquals, lang, smt::SmtEquals, Res};
+use crate::{lang, smt::SmtEquals, Res};
 
 pub fn split_into_halves(n: usize) -> (usize, usize) {
     if n % 2 == 0 {
@@ -206,7 +205,6 @@ pub struct DiosSeedRules {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiosConfig {
     pub constants: Vec<DiosConstant>,
-    // TODO: update diosconfig initialization such that seed rules are strings, not diosseedrules
     pub seed_rules: Vec<String>,
     pub unops: Vec<String>,
     pub binops: Vec<String>,
@@ -239,6 +237,41 @@ impl Default for DiosConfig {
     }
 }
 
+// Better post-processing support
+// TODO JB: I'm sure there's a better way to do this. This is a little bit jank.
+
+/// Reports for each run of Ruler.
+// #[derive(Debug, Serialize, Deserialize)]
+// #[serde(from = "SerializedRuleset")]
+// #[serde(into = "SerializedRuleset")]
+// #[serde(bound = "L: SynthLanguage")]
+
+
+
+// impl lang::VecLang {
+    
+//     fn post_process(
+//         ruleset: &RuleSet<lang::VecLang>,
+//     ) -> Report<Self> {
+//         let mut new_eqs: Vec<Equality<_>> = vec![];
+//         for eq in &report.eqs {
+//             let lhs_pre: Lang = eq.lhs.unpattern().into();
+//             let lhs: egg::RecExpr<lang::VecLang> =
+//                 lhs_pre.desugar(params.vector_size).into();
+//             let rhs_pre: Lang = eq.rhs.unpattern().into();
+//             let rhs: egg::RecExpr<lang::VecLang> =
+//                 rhs_pre.desugar(params.vector_size).into();
+//             if let Some(new_eq) = Equality::new(&lhs, &rhs) {
+//                 new_eqs.push(new_eq);
+//             } else {
+//                 eprintln!("Could not make equation for {} <=> {}", lhs, rhs);
+//             }
+//         }
+//         report.eqs = new_eqs;
+//         report
+//     }
+// }
+
 impl SynthLanguage for lang::VecLang {
     type Constant = lang::Value;
     // type Config = DiosConfig;
@@ -256,11 +289,6 @@ impl SynthLanguage for lang::VecLang {
     }
 
     fn is_constant(&self) -> bool {
-        // if let lang::VecLang::Const(n) = self {
-        //     Some(n)
-        // } else {
-        //     None
-        // }
         matches!(&self, lang::VecLang::Const(_))
     }
 
@@ -527,8 +555,8 @@ impl SynthLanguage for lang::VecLang {
     }
 
     fn initialize_vars(egraph: &mut EGraph<Self, SynthAnalysis>, vars: &[String]) {
-        // JB: not sure that this will work given that rules may have already been added? tbd unsure
         *egraph = egraph.clone().with_explanations_enabled();
+        debug!("initializing variables");
 
         // TODO: consts are set upon creating DiosLang config, for now I've hard coded the constants but can clean it up later
         let consts = vec![0,1];
@@ -552,29 +580,16 @@ impl SynthLanguage for lang::VecLang {
                 vars.len(),
             )
             .len()
-        } * 10;
+        } * 5;
 
         egraph.analysis.cvec_len = cvec_size;
 
-        debug!("cvec size: {cvec_size}");
+        egraph.analysis.cvec_len = cvec_size;
 
 
         // read and add seed rules from config
         // JB: seed rules can be added by means of enumo's extend operator, so there is no longer any reason to add it here :)
-        // for rule in &synth.lang_config.seed_rules {
-        //     let rule: Equality<lang::VecLang> = Equality::new(
-        //         &rule.lhs.parse().unwrap(),
-        //         &rule.rhs.parse().unwrap(),
-        //     )
-        //     .unwrap();
-        //     synth
-        //         .equalities
-        //         .insert(format!("{} <=> {}", rule.lhs, rule.rhs).into(), rule);
-        // }
 
-        // let mut egraph = egg::EGraph::new(SynthAnalysis {
-        //     cvec_len: cvec_size,
-        // });
 
         // add constants to egraph
         for v in consts {
@@ -620,155 +635,7 @@ impl SynthLanguage for lang::VecLang {
             egraph[id].data.cvec = cvec;
         }
 
-        // set egraph to the one we just constructed
     }
-
-    // fn make_layer<'a>(
-    //     ids: Vec<Id>,
-    //     synth: &'a Synthesizer<Self, ruler::Init>,
-    //     mut iter: usize,
-    // ) -> Box<dyn Iterator<Item = Self> + 'a> {
-    //     // vd for variable duplication
-    //     let vd = synth.lang_config.variable_duplication;
-
-    //     // if iter % 2 == 0 {
-    //     iter -= 1; // make iter start at 0
-
-    //     // only do binops for iters < 2
-    //     let binops = if iter <= 2 && synth.lang_config.use_scalar {
-    //         let us = ids
-    //             .clone()
-    //             .into_iter()
-    //             .filter(move |x| !synth.egraph[*x].data.exact)
-    //             .flat_map(move |x| {
-    //                 synth
-    //                     .lang_config
-    //                     .unops
-    //                     .iter()
-    //                     .map(|op| match op.as_str() {
-    //                         "neg" => lang::VecLang::Neg([x]),
-    //                         "sgn" => lang::VecLang::Sgn([x]),
-    //                         "sqrt" => lang::VecLang::Sqrt([x]),
-    //                         _ => panic!("Unknown vec unop"),
-    //                     })
-    //                     .collect_vec()
-    //             });
-    //         let bs = (0..2)
-    //             .map(|_| ids.clone())
-    //             .multi_cartesian_product()
-    //             .filter(move |ids| {
-    //                 !ids.iter().all(|x| synth.egraph[*x].data.exact)
-    //             })
-    //             .map(|ids| [ids[0], ids[1]])
-    //             .flat_map(move |x| {
-    //                 synth
-    //                     .lang_config
-    //                     .binops
-    //                     .iter()
-    //                     .filter_map(|op| match op.as_str() {
-    //                         "+" => Some(lang::VecLang::Add(x)),
-    //                         "*" => Some(lang::VecLang::Mul(x)),
-    //                         "-" => Some(lang::VecLang::Minus(x)),
-    //                         "/" => Some(lang::VecLang::Div(x)),
-    //                         "or" => Some(lang::VecLang::Or(x)),
-    //                         "&&" => Some(lang::VecLang::And(x)),
-    //                         "<" => Some(lang::VecLang::Lt(x)),
-    //                         "sqrtsgn" => Some(lang::VecLang::SqrtSgn(x)),
-    //                         "~*" => None,
-    //                         _ => panic!("Unknown binop"),
-    //                     })
-    //                     .collect::<Vec<_>>()
-    //             })
-    //             .filter(move |node| vd || unique_vars(node, &synth.egraph));
-    //         Some(us.chain(bs))
-    //     } else {
-    //         None
-    //     };
-
-    //     let vec_stuff = if iter > 2 && synth.lang_config.use_vector {
-    //         let vec_unops = ids
-    //             .clone()
-    //             .into_iter()
-    //             .filter(move |x| !synth.egraph[*x].data.exact)
-    //             .flat_map(move |x| {
-    //                 let mut v = synth
-    //                     .lang_config
-    //                     .unops
-    //                     .iter()
-    //                     .map(|op| match op.as_str() {
-    //                         "neg" => lang::VecLang::VecNeg([x]),
-    //                         "sgn" => lang::VecLang::VecSgn([x]),
-    //                         "sqrt" => lang::VecLang::VecSqrt([x]),
-    //                         _ => panic!("Unknown vec unop"),
-    //                     })
-    //                     .collect_vec();
-    //                 v.extend(vec![lang::VecLang::Vec(
-    //                     vec![x].into_boxed_slice(),
-    //                 )]);
-    //                 v
-    //             });
-
-    //         let vec_binops = (0..2)
-    //             .map(|_| ids.clone())
-    //             .multi_cartesian_product()
-    //             .filter(move |ids| {
-    //                 !ids.iter().all(|x| synth.egraph[*x].data.exact)
-    //             })
-    //             .map(|ids| [ids[0], ids[1]])
-    //             .flat_map(move |x| {
-    //                 synth
-    //                     .lang_config
-    //                     .binops
-    //                     .iter()
-    //                     .map(|op| match op.as_str() {
-    //                         "+" => lang::VecLang::VecAdd(x),
-    //                         "-" => lang::VecLang::VecMinus(x),
-    //                         "*" => lang::VecLang::VecMul(x),
-    //                         "/" => lang::VecLang::VecDiv(x),
-    //                         "~*" => lang::VecLang::VecMulSgn(x),
-    //                         "sqrtsgn" => lang::VecLang::VecSqrtSgn(x),
-    //                         _ => panic!("Unknown vec binop"),
-    //                     })
-    //                     .collect::<Vec<_>>()
-    //             })
-    //             .filter(move |node| vd || unique_vars(node, &synth.egraph));
-
-    //         let vec_triops = (0..3)
-    //             .map(|_| ids.clone())
-    //             .multi_cartesian_product()
-    //             .filter(move |ids| {
-    //                 !ids.iter().all(|x| synth.egraph[*x].data.exact)
-    //             })
-    //             .map(|ids| [ids[0], ids[1], ids[2]])
-    //             .flat_map(move |x| {
-    //                 synth
-    //                     .lang_config
-    //                     .triops
-    //                     .iter()
-    //                     .map(|op| match op.as_str() {
-    //                         "mac" => lang::VecLang::VecMAC(x),
-    //                         "muls" => lang::VecLang::VecMULS(x),
-    //                         _ => panic!("Unknown vec triop"),
-    //                     })
-    //                     .collect::<Vec<_>>()
-    //             })
-    //             .filter(move |node| vd || unique_vars(node, &synth.egraph));
-
-    //         Some(vec_unops.chain(vec_binops).chain(vec_triops))
-    //     } else {
-    //         None
-    //     };
-
-    //     match (binops, vec_stuff) {
-    //         // all are defined
-    //         (Some(b), Some(v)) => Box::new(b.chain(v)),
-    //         // two are defined
-    //         (Some(i), _) => Box::new(i),
-    //         (_, Some(v)) => Box::new(v),
-    //         // none are defined
-    //         (_, _) => panic!("No binops or vector ops defined."),
-    //     }
-    // }
 
     fn validate(
         lhs: &egg::Pattern<Self>,
@@ -781,173 +648,11 @@ impl SynthLanguage for lang::VecLang {
             } else {
                 ValidationResult::Invalid
             }
-        // } else {
-        //     let fuzz = Self::fuzz_equals(lhs, rhs, false);
-        //     // if fuzz succeeds and `smt_fallback` is enabled, run `smt_equals`.
-        //     if synth.lang_config.smt_fallback && fuzz {
-        //         debug!("falling back to smt");
-        //         Self::smt_equals(lhs, rhs)
-        //     } else {
-        //         false
-        //     }
-        // };
-        // debug!("Checking {lhs} => {rhs}: {x}");
-        // x
+
     }
 
-    // fn post_process(
-    //     params: &SynthParams,
-    //     mut report: ruler::Report<Self>,
-    // ) -> ruler::Report<Self> {
-    //     let mut new_eqs: Vec<Equality<_>> = vec![];
-    //     for eq in &report.eqs {
-    //         let lhs_pre: Lang = eq.lhs.unpattern().into();
-    //         let lhs: egg::RecExpr<lang::VecLang> =
-    //             lhs_pre.desugar(params.vector_size).into();
-    //         let rhs_pre: Lang = eq.rhs.unpattern().into();
-    //         let rhs: egg::RecExpr<lang::VecLang> =
-    //             rhs_pre.desugar(params.vector_size).into();
-    //         if let Some(new_eq) = Equality::new(&lhs, &rhs) {
-    //             new_eqs.push(new_eq);
-    //         } else {
-    //             eprintln!("Could not make equation for {} <=> {}", lhs, rhs);
-    //         }
-    //     }
-    //     report.eqs = new_eqs;
-    //     report
-    // }
-
-    // fn debug_pre_union(
-    //     egraph: &EGraph<Self, SynthAnalysis>,
-    //     id1: Id,
-    //     id2: Id,
-    //     justification: &Option<egg::Justification>,
-    // ) {
-    //     for (val1, val2) in egraph[id1]
-    //         .data
-    //         .cvec
-    //         .iter()
-    //         .zip(egraph[id2].data.cvec.iter())
-    //     {
-    //         match (val1, val2) {
-    //             (Some(x), Some(y)) if x != y => {
-    //                 let extractor = egg::Extractor::new(egraph, egg::AstDepth);
-    //                 let (_, prog1) = extractor.find_best(id1);
-    //                 let (_, prog2) = extractor.find_best(id2);
-
-    //                 log::error!("Trying to merge:");
-    //                 log::error!(
-    //                     "  {} <=> {}",
-    //                     prog1.pretty(80),
-    //                     prog2.pretty(80)
-    //                 );
-    //                 log::error!("cvec1: {:?}", egraph[id1].data.cvec);
-    //                 log::error!("cvec2: {:?}", egraph[id2].data.cvec);
-    //                 log::error!("just: {justification:?}");
-
-    //                 if let Some(egg::Justification::Rule(s)) = &justification {
-    //                     if let Some((lhs, rhs)) =
-    //                         s.as_str().split(" => ").collect_tuple()
-    //                     {
-    //                         // strip off the ? prefix for variable names
-    //                         let lhs_expr: egg::RecExpr<_> = strip_prefix(
-    //                             &lhs.parse::<egg::RecExpr<_>>().unwrap(),
-    //                         );
-
-    //                         let rhs_expr: egg::RecExpr<_> = strip_prefix(
-    //                             &rhs.parse::<egg::RecExpr<_>>().unwrap(),
-    //                         );
-
-    //                         log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
-
-    //                         // print out ids, plus cannoncial ids
-    //                         let lhs_id = egraph
-    //                             .lookup_expr(&lhs_expr)
-    //                             .map(|x| egraph.find(x));
-    //                         let rhs_id = egraph
-    //                             .lookup_expr(&rhs_expr)
-    //                             .map(|x| egraph.find(x));
-    //                         log::error!(
-    //                             "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
-    //     			egraph.find(id1),
-    //     			egraph.find(id2),
-    //                         );
-
-    //                         // let's get the cvec for a
-    //                         let a_id = egraph
-    //                             .lookup_expr(&egg::RecExpr::from(vec![
-    //                                 lang::VecLang::Symbol("a".into()),
-    //                             ]))
-    //                             .unwrap();
-    //                         log::error!(
-    //                             "'a' cvec: {:?}",
-    //                             egraph[a_id].data.cvec
-    //                         );
-    //                     } else {
-    //                         log::error!("Split failed: '{s}'");
-    //                     }
-    //                 } else {
-    //                     log::error!("No rule justification");
-    //                 }
-
-    //                 panic!("This is going to cause problems. Let's just stop here.");
-    //             }
-    //             _ => (),
-    //         }
-    //     }
-    // }
 }
 
-// fn strip_prefix(
-//     expr: &egg::RecExpr<lang::VecLang>,
-// ) -> egg::RecExpr<lang::VecLang> {
-//     expr.as_ref()
-//         .iter()
-//         .map(|n: &lang::VecLang| match n {
-//             lang::VecLang::Symbol(s) => lang::VecLang::Symbol(
-//                 s.as_str().strip_prefix("?").unwrap().into(),
-//             ),
-//             x => x.clone(),
-//         })
-//         .collect_vec()
-//         .into()
-// }
-
-// fn get_vars(
-//     node: &lang::VecLang,
-//     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
-//     seen: &mut HashMap<egg::Id, Vec<egg::Symbol>>,
-// ) -> Vec<egg::Symbol> {
-//     node.fold(vec![], |mut acc, id| {
-//         // if we haven't already seen this id, gather vars from children
-
-//         if let Some(cached) = seen.get(&id) {
-//             // if we have already seen this id, add on the cached results
-//             acc.extend_from_slice(cached)
-//         } else {
-//             // else, get the variables for this node, recursing if necessary
-//             let node = &egraph[id].nodes[0];
-//             let vars = if node.is_leaf() {
-//                 egraph[id].data.vars.clone()
-//             } else {
-//                 get_vars(node, egraph, seen)
-//             };
-//             // save the results in seen
-//             seen.insert(id, vars.clone());
-//             acc.extend(vars);
-//         }
-//         acc
-//     })
-// }
-
-// fn unique_vars(
-//     node: &lang::VecLang,
-//     egraph: &EGraph<lang::VecLang, SynthAnalysis>,
-// ) -> bool {
-//     let mut seen: HashMap<egg::Id, Vec<egg::Symbol>> = HashMap::default();
-//     let vars: Vec<egg::Symbol> = get_vars(node, egraph, &mut seen);
-//     vars.iter().all_unique()
-// }
 
 pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
     if lvec.iter().all(|x| x.is_none()) && rvec.iter().all(|x| x.is_none()) {
@@ -962,68 +667,125 @@ pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
 }
 
 // again, this is obviously hardcoded -- fix it later, for now make things work as they should
-fn iter_dios(argnum: usize) -> Workload {
-    recipe_utils::iter_metric(recipe_utils::base_lang(argnum), "EXPR", Metric::Atoms, argnum)
+fn iter_dios(argnum: usize, depth: usize, values: Vec<&str>, variable_names: Vec<&str>, operations: Vec<Vec<String>>) -> Workload {
+    recipe_utils::iter_metric(recipe_utils::base_lang(argnum), "EXPR", Metric::Atoms, depth)
     .filter(Filter::Contains("VAR".parse().unwrap()))
-    .plug("VAL", &Workload::new(["0", "1"]))
-    .plug("VAR", &Workload::new(["a", "b", "c", "d"]))
-    .plug("OP1", &Workload::new(["sqrt", "sgn", "neg"]))
-    // had to change it from ~* to ~
-    .plug("OP2", &Workload::new(["/", "+", "*", "-"]))
-    .plug("OP3", &Workload::new(["mac", "mul"]))
+    .plug("VAL", &Workload::new(values))
+    .plug("VAR", &Workload::new(variable_names))
+    // TODO JB: make this a loop using iter
+    .plug("OP1", &Workload::new(operations[0].clone()))
+    .plug("OP2", &Workload::new(operations[1].clone()))
+    .plug("OP3", &Workload::new(operations[2].clone()))
+    // recipe_utils::recursive_rules(Metric::Atoms, )
+    
+    // .plug("VAL", &Workload::new(["0", "1"]))
+    // .plug("VAR", &Workload::new(["a", "b", "c", "d"]))
+    // .plug("OP1", &Workload::new(["sqrt", "sgn", "neg"]))
+    // // had to change it from ~* to ~
+    // .plug("OP2", &Workload::new(["/", "+", "*", "-"]))
+    // .plug("OP3", &Workload::new(["mac", "mul"]))
+}
+
+fn extend_rules() -> ruler::enumo::Ruleset<lang::VecLang>{
+    // "lhs": "(VecAdd (Vec ?b) (Vec ?a))",
+    //   "rhs": "(Vec (+ ?b ?a))",
+    Ruleset::new([
+        "(VecAdd (Vec ?b) (Vec ?a)) ==> (Vec (+ ?b ?a))", 
+        "(VecDiv (Vec ?b) (Vec ?a)) ==> (Vec (/ ?b ?a))"]
+    )
 }
 
 pub fn run(
     dios_config: DiosConfig,
-    chkpt_path: Option<PathBuf>,
+    _chkpt_path: Option<PathBuf>,
 ) -> Res<ruler::enumo::Ruleset<lang::VecLang>>
 // Res<ruler::Report<lang::VecLang>> 
 {
+    let run_name = "depth 5";
     log::info!("running with config: {dios_config:#?}");
-        
-        // no need for the synthesizer anymore
-    // create the synthesizer
-    // let mut syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
-    //     dios_config.ruler_config.clone(),
-    //     dios_config.clone(),
-    // )
-    // .init();
     
     // add all seed rules
-    let mut rules : ruler::enumo::Ruleset<lang::VecLang> = ruler::enumo::Ruleset::default();
+    let mut seed_rules : ruler::enumo::Ruleset<lang::VecLang> = ruler::enumo::Ruleset::default();
 
     for rule in dios_config.seed_rules.into_iter() {
         match ruler::enumo::Rule::from_string(&rule) {
             Ok(r) => {
-                rules.add(r.0);
+                seed_rules.add(r.0);
                 match r.1 {
-                    Some(bidirectional) => rules.add(bidirectional),
+                    Some(bidirectional) => seed_rules.add(bidirectional),
                     None => ()
                 }
             },
             Err(msg) => panic!("provided a malformed seed rule, {:?}\n{:?}", rule, msg)
         } 
-
     }
 
-    // TODO: figure out what this checkpoint is for
-    // if let Some(chkpt) = chkpt_path {
-    //     syn.load_checkpoint(&chkpt);
-    // }
+    seed_rules.extend(extend_rules());
+    
+    // TODO JB: ok obviously the variable names and stuff shouldn't be hard coded
+    // let lang = recipe_utils::Lang{vals: ["0".to_string(), "1".to_string()].to_vec(), vars: ["a".to_string(), "b".to_string(), "c".to_string(), "d".to_string(), "e".to_string(), "f".to_string()].to_vec(), ops: [dios_config.unops, dios_config.binops, dios_config.triops].to_vec()};
+    // let rules = recipe_utils::recursive_rules(Metric::Depth, 3, lang, seed_rules.clone());
+    // ruler::logger::log_rules(&rules, Some("rulesets/ruleset.json"), run_name);
 
-    // TODO: the n passed into this should be the max number of arguments suppliable to an operation.
-    // right now it is hard coded
-    let workload: ruler::enumo::Workload = iter_dios(3);
+    // return Ok(rules);
     // workload.plug()
+
+    // let other_rules = recipe_utils::run_workload(workload, seed_rules.clone(), ruler::Limits::synthesis(), ruler::Limits::synthesis(), true);
+    // ruler::logger::log_rules(&other_rules, Some("rulesets/ruleset.json"), run_name);
+    // return Ok(other_rules);
 
     // run the synthesizer
     // JB: now, in order to run the synthesizer, we must create a workload -- tbd, need to figure out how to construct a workload
-    let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
-    let egraph = scheduler.run(&workload.to_egraph(), &rules);
-    let mut candidates = Ruleset::cvec_match(&egraph);
-    let rules = candidates.minimize(rules.clone(), scheduler).0;
+    let vals = ["0", "1"].to_vec();
+    let vars = ["a", "b", "c", "d", "e", "f"].to_vec();
+    let ops = [dios_config.unops, dios_config.binops, dios_config.triops].to_vec();
+    let start = std::time::Instant::now();
     
-    // let report = syn.run();
-    debug!("generated rules are: {rules:?}");
+    let workload: ruler::enumo::Workload = iter_dios(3, 3, vals.clone(), vars.clone(), ops.clone());
+    let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
+    let egraph = scheduler.run(&workload.to_egraph(), &seed_rules);
+    let mut candidates =  Ruleset::fast_cvec_match(&egraph);
+    let rules = candidates.minimize(seed_rules.clone(), scheduler).0;
+    // egraph1.dot().to_pdf("egraphs/before_adding_vecadd.pdf");
+    println!(
+        "Done with phase 1 after {} secs, {} eclasses",
+        start.elapsed().as_secs(),
+        egraph.number_of_classes()
+    );
+    ruler::logger::log_rules(&rules, Some("candidates/depth3_ruleset.json"), run_name);
+
+
+    // learn the depth 4 rules?
+    let depth4_workload: ruler::enumo::Workload = iter_dios(3, 4, vals.clone(), vars.clone(), ops.clone());
+    let egraph = scheduler.run(&depth4_workload.to_egraph(), &rules);
+    candidates =  Ruleset::fast_cvec_match(&egraph);
+    let mut rulesd4 = candidates.minimize(seed_rules.clone(), scheduler).0;
+    rulesd4.extend(extend_rules());
+
+    // learn the depth 5 rules?
+    let depth5_workload: ruler::enumo::Workload = iter_dios(3, 5, vals, vars, ops).filter(Filter::Contains("Vec".parse().unwrap()));
+    let egraph = scheduler.run(&depth5_workload.to_egraph(), &rulesd4);
+    candidates =  Ruleset::fast_cvec_match(&egraph);
+    let mut rules = candidates.minimize(seed_rules, scheduler).0;
+    rules.extend(rulesd4);
+
+    // let egraph = scheduler.run(egraph, )
+
+    // let egraph = Scheduler::Simple(ruler::Limits::synthesis()).run(&egraph1, &extend_rules());
+    // egraph.dot().to_pdf("egraphs/after_adding_vecadd.pdf");
+    // ruler::logger::log_rules(&ruler::enumo::Ruleset::extract_candidates(&egraph1, &egraph), Some("candidates/after_adding_vecadd.json"), run_name);
+    // println!(
+    //     "Done with phase 2 after {} secs, {} eclasses",
+    //     start.elapsed().as_secs(),
+    //     egraph.number_of_classes()
+    // );
+    // std::process::exit(0);
+
+    // let mut candixx/x/dates = Ruleset::fast_cvec_match(&egraph);
+    // ruler::logger::log_rules(&candidates, Some("candidates/candidate_ruleset_post_cvec_match1.json"), run_name);
+
+    // let rules = candidates.minimize(seed_rules.clone(), scheduler).0;
+    ruler::logger::log_rules(&rules, Some("rulesets/ruleset.json"), run_name);
+
     Ok(rules)
 }

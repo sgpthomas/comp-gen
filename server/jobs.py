@@ -529,7 +529,7 @@ def overall_performance(
         (18, 18, 4, 4),
     ]
     qr_decomp_sizes = [3, 4]
-    ruleset = rulesets["ruleset_timeout86400"]
+    ruleset = rulesets["ruleset_ruler2_depth4_simple"]
 
     # create all the jobs
     for size in mat_mul_sizes:

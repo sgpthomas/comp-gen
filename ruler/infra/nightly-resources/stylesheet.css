@@ -1,0 +1,21 @@
+body {
+    font-family: monospace, monospace;
+}
+
+.table {
+    padding-top: 20px;
+}
+
+h3 {
+    text-align: center;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+textarea {
+    width: 100%;
+}
+
+td {
+    vertical-align: top;
+}
