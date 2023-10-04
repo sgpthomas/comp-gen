@@ -76,7 +76,12 @@ def make_job_dir(
     job_dir = unique_name(jobs_dir / f"{date_str}-{name}", 0)
     job_dir.mkdir(exist_ok=False)
 
-    config = {"date": date_str, "name": name, **config}
+    config = {
+        "date": date_str,
+        "name": name,
+        "owner": f"{os.getlogin()}@{os.uname().nodename}",
+        **config,
+    }
     json.dump(config, (job_dir / "config.json").open("w"), indent=2)
 
     if command is not None:

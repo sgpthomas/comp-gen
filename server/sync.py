@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +30,26 @@ def get_aws_ip_by_name(name):
     raise Exception(f"Machine {name} not found")
 
 
+def job_query(ip, remote_path_template, all):
+    """
+    Return information about running jobs on server running at `ip`.
+    """
+
+    jq_pattern = "{owner:.owner, name:.name, file:input_filename}"
+    jq_cmd = subprocess.run(
+        f'ssh ubuntu@{ip} "sh -c \'jq -c \\"{jq_pattern}\\" {remote_path_template}\'"',
+        shell=True,
+        capture_output=True,
+    )
+    jobs = [json.loads(s) for s in jq_cmd.stdout.decode("utf-8").splitlines()]
+
+    if all:
+        return jobs
+    else:
+        owner = f"{os.getlogin()}@{os.uname().nodename}"
+        return list(filter(lambda j: j["owner"] == owner, jobs))
+
+
 def do_upload(ip, remote_path, clean=False):
     print("Sending jobs", end="...", flush=True)
     subprocess.run(
@@ -51,42 +72,36 @@ def do_upload(ip, remote_path, clean=False):
         subprocess.run(["mkdir", "jobs"])
 
 
-def do_download(ip, remote_path, clean=False):
-    print("Downloading completed", end="...", flush=True)
-
+def do_download(ip, remote_path, clean=False, all=False):
     # normalize the remote path so that rsync doesn't create completed/completed/*
-    remote_path = str(Path(remote_path)) + "/"
+    remote_path = str(Path(remote_path))
+    jobs = job_query(ip, f"{remote_path}/**/**/config.json", all)
+    paths = [Path(j["file"]).parent for j in jobs]
 
-    subprocess.run(
-        " ".join(
-            [
-                "rsync",
-                "-e 'ssh -o StrictHostKeyChecking=no'",
-                "-avh",
-                f"ubuntu@{ip}:{remote_path}",
-                "completed/",
-            ]
-        ),
-        shell=True,
-    )
+    for p in paths:
+        subprocess.run(
+            " ".join(
+                [
+                    "rsync",
+                    "-e 'ssh -o StrictHostKeyChecking=no'",
+                    "-avh",
+                    f"ubuntu@{ip}:{p}",
+                    remote_path,
+                ]
+            ),
+            shell=True,
+        )
+        if clean:
+            subprocess.run(f"ssh ubuntu@{ip} 'rm -rfv {p}'", shell=True)
 
-    if clean:
-        subprocess.run(f"ssh ubuntu@{ip} 'rm -rfv {remote_path}*'", shell=True)
-        print("Cleaning completed")
 
-
-def do_check(ip, remote_path):
-    # print("Downloading completed", end="...", flush=True)
-
+def do_check(ip, remote_path, all=False):
     # normalize the remote path so that rsync doesn't create completed/completed/*
-    remote_path = str(Path(remote_path)) + "/"
+    remote_path = str(Path(remote_path))
+    jobs = job_query(ip, f"{remote_path}/**/config.json", all)
 
-    output = subprocess.run(
-        ["ssh", f"ubuntu@{ip}", "ls", remote_path], capture_output=True
-    )
-
-    if len(output.stdout) > 0:
-        print("In progress")
+    if len(jobs) > 0:
+        print(f"{len(jobs)} jobs in progress")
         sys.exit(-1)
     else:
         print("Completed")
@@ -136,18 +151,20 @@ def upload(name, ip, dir, clean):
 @click.option("--ip")
 @click.option("--dir", default="~/completed")
 @click.option("--clean", is_flag=True)
-def download(name, ip, dir, clean):
+@click.option("--all", is_flag=True)
+def download(name, ip, dir, clean, all):
     ip = resolve_name_ip(name, ip)
-    do_download(ip, dir, clean=clean)
+    do_download(ip, dir, clean=clean, all=all)
 
 
 @cli.command()
 @click.option("--name")
 @click.option("--ip")
 @click.option("--dir", default="~/jobs")
-def check(name, ip, dir):
+@click.option("--all", is_flag=True)
+def check(name, ip, dir, all):
     ip = resolve_name_ip(name, ip)
-    do_check(ip, dir)
+    do_check(ip, dir, all)
 
 
 if __name__ == "__main__":

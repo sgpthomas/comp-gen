@@ -46,6 +46,11 @@ podman machine start
 #+end_src
 
 * Reproducing our figures
+
+Estimated time: 1 hour
+
+This section describes the commands to run to make our figures, and run shorter versions of our experiments. Running everything in this section will take about an hour. Because these are not the full experiments, the figures won't look exactly the same as they do in the paper.
+
 ** Performance and Compile Time (Figures 4 & 5)
 
 *** Making figures
@@ -70,14 +75,6 @@ As part of the AEC committee, you have been provided with a server ip. Otherwise
 #+begin_src async-shell
 ./run.sh ./aec.py gen-data overall --ip $EXP_SERVER
 #+end_src
-
-If you want to run the complete experiments and generate all the data, run the following command. Adding =--all= works the same way for all of the other experiments described in this document.
-
-#+begin_src async-shell
-./run.sh ./aec.py gen-data overall --ip $EXP_SERVER --all
-#+end_src
-
-Once you have generated the data, you can rerun the commands above to remake the figures. Unless you rerun the full experiments, the new figures will not have as many benchmarks as the figures in the paper.
 
 ** Effects of Pruning (Figure 6)
 
@@ -161,6 +158,12 @@ Running the following command will launch the alpha beta ablation experiments.
 #+end_src
 
 Once the command has completed, you can regenerate the figures.
+
+** Running complete experiments
+
+Above, we have shown how to reproduce smaller versions of the experiments that we present in our paper. To run the full version of experiments. You can pass the =--all= flag to every one of the commands above. There are also a few additional commands that you need to run to regenerate the rulesets used.
+
+
 
 * Cleanup
 
