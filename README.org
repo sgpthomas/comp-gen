@@ -2,7 +2,11 @@
 
 Automatically generate equality saturation based compilers using equality saturation and some cleverness.
 
-[[file:experiments/README.org][Experiments]]
+* Artifact Evaluation!!
+
+Check out our artifact evaluation here: [[file:artifact-evaluation.org][artifact-evaluation.org]] 
+
+* Sub-components
 
 ** Comp-gen
 

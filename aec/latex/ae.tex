@@ -1,0 +1,92 @@
+% LaTeX template for Artifact Evaluation V20201122
+%
+% Prepared by Grigori Fursin with contributions from Bruce Childers,
+%   Michael Heroux, Michela Taufer and other colleagues.
+%
+% See examples of this Artifact Appendix in
+%  * SC'17 paper: https://dl.acm.org/citation.cfm?id=3126948
+%  * CGO'17 paper: https://www.cl.cam.ac.uk/~sa614/papers/Software-Prefetching-CGO2017.pdf
+%  * ACM ReQuEST-ASPLOS'18 paper: https://dl.acm.org/citation.cfm?doid=3229762.3229763
+%
+% (C)opyright 2014-2022
+%
+% CC BY 4.0 license
+%
+
+\documentclass{sigplanconf}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+\special{papersize=8.5in,11in}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% When adding this appendix to your paper, 
+% please remove above part
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\section{Artifact Appendix}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Abstract}
+
+Our artifact packages the required materials to reproduce our results. There are two main components, each packaged as a container. The first is the client, available at \url{ghcr.io/sgpthomas/isaria-aec-client:latest}. This packages scripts to generate jobs, and code to make figures. The second is the experiment server, available here: \url{ghcr.io/sgpthomas/isaria-aec:latest}. The experiment server can generate new rulesets, run equality saturation compilation on a provided program, and use the \textsc{Xtensa} toolchain to perform cycle estimations.
+
+\paragraph{A note on proprietary tools.} We use the \textsc{Xtensa} toolchain to perform cycle estimations. This is a proprietary tool that we are not allowed to redistribute. However, they do offer free educational licenses, and there are instructions on how to setup the tools with our experiment server on our Github repository.
+
+\subsection{Artifact check-list (meta-information)}
+
+{\small
+\begin{itemize}
+  \item {\bf Program: } We use the linear algebra benchmarks distributed with Diospyros.
+  \item {\bf Binary: } All binaries included except the proprietary tools that we use for cycle estimation.
+  \item {\bf Metrics: } Cycle counts
+  \item {\bf How much disk space required (approximately)?: } 16 GB
+  \item {\bf How much time is needed to prepare workflow (approximately)?: } 10 minutes
+  \item {\bf How much time is needed to complete experiments (approximately)?: } About an hour for the short version of experiments, and several days for the complete set of experiments.
+  \item {\bf Publicly available?: } Yes
+\end{itemize}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Description and Installation}
+
+\subsubsection{How to access}
+
+The artifact is provided as a container image available on \url{ghcr.io}. Instructions for using the container, as well as installing tools from scratch, can be found on our Github: \url{https://github.com/sgpthomas/comp-gen}.
+
+\subsubsection{Hardware dependencies}
+
+The experiment server expects a UNIX-like environment. A machine with more than 256 GB of RAM is necessary to run all of our experiments. However, we will provide this for artifact reviewers. Reviewers only need access to a Linux or Mac machine that can run \textsc{Docker} or \textsc{Podman}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Evaluation and expected results}
+
+The evaluation process aims to reproduce all of the figures presented in our paper.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Experiment customization}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Notes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Methodology}
+
+Submission, reviewing and badging methodology:
+
+\begin{itemize}
+  \item \url{https://www.acm.org/publications/policies/artifact-review-badging}
+  \item \url{http://cTuning.org/ae/submission-20201122.html}
+  \item \url{http://cTuning.org/ae/reviewing-20201122.html}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% When adding this appendix to your paper, 
+% please remove below part
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}

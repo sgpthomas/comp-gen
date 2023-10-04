@@ -129,7 +129,7 @@ Once the command has completed, you can regenerate the figures.
 *** Running experiments (Estimated time: 10 minutes)
 
 #+begin_src async-shell
-./run.sh ./aec.py gen-data new_instructions --ip <server-ip>
+./run.sh ./aec.py gen-data new_instructions --ip $EXP_SERVER
 #+end_src
 
 ** Exploring the effect of alpha and beta (Figures 8 & 9)

@@ -26,3 +26,8 @@ Cargo.lock
 /output/
 *.pem
 /aec/output/
+*.aux
+*.log
+*.synctex.gz
+/aec/latex/ae.pdf
+/aec/latex/*.out
