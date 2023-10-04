@@ -46,6 +46,7 @@ fn run_workload_internal<L: SynthLanguage>(
     };
 
     let num_prior = prior.len();
+    crate::logger::log_rules(&candidates, Some("candidates_ruler/"), "candidates1");
     let (chosen, _) = candidates.minimize(prior, Scheduler::Compress(minimize_limits));
     let time = t.elapsed().as_secs_f64();
 

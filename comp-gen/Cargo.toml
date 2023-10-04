@@ -14,7 +14,7 @@ json = "0.12.4"
 log = "0.4.17"
 plotlib = "0.5.1"
 # ruler = { path = "../ruler", default-features = false }
-ruler = { path = "../../ruler" }
+ruler = { path = "../ruler" }
 serde = "1.0.145"
 statrs = "0.16.0"
 [dependencies.egg]

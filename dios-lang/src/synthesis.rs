@@ -690,14 +690,14 @@ fn explore_ruleset_at_depth(current_ruleset: Ruleset<lang::VecLang>,
                  -> Ruleset<lang::VecLang>
 {
     let start = std::time::Instant::now();
-    let workload: ruler::enumo::Workload = iter_dios(3, 3, vals.clone(), vars.clone(), ops.clone());
+    let mut workload: ruler::enumo::Workload = iter_dios(3, depth, vals.clone(), vars.clone(), ops.clone());
     if filter {
         workload = workload.filter(Filter::Contains("Vec".parse().unwrap()));
     }
     let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
     let egraph = scheduler.run(&workload.to_egraph(), &current_ruleset);
     let mut candidates =  Ruleset::fast_cvec_match(&egraph);
-    let rules = candidates.minimize(current_ruleset.clone(), scheduler).0;
+    let mut rules = candidates.minimize(current_ruleset.clone(), scheduler).0;
     println!(
         "Done with generating rules of depth {} after {} secs, {} eclasses",
         depth,
@@ -714,7 +714,7 @@ pub fn run(
     _chkpt_path: Option<PathBuf>,
 ) -> Res<ruler::enumo::Ruleset<lang::VecLang>>
 {
-    let run_name = "deeper (depth 6) rulegen";
+    let run_name = "garbage..?";
     log::info!("running with config: {dios_config:#?}");
 
     // add all seed rules
@@ -736,35 +736,18 @@ pub fn run(
     // extend based off of any rule patterns we would want to learn
     seed_rules.extend(extend_rules());
 
-    // let other_rules = recipe_utils::run_workload(workload, seed_rules.clone(), ruler::Limits::synthesis(), ruler::Limits::synthesis(), true);
-    // ruler::logger::log_rules(&other_rules, Some("rulesets/ruleset.json"), run_name);
-    // return Ok(other_rules);
-
     // run the synthesizer
     // JB: now, in order to run the synthesizer, we must create a workload -- tbd, need to figure out how to construct a workload
     let vals = ["0", "1"].to_vec();
     let vars = ["a", "b", "c", "d", "e", "f"].to_vec();
     let ops = [dios_config.unops, dios_config.binops, dios_config.triops].to_vec();
-    
-    // let workload: ruler::enumo::Workload = iter_dios(3, 3, vals.clone(), vars.clone(), ops.clone());
-    // let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
-    // let egraph = scheduler.run(&workload.to_egraph(), &seed_rules);
-    // let mut candidates =  Ruleset::fast_cvec_match(&egraph);
-    // let rules = candidates.minimize(seed_rules.clone(), scheduler).0;
-    // // egraph1.dot().to_pdf("egraphs/before_adding_vecadd.pdf");
-    // println!(
-    //     "Done with phase 1 after {} secs, {} eclasses",
-    //     start.elapsed().as_secs(),
-    //     egraph.number_of_classes()
-    // );
-    // ruler::logger::log_rules(&rules, Some("candidates/depth3_ruleset.json"), run_name);
 
     let rules = seed_rules.clone();
     for idx in 3..=4 {
-        let rules = explore_ruleset_at_depth(&(rules.clone()), idx, false, &run_name, vals.clone(), vars.clone(), ops.clone());
+        let rules = explore_ruleset_at_depth((rules.clone()), idx, false, &run_name, vals.clone(), vars.clone(), ops.clone());
     }
     for idx in 5..=6 {
-        let rules = explore_ruleset_at_depth(&(rules.clone()), idx, true, &run_name, vals.clone(), vars.clone(), ops.clone());
+        let rules = explore_ruleset_at_depth((rules.clone()), idx, true, &run_name, vals.clone(), vars.clone(), ops.clone());
     }
 
 

@@ -578,6 +578,98 @@ def overall_performance(
             after=after,
         )
 
+@job()
+def overall_performance_small(
+    rulesets: Dict[str, Path] | None = None, after=None, memlimit=220, **_
+):
+    """
+    This measures the overall performance of the compiler in terms of
+    1) How good are the results of the compiler?
+    2) How fast is the compiler?
+    3) How well does the compiler scale?
+
+    This is a run with all of the benchmarks that Dios uses.
+    """
+
+    assert rulesets is not None
+
+    mat_mul_sizes = [
+        (2, 2, 2, 2),
+        (2, 3, 3, 3),
+        (3, 3, 3, 3),
+        (4, 4, 4, 4),
+        (8, 8, 8, 8),
+        (10, 10, 10, 10),
+        (16, 16, 16, 16),
+        (18, 18, 18, 18),
+        (20, 20, 20, 20),
+    ]
+    conv_2d_sizes = [
+        (3, 3, 2, 2),
+        (3, 3, 3, 3),
+        (3, 5, 3, 3),
+        (4, 4, 3, 3),
+        (8, 8, 3, 3),
+        (10, 10, 2, 2),
+        (10, 10, 3, 3),
+        (10, 10, 4, 4),
+        (16, 16, 2, 2),
+        (16, 16, 3, 3),
+        (16, 16, 4, 4),
+        (18, 18, 2, 2),
+        (18, 18, 3, 3),
+        (18, 18, 4, 4),
+    ]
+    qr_decomp_sizes = [3, 4]
+    ruleset = rulesets["ruleset-ruler2-depth6-prod-vecmac-vecmuls"]
+
+    # create all the jobs
+    for size in mat_mul_sizes:
+        mat_mul(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance-vecmac-vecmuls",
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
+        )
+
+    for size in conv_2d_sizes:
+        make_2d_conv(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance-vecmac-vecmuls",
+            timeout=3000,
+            memlimit=memlimit,
+            after=after,
+        )
+
+    q_prod(
+        Path("jobs"),
+        ruleset,
+        make_config(alpha=15, beta=6, timeout=180),
+        key="performance-vecmac-vecmuls",
+        timeout=3000,
+        memlimit=memlimit,
+        after=after,
+    )
+
+    for size in qr_decomp_sizes:
+        qr_decomp(
+            Path("jobs"),
+            size,
+            ruleset,
+            make_config(alpha=15, beta=6, timeout=180),
+            key="performance-vecmac-vecmuls",
+            timeout=10000,
+            memlimit=memlimit,
+            after=after,
+        )
+
 
 @job()
 def diospyros(after=None, memlimit=220, **_):

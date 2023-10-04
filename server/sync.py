@@ -36,13 +36,14 @@ def job_query(ip, remote_path_template, all):
     """
 
     jq_pattern = "{owner:.owner, name:.name, file:input_filename}"
+    # print(f'ssh ubuntu@{ip} "sh -c \'jq -c \\"{jq_pattern}\\" {remote_path_template}\'"')
     jq_cmd = subprocess.run(
         f'ssh ubuntu@{ip} "sh -c \'jq -c \\"{jq_pattern}\\" {remote_path_template}\'"',
         shell=True,
         capture_output=True,
     )
+    jq_cmd.check_returncode()
     jobs = [json.loads(s) for s in jq_cmd.stdout.decode("utf-8").splitlines()]
-
     if all:
         return jobs
     else:
@@ -76,14 +77,24 @@ def do_download(ip, remote_path, clean=False, all=False):
     # normalize the remote path so that rsync doesn't create completed/completed/*
     remote_path = str(Path(remote_path))
     jobs = job_query(ip, f"{remote_path}/**/**/config.json", all)
+    print(jobs)
     paths = [Path(j["file"]).parent for j in jobs]
 
     for p in paths:
+        print(" ".join(
+                [
+                    "rsync",
+                    "-e 'ssh -o StrictHostKeyChecking=no -i ~/.ssh/isaria'",
+                    "-avh",
+                    f"ubuntu@{ip}:{p}",
+                    remote_path,
+                ]
+            ))
         subprocess.run(
             " ".join(
                 [
                     "rsync",
-                    "-e 'ssh -o StrictHostKeyChecking=no'",
+                    "-e 'ssh -o StrictHostKeyChecking=no -i ~/.ssh/isaria'",
                     "-avh",
                     f"ubuntu@{ip}:{p}",
                     remote_path,
