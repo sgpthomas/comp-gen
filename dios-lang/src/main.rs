@@ -125,17 +125,10 @@ fn synth(synth_opts: SynthOpts) -> Res<()> {
         synth_opts.config.unwrap_or_default(),
         synth_opts.checkpoint,
     )?;
-<<<<<<< HEAD
     let file = std::fs::File::create(&synth_opts.output)
         .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
     // report.to_file(&synth_opts.output);
     serde_json::to_writer_pretty(file, &report).expect("failed to write json");
-=======
-    // let file = std::fs::File::create(&synth_opts.output)
-    //     .unwrap_or_else(|_| panic!("Failed to open '{}'", &synth_opts.output));
-    report.to_file(&synth_opts.output);
-    // serde_json::to_writer_pretty(file, &report).expect("failed to write json");
->>>>>>> 58a37b6cfe70b377de75db71da5e63c7630b5aef
     Ok(())
 }
 

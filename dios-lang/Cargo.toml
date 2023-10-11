@@ -25,10 +25,7 @@ rustc-hash = "1"
 lexpr = "0.2.6"
 thiserror = "1.0.37"
 anyhow = "1.0.65"
-<<<<<<< HEAD
 dot = "0.1.4"
-=======
->>>>>>> 58a37b6cfe70b377de75db71da5e63c7630b5aef
 [dependencies.egg]
 git = "https://github.com/sgpthomas/egg.git"
 branch = "update_symbol_table"
