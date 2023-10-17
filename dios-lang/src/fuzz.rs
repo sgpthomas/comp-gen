@@ -99,12 +99,5 @@ impl FuzzEquals for lang::VecLang {
         // let lvec = Self::eval_pattern(lhs, &env, length);
         // let rvec = Self::eval_pattern(rhs, &env, length);
 
-<<<<<<< HEAD
-        // vecs_eq(&lhs, &rhs)
-        // false
-=======
-        // vecs_eq(&lvec, &rvec)
-        true
->>>>>>> 58a37b6cfe70b377de75db71da5e63c7630b5aef
     }
 }
