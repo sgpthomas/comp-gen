@@ -297,7 +297,7 @@ impl SynthLanguage for lang::VecLang {
     where
         F: FnMut(&'a Id) -> &'a CVec<Self>,
     {
-        match self {
+        let x = match self {
             lang::VecLang::Const(i) => vec![Some(i.clone()); cvec_len],
             lang::VecLang::Add([l, r]) => map!(get, l, r => {
                 lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
@@ -548,7 +548,9 @@ impl SynthLanguage for lang::VecLang {
                 })
             }),
             lang::VecLang::Symbol(_) => vec![],
-        }
+        };
+        log::info!("eval({self}): {x:?}");
+        x
     }
 
     fn initialize_vars(
@@ -785,7 +787,7 @@ pub fn run(
         [dios_config.unops, dios_config.binops, dios_config.triops].to_vec();
 
     let mut rules = seed_rules.clone();
-    for idx in 1..=2 {
+    for idx in 1..=3 {
         rules = explore_ruleset_at_depth(
             rules,
             idx,
@@ -795,6 +797,10 @@ pub fn run(
             vars.clone(),
             ops.clone(),
         );
+    }
+
+    for (_, r) in &rules {
+        log::info!("{r}");
     }
     // for idx in 5..=5 {
     //     rules = explore_ruleset_at_depth(

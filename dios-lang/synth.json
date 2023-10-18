@@ -11,14 +11,11 @@
   ],
   "seed_rules": [],
   "unops": [
-    "VecNeg",
     "Vec"
   ],
   "binops": [
     "+",
-    "-",
-    "VecAdd",
-    "VecMinus"
+    "VecAdd"
   ],
   "triops": [],
   "use_scalar": true,
