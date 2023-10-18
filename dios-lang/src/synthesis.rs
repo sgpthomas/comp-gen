@@ -1,17 +1,13 @@
-use comp_gen::ruler::{
-    self, enumo::*, recipe_utils, ValidationResult,
-};
+use comp_gen::ruler::{self, enumo::*, recipe_utils, ValidationResult};
 use egg::{self, EGraph, Id};
 use log::debug;
 use num::integer::Roots;
 use rand::Rng;
 use rand_pcg::Pcg32;
 // ruler no longer has Equality and Synthesizer
-use ruler::{
-    map, self_product, CVec, SynthAnalysis, SynthLanguage
-};
+use ruler::{map, self_product, CVec, SynthAnalysis, SynthLanguage};
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{lang, smt::SmtEquals, Res};
 
@@ -246,10 +242,8 @@ impl Default for DiosConfig {
 // #[serde(into = "SerializedRuleset")]
 // #[serde(bound = "L: SynthLanguage")]
 
-
-
 // impl lang::VecLang {
-    
+
 //     fn post_process(
 //         ruleset: &RuleSet<lang::VecLang>,
 //     ) -> Report<Self> {
@@ -292,7 +286,10 @@ impl SynthLanguage for lang::VecLang {
         matches!(&self, lang::VecLang::Const(_))
     }
 
-    fn mk_constant(c: <Self as SynthLanguage>::Constant, _e: &mut EGraph<Self, SynthAnalysis>) -> Self {
+    fn mk_constant(
+        c: <Self as SynthLanguage>::Constant,
+        _e: &mut EGraph<Self, SynthAnalysis>,
+    ) -> Self {
         lang::VecLang::Const(c)
     }
 
@@ -554,12 +551,15 @@ impl SynthLanguage for lang::VecLang {
         }
     }
 
-    fn initialize_vars(egraph: &mut EGraph<Self, SynthAnalysis>, vars: &[String]) {
+    fn initialize_vars(
+        egraph: &mut EGraph<Self, SynthAnalysis>,
+        vars: &[String],
+    ) {
         *egraph = egraph.clone().with_explanations_enabled();
-        debug!("initializing variables");
+        log::info!("initializing variables: {vars:?}");
 
         // TODO: consts are set upon creating DiosLang config, for now I've hard coded the constants but can clean it up later
-        let consts = vec![0,1];
+        let consts = vec![0, 1];
         // let consts = synth
         //     .lang_config
         //     .constants
@@ -584,12 +584,8 @@ impl SynthLanguage for lang::VecLang {
 
         egraph.analysis.cvec_len = cvec_size;
 
-        egraph.analysis.cvec_len = cvec_size;
-
-
         // read and add seed rules from config
         // JB: seed rules can be added by means of enumo's extend operator, so there is no longer any reason to add it here :)
-
 
         // add constants to egraph
         for v in consts {
@@ -598,7 +594,7 @@ impl SynthLanguage for lang::VecLang {
         }
 
         use rand_pcg::Lcg64Xsh32;
-        let mut rng = Lcg64Xsh32::new(0,0);
+        let mut rng = Lcg64Xsh32::new(0, 0);
 
         // add variables
         // set the initial cvecs of variables. this represents all the possible
@@ -620,10 +616,7 @@ impl SynthLanguage for lang::VecLang {
 
             cvec.extend(
                 lang::Value::sample_vec(
-                    &mut rng,
-                    -100,
-                    100,
-                    1, // synth.params.vector_size
+                    &mut rng, -100, 100, 1, // synth.params.vector_size
                     n_vecs,
                 )
                 .into_iter()
@@ -634,7 +627,6 @@ impl SynthLanguage for lang::VecLang {
 
             egraph[id].data.cvec = cvec;
         }
-
     }
 
     fn validate(
@@ -643,16 +635,13 @@ impl SynthLanguage for lang::VecLang {
     ) -> ValidationResult {
         // JB TODO: allow for fuzz mode as well
         // let x = if synth.lang_config.always_smt {
-            if Self::smt_equals(lhs, rhs) {
-                ValidationResult::Valid
-            } else {
-                ValidationResult::Invalid
-            }
-
+        if Self::smt_equals(lhs, rhs) {
+            ValidationResult::Valid
+        } else {
+            ValidationResult::Invalid
+        }
     }
-
 }
-
 
 pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
     if lvec.iter().all(|x| x.is_none()) && rvec.iter().all(|x| x.is_none()) {
@@ -667,52 +656,82 @@ pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
 }
 
 // JB: theoretically loop based off of argnum btu lazy so not rn
-fn iter_dios(_argnum: usize, depth: usize, values: Vec<&str>, variable_names: Vec<&str>, operations: Vec<Vec<String>>) -> Workload {
-    recipe_utils::iter_metric(recipe_utils::base_lang(3), "EXPR", Metric::Atoms, depth)
-    .filter(Filter::Contains("VAR".parse().unwrap()))
+fn iter_dios(
+    _argnum: usize,
+    depth: usize,
+    values: Vec<&str>,
+    variable_names: Vec<&str>,
+    operations: Vec<Vec<String>>,
+) -> Workload {
+    recipe_utils::iter_metric(
+        recipe_utils::base_lang(3),
+        "EXPR",
+        Metric::Depth,
+        depth,
+    )
+    // .filter(Filter::Contains("VAR".parse().unwrap()))
     .plug("VAL", &Workload::new(values))
-    .plug("VAR", &Workload::new(variable_names))
+    .plug("VAR", &Workload::new(variable_names.iter()))
     .plug("OP1", &Workload::new(operations[0].clone()))
     .plug("OP2", &Workload::new(operations[1].clone()))
     .plug("OP3", &Workload::new(operations[2].clone()))
-
+    .filter(Filter::Canon(
+        variable_names.iter().map(|x| x.to_string()).collect(),
+    ))
 }
 
-fn extend_rules() -> ruler::enumo::Ruleset<lang::VecLang>{
+fn extend_rules() -> ruler::enumo::Ruleset<lang::VecLang> {
     Ruleset::new([
-        "(VecAdd (Vec ?b) (Vec ?a)) ==> (Vec (+ ?b ?a))", 
-        "(VecDiv (Vec ?b) (Vec ?a)) ==> (Vec (/ ?b ?a))"]
-    )
+        "(VecAdd (Vec ?b) (Vec ?a)) ==> (Vec (+ ?b ?a))",
+        "(VecDiv (Vec ?b) (Vec ?a)) ==> (Vec (/ ?b ?a))",
+    ])
 }
 
-fn explore_ruleset_at_depth(current_ruleset: Ruleset<lang::VecLang>, 
-                depth: usize, filter: bool, run_name: &str, 
-                vals: Vec<&str>, vars: Vec<&str>, ops: Vec<Vec<String>>)
-                 -> Ruleset<lang::VecLang>
-{
+fn explore_ruleset_at_depth(
+    current_ruleset: Ruleset<lang::VecLang>,
+    depth: usize,
+    filter: bool,
+    run_name: &str,
+    vals: Vec<&str>,
+    vars: Vec<&str>,
+    ops: Vec<Vec<String>>,
+) -> Ruleset<lang::VecLang> {
     let start = std::time::Instant::now();
-    let mut workload: ruler::enumo::Workload = iter_dios(3, depth, vals.clone(), vars.clone(), ops.clone())
-            .filter(Filter::MetricEq(Metric::Atoms, depth));
-    println!(
-        "WORKLOAD IS {:?}", workload
-    );
+    let mut workload: ruler::enumo::Workload =
+        iter_dios(3, depth, vals.clone(), vars.clone(), ops.clone())
+            .filter(Filter::MetricEq(Metric::Depth, depth));
+    println!("==============================");
+    println!("WORKLOAD IS:");
+    for sexp in workload.clone().force() {
+        println!("{sexp}");
+    }
     if filter {
+        println!("Filtering rules!");
         workload = workload.filter(Filter::Contains("Vec".parse().unwrap()));
     }
     let scheduler = Scheduler::Compress(ruler::Limits::synthesis());
+    println!("=============Scheduler has been run================");
+    let egraph: EGraph<lang::VecLang, SynthAnalysis> =
+        scheduler.run(&workload.to_egraph(), &current_ruleset);
+    println!("=============Workload converted to egraph================");
+
+    let mut candidates = Ruleset::fast_cvec_match(&egraph);
     println!(
-        "=============Scheduler has been run================"
+        "=============Generated {} candidates for depth {}================",
+        candidates.len(),
+        depth
     );
-    let egraph: EGraph<lang::VecLang, SynthAnalysis> = scheduler.run(&workload.to_egraph(), &current_ruleset);
-    println!(
-        "=============Workload converted to egraph================"
-    );
-    
-    let mut candidates =  Ruleset::fast_cvec_match(&egraph);
-    println!(
-        "=============Generated {} candidates for depth {}================", candidates.len(), depth
-    );
-    ruler::logger::log_rules(&candidates, Some((format!("candidates/depth{}_post_cvec_match.json", depth)).as_str()), run_name);
+    for (_name, rule) in &candidates {
+        println!("cand: {}", rule);
+    }
+    // ruler::logger::log_rules(
+    //     &candidates,
+    //     Some(
+    //         (format!("candidates/depth{}_post_cvec_match.json", depth))
+    //             .as_str(),
+    //     ),
+    //     run_name,
+    // );
     let mut rules = candidates.minimize(current_ruleset.clone(), scheduler).0;
     println!(
         "Done with generating rules of depth {} after {} secs, {} eclasses, {} rules",
@@ -721,7 +740,11 @@ fn explore_ruleset_at_depth(current_ruleset: Ruleset<lang::VecLang>,
         egraph.number_of_classes(),
         rules.len()
     );
-    ruler::logger::log_rules(&rules, Some((format!("candidates/depth{}_ruleset.json", depth)).as_str()), run_name);
+    // ruler::logger::log_rules(
+    //     &rules,
+    //     Some((format!("candidates/depth{}_ruleset.json", depth)).as_str()),
+    //     run_name,
+    // );
     rules.extend(current_ruleset);
     rules
 }
@@ -729,13 +752,13 @@ fn explore_ruleset_at_depth(current_ruleset: Ruleset<lang::VecLang>,
 pub fn run(
     dios_config: DiosConfig,
     _chkpt_path: Option<PathBuf>,
-) -> Res<ruler::enumo::Ruleset<lang::VecLang>>
-{
+) -> Res<ruler::enumo::Ruleset<lang::VecLang>> {
     let run_name = "slow cvec match, up to depth 5";
     log::info!("running with config: {dios_config:#?}");
 
     // add all seed rules
-    let mut seed_rules : ruler::enumo::Ruleset<lang::VecLang> = ruler::enumo::Ruleset::default();
+    let mut seed_rules: ruler::enumo::Ruleset<lang::VecLang> =
+        ruler::enumo::Ruleset::default();
 
     for rule in dios_config.seed_rules.into_iter() {
         match ruler::enumo::Rule::from_string(&rule) {
@@ -743,30 +766,49 @@ pub fn run(
                 seed_rules.add(r.0);
                 match r.1 {
                     Some(bidirectional) => seed_rules.add(bidirectional),
-                    None => ()
+                    None => (),
                 }
-            },
-            Err(msg) => panic!("provided a malformed seed rule, {:?}\n{:?}", rule, msg)
-        } 
+            }
+            Err(msg) => {
+                panic!("provided a malformed seed rule, {:?}\n{:?}", rule, msg)
+            }
+        }
     }
 
     // extend based off of any rule patterns we would want to learn
-    seed_rules.extend(extend_rules());
+    // seed_rules.extend(extend_rules());
 
     // run the synthesizer
     let vals = ["0", "1"].to_vec();
     let vars = ["a", "b", "c", "d", "e", "f"].to_vec();
-    let ops = [dios_config.unops, dios_config.binops, dios_config.triops].to_vec();
+    let ops =
+        [dios_config.unops, dios_config.binops, dios_config.triops].to_vec();
 
     let mut rules = seed_rules.clone();
-    for idx in 3..=4 {
-        rules = explore_ruleset_at_depth(rules, idx, false, &run_name, vals.clone(), vars.clone(), ops.clone());
+    for idx in 1..=2 {
+        rules = explore_ruleset_at_depth(
+            rules,
+            idx,
+            false,
+            &run_name,
+            vals.clone(),
+            vars.clone(),
+            ops.clone(),
+        );
     }
-    for idx in 5..=5 {
-        rules = explore_ruleset_at_depth(rules, idx, true, &run_name, vals.clone(), vars.clone(), ops.clone());
-    }
+    // for idx in 5..=5 {
+    //     rules = explore_ruleset_at_depth(
+    //         rules,
+    //         idx,
+    //         true,
+    //         &run_name,
+    //         vals.clone(),
+    //         vars.clone(),
+    //         ops.clone(),
+    //     );
+    // }
 
-    ruler::logger::log_rules(&rules, Some("rulesets/ruleset.json"), run_name);
+    // ruler::logger::log_rules(&rules, Some("rulesets/ruleset.json"), run_name);
 
     Ok(rules)
 }
