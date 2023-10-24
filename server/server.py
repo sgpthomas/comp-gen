@@ -188,6 +188,8 @@ class Job:
         # remove the job directory
         shutil.rmtree(self.dir)
 
+        print(f"Completed {self.name}")
+
     def __eq__(self, obj):
         return isinstance(obj, Job) and self.dir == obj.dir
 
