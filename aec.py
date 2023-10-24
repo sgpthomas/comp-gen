@@ -43,14 +43,14 @@ def jobs(job_name, **kwargs):
 def sync(cmd: str, *args, name: str | None = None, ip: str | None = None, **kwargs):
     if name is not None:
         return sp.run(
-            f"./sync.py {cmd} --name {name} {' '.join(args)}",
+            f"./sync.py {cmd} --name {name} --dir completed {' '.join(args)}",
             shell=True,
             cwd="server",
             **kwargs,
         )
     elif ip is not None:
         return sp.run(
-            f"./sync.py {cmd} --ip {ip} {' '.join(args)}",
+            f"./sync.py {cmd} --ip {ip} --dir completed {' '.join(args)}",
             shell=True,
             cwd="server",
             **kwargs,
