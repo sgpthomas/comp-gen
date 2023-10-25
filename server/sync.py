@@ -86,7 +86,7 @@ def do_download(ip, remote_path, clean=False, all=False):
                     "-e 'ssh -o StrictHostKeyChecking=no'",
                     "-avh",
                     f"ubuntu@{ip}:{p}",
-                    remote_path,
+                    "completed",
                 ]
             ),
             shell=True,
