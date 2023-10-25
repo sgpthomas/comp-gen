@@ -163,8 +163,6 @@ Once the command has completed, you can regenerate the figures.
 
 Above, we have shown how to reproduce smaller versions of the experiments that we present in our paper. To run the full version of experiments. You can pass the =--all= flag to every one of the commands above. There are also a few additional commands that you need to run to regenerate the rulesets used.
 
-
-
 * Cleanup
 
 After you are done playing with the artifact, you can remove the container.
