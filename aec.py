@@ -70,7 +70,6 @@ def wait_then_process(query, *, name, ip, estimated_time=None):
     start_time = datetime.datetime.now()
     while True:
         ret_code = sync("check", name=name, ip=ip, capture_output=True).returncode
-        print(ret_code)
         if ret_code == 0:
             break
         elif ret_code == 255:
@@ -78,7 +77,7 @@ def wait_then_process(query, *, name, ip, estimated_time=None):
             sys.exit(-1)
 
         delta = datetime.datetime.now() - start_time
-        print(f"Jobs running for {delta.seconds}s", end="", flush=True)
+        print(f"{ret_code} jobs left. Running for {delta.seconds}s", end="", flush=True)
         if estimated_time is not None:
             print(f" [Estimated total ~{estimated_time}s]", flush=True)
         else:
@@ -198,16 +197,18 @@ def make(fig: str):
 @click.option("--no-wait", is_flag=True)
 @click.option("--ip", type=str)
 @click.option("--name", type=str)
-def gen_data(experiment, all, no_wait, ip, name):
+@click.option("--resume", is_flag=True)
+def gen_data(experiment, all, no_wait, ip, name, resume):
     match experiment:
         case "overall":
-            if all:
-                jobs("overall_performance")
-            else:
-                jobs("fast_overall_performance")
+            if not resume:
+                if all:
+                    jobs("overall_performance")
+                else:
+                    jobs("fast_overall_performance")
 
-            jobs("estimate:performance", after="performance")
-            sync("upload", "--clean", name=name, ip=ip)
+                jobs("estimate:performance", after="performance")
+                sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
                 wait_then_process(
@@ -215,13 +216,14 @@ def gen_data(experiment, all, no_wait, ip, name):
                 )
 
         case "pruning":
-            if all:
-                jobs("pruning")
-            else:
-                jobs("fast_pruning")
+            if not resume:
+                if all:
+                    jobs("pruning")
+                else:
+                    jobs("fast_pruning")
 
-            jobs("estimate:pruning", after="pruning")
-            sync("upload", "--clean", name=name, ip=ip)
+                jobs("estimate:pruning", after="pruning")
+                sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
                 wait_then_process(
@@ -229,13 +231,14 @@ def gen_data(experiment, all, no_wait, ip, name):
                 )
 
         case "ruleset_ablation":
-            if all:
-                jobs("ruleset_ablation", rulesets="rulesets/ablation")
-            else:
-                jobs("fast_ruleset_ablation", rulesets="rulesets/ablation")
+            if not resume:
+                if all:
+                    jobs("ruleset_ablation", rulesets="rulesets/ablation")
+                else:
+                    jobs("fast_ruleset_ablation", rulesets="rulesets/ablation")
 
-            jobs("estimate:ruleset_ablation", after="ruleset_ablation")
-            sync("upload", "--clean", name=name, ip=ip)
+                jobs("estimate:ruleset_ablation", after="ruleset_ablation")
+                sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
                 wait_then_process(
@@ -246,9 +249,10 @@ def gen_data(experiment, all, no_wait, ip, name):
                 )
 
         case "new_instructions":
-            jobs("test_instruction_ruleset", rulesets="rulesets/instructions")
-            jobs("estimate:instruction", after="instruction")
-            sync("upload", "--clean", name=name, ip=ip)
+            if not resume:
+                jobs("test_instruction_ruleset", rulesets="rulesets/instructions")
+                jobs("estimate:instruction", after="instruction")
+                sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
                 wait_then_process(
@@ -259,13 +263,14 @@ def gen_data(experiment, all, no_wait, ip, name):
                 )
 
         case "alpha_beta":
-            if all:
-                jobs("alpha_beta_ablation")
-            else:
-                jobs("fast_alpha_beta_ablation")
+            if not resume:
+                if all:
+                    jobs("alpha_beta_ablation")
+                else:
+                    jobs("fast_alpha_beta_ablation")
 
-            jobs("estimate:alpha-beta", after="alpha-beta")
-            sync("upload", "--clean", name=name, ip=ip)
+                jobs("estimate:alpha-beta", after="alpha-beta")
+                sync("upload", "--clean", name=name, ip=ip)
 
             if not no_wait:
                 wait_then_process(

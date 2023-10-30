@@ -111,7 +111,7 @@ def do_check(ip, remote_path, all=False):
     if alive:
         if in_progress:
             print(f"{len(jobs)} jobs in progress")
-            sys.exit(len(jobs))
+            sys.exit(min(len(jobs), 254))
         else:
             print("Completed")
             sys.exit(0)
