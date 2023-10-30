@@ -222,7 +222,6 @@ def gen_data(experiment, all, no_wait, ip, name):
 
         case "ruleset_ablation":
             if all:
-                # jobs("ruleset_synthesis")
                 jobs("ruleset_ablation", rulesets="rulesets/ablation")
             else:
                 jobs("fast_ruleset_ablation", rulesets="rulesets/ablation")
@@ -239,12 +238,7 @@ def gen_data(experiment, all, no_wait, ip, name):
                 )
 
         case "new_instructions":
-            if all:
-                raise NotImplementedError("Not yet tested")
-            else:
-                jobs("test_instruction_ruleset", rulesets="rulesets/instructions")
-                pass
-
+            jobs("test_instruction_ruleset", rulesets="rulesets/instructions")
             jobs("estimate:instruction", after="instruction")
             sync("upload", "--clean", name=name, ip=ip)
 
