@@ -100,12 +100,24 @@ def do_check(ip, remote_path, all=False):
     remote_path = str(Path(remote_path))
     jobs = job_query(ip, f"{remote_path}/**/config.json", all)
 
-    if len(jobs) > 0:
-        print(f"{len(jobs)} jobs in progress")
-        sys.exit(-1)
+    podman_status_cmd = subprocess.run(
+        f'ssh ubuntu@{ip} "sh -c \'podman ps --format "{{{{.Exited}}}}" --filter name="isaria"\'"',
+        shell=True,
+        capture_output=True,
+    )
+    alive = podman_status_cmd.stdout.decode("utf-8").strip() == "false"
+    in_progress = len(jobs) > 0
+
+    if alive:
+        if in_progress:
+            print(f"{len(jobs)} jobs in progress")
+            sys.exit(-1)
+        else:
+            print("Completed")
+            sys.exit(0)
     else:
-        print("Completed")
-        sys.exit(0)
+        print(f"Isaria experiment server not detected")
+        sys.exit(-2)
 
 
 def resolve_name_ip(name, ip):

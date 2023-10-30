@@ -68,7 +68,14 @@ def query(name):
 
 def wait_then_process(query, *, name, ip, estimated_time=None):
     start_time = datetime.datetime.now()
-    while sync("check", name=name, ip=ip, capture_output=True).returncode != 0:
+    while True:
+        ret_code = sync("check", name=name, ip=ip, capture_output=True).returncode
+        if ret_code == 0:
+            break
+        elif ret_code == -2:
+            print(f"No experiment server detected! Jobs will not complete.")
+            break
+
         delta = datetime.datetime.now() - start_time
         print(f"Jobs running for {delta.seconds}s", end="", flush=True)
         if estimated_time is not None:
