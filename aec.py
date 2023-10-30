@@ -70,11 +70,12 @@ def wait_then_process(query, *, name, ip, estimated_time=None):
     start_time = datetime.datetime.now()
     while True:
         ret_code = sync("check", name=name, ip=ip, capture_output=True).returncode
+        print(ret_code)
         if ret_code == 0:
             break
-        elif ret_code == -2:
+        elif ret_code == 255:
             print(f"No experiment server detected! Jobs will not complete.")
-            break
+            sys.exit(-1)
 
         delta = datetime.datetime.now() - start_time
         print(f"Jobs running for {delta.seconds}s", end="", flush=True)

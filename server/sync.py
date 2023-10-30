@@ -111,13 +111,13 @@ def do_check(ip, remote_path, all=False):
     if alive:
         if in_progress:
             print(f"{len(jobs)} jobs in progress")
-            sys.exit(-1)
+            sys.exit(len(jobs))
         else:
             print("Completed")
             sys.exit(0)
     else:
         print(f"Isaria experiment server not detected")
-        sys.exit(-2)
+        sys.exit(-1)
 
 
 def resolve_name_ip(name, ip):
