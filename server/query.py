@@ -543,7 +543,11 @@ def update(name, time, commit, diff):
 
     res = []
     for _, row in exps.iterrows():
-        res.append(config["func"](row))
+        try:
+            res.append(config["func"](row))
+        except Exception as e:
+            print(f"Something went wrong with {row}")
+            print(e)
     df = (
         pd.concat(res)
         >> sort_values(by=config["sort_keys"], key=sorter)
