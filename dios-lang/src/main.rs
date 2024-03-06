@@ -1,15 +1,17 @@
+mod alpha_rename;
 mod cost;
 mod desugar;
 mod error;
 mod fuzz;
 mod handwritten;
 mod lang;
+mod letify;
 mod rewriteconcats;
 mod smt;
 mod stringconversion;
 mod synthesis;
 
-use crate::desugar::Desugar;
+use crate::{desugar::Desugar, letify::Letify};
 use anyhow::Context;
 use argh::FromArgs;
 use comp_gen::ruler::egg;
@@ -73,7 +75,8 @@ struct CompileOpts {
     #[argh(option, from_str_fn(read_path))]
     dios_example_bin: PathBuf,
 
-    /// diosbinary
+    /// dios binary
+    #[allow(unused)]
     #[argh(option, from_str_fn(read_path))]
     dios_bin: PathBuf,
 
@@ -204,6 +207,11 @@ fn compile(opts: CompileOpts) -> Res<()> {
     let (cost, prog, mut _eg) = compiler.compile(prog);
     info!("cost: {cost}");
 
+    // test the let intro rewrite rule
+    {
+        println!("test:\n{}", prog.clone().letify().pretty(80));
+    }
+
     // write to spec.rkt
     let path = output_dir.join("res.rkt");
     let mut spec_file = fs::File::create(&path)?;
@@ -212,17 +220,19 @@ fn compile(opts: CompileOpts) -> Res<()> {
 
     // call ./dios -w <vec_width> --egg --suppress-git -o <dir>/kernel.c <dir>
     // this generates the kernel.c file
-    process::Command::new(opts.dios_bin)
+    let output = process::Command::new(opts.dios_bin)
         .arg("-w")
         .arg(opts.vector_width.to_string())
         .arg("--egg")
         .arg("--suppress-git")
+        .arg("--dump-intermediate")
         .arg("-o")
         .arg(output_dir.join("kernel.c"))
         .arg(output_dir)
-        .stdout(process::Stdio::inherit())
+        .stdout(process::Stdio::piped())
         .stderr(process::Stdio::inherit())
         .output()?;
+    println!("{}", String::from_utf8(output.stdout).unwrap());
 
     Ok(())
 }

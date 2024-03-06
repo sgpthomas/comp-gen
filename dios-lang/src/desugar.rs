@@ -3,7 +3,7 @@ use std::str::FromStr;
 use comp_gen::{ruler::egg, FromPattern};
 use itertools::Itertools;
 
-use crate::lang;
+use crate::{alpha_rename::AlphaRenamable, lang};
 
 pub trait Desugar {
     fn desugar(self, n_lanes: usize) -> Self;
@@ -42,6 +42,9 @@ impl Desugar for lang::VecAst {
                     .into_iter()
                     .map(|n| items[0].clone().rename(&format!("{n}")))
                     .collect_vec(),
+            ),
+            lang::VecAst::List(l) => lang::VecAst::List(
+                l.into_iter().map(|i| i.desugar(n_lanes)).collect(),
             ),
             x @ lang::VecAst::Vec(_) => {
                 panic!("Can't desugar Vecs with more than one lane.\n{:?}", x)
@@ -137,6 +140,13 @@ impl Desugar for lang::VecAst {
                 Box::new(b.desugar(n_lanes)),
                 Box::new(c.desugar(n_lanes)),
             ),
+            lang::VecAst::Let(a, b) => {
+                lang::VecAst::Let(a, Box::new(b.desugar(n_lanes)))
+            }
+            lang::VecAst::Concat(left, right) => lang::VecAst::Concat(
+                Box::new(left.desugar(n_lanes)),
+                Box::new(right.desugar(n_lanes)),
+            ),
             lang::VecAst::Get(left, right) => lang::VecAst::Get(
                 Box::new(left.desugar(n_lanes)),
                 Box::new(right.desugar(n_lanes)),
@@ -144,120 +154,6 @@ impl Desugar for lang::VecAst {
 
             x @ lang::VecAst::Const(_) => x,
             x @ lang::VecAst::Symbol(_) => x,
-        }
-    }
-}
-
-pub trait AlphaRenamable {
-    fn rename(self, suffix: &str) -> Self;
-}
-
-impl AlphaRenamable for lang::VecAst {
-    fn rename(self, suffix: &str) -> Self {
-        match self {
-            lang::VecAst::Add(x, y) => lang::VecAst::Add(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Mul(x, y) => lang::VecAst::Mul(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Minus(x, y) => lang::VecAst::Minus(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Div(x, y) => lang::VecAst::Div(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Or(x, y) => lang::VecAst::Or(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::And(x, y) => lang::VecAst::And(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Ite(b, t, f) => lang::VecAst::Ite(
-                Box::new(b.rename(suffix)),
-                Box::new(t.rename(suffix)),
-                Box::new(f.rename(suffix)),
-            ),
-            lang::VecAst::Lt(x, y) => lang::VecAst::Lt(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::SqrtSgn(x, y) => lang::VecAst::SqrtSgn(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::Sqrt(x) => {
-                lang::VecAst::Sqrt(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::Sgn(x) => {
-                lang::VecAst::Sgn(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::Neg(x) => {
-                lang::VecAst::Neg(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::Vec(items) => lang::VecAst::Vec(
-                items.into_iter().map(|x| x.rename(suffix)).collect_vec(),
-            ),
-            lang::VecAst::LitVec(items) => lang::VecAst::LitVec(
-                items.into_iter().map(|x| x.rename(suffix)).collect_vec(),
-            ),
-            lang::VecAst::Get(x, y) => lang::VecAst::Get(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecAdd(x, y) => lang::VecAst::VecAdd(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecMul(x, y) => lang::VecAst::VecMul(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecMinus(x, y) => lang::VecAst::VecMinus(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecDiv(x, y) => lang::VecAst::VecDiv(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecMulSgn(x, y) => lang::VecAst::VecMulSgn(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecSqrtSgn(x, y) => lang::VecAst::VecSqrtSgn(
-                Box::new(x.rename(suffix)),
-                Box::new(y.rename(suffix)),
-            ),
-            lang::VecAst::VecNeg(x) => {
-                lang::VecAst::VecNeg(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::VecSqrt(x) => {
-                lang::VecAst::VecSqrt(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::VecSgn(x) => {
-                lang::VecAst::VecSgn(Box::new(x.rename(suffix)))
-            }
-            lang::VecAst::VecMAC(a, b, c) => lang::VecAst::VecMAC(
-                Box::new(a.rename(suffix)),
-                Box::new(b.rename(suffix)),
-                Box::new(c.rename(suffix)),
-            ),
-            lang::VecAst::VecMULS(a, b, c) => lang::VecAst::VecMULS(
-                Box::new(a.rename(suffix)),
-                Box::new(b.rename(suffix)),
-                Box::new(c.rename(suffix)),
-            ),
-            x @ lang::VecAst::Const(_) => x,
-            lang::VecAst::Symbol(n) => {
-                lang::VecAst::Symbol(format!("{n}{suffix}"))
-            }
         }
     }
 }

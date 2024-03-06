@@ -520,6 +520,7 @@ impl SynthLanguage for lang::VecLang {
                         .map(lang::Value::Vec)
                 })
             }),
+            lang::VecLang::Let(_) => todo!(),
             lang::VecLang::Symbol(_) => vec![],
         }
     }

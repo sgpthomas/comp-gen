@@ -185,6 +185,8 @@ impl egg::CostFunction<VecLang> for VecCostFn {
             VecLang::Lt(_) => self.vec_op,
             VecLang::VecMulSgn(_) => self.vec_op,
             VecLang::VecSqrtSgn(..) => self.vec_op,
+
+            VecLang::Let(..) => self.op,
             // _ => VEC_OP,
         };
         enode.fold(op_cost, |sum, id| sum + costs(id))

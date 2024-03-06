@@ -62,7 +62,7 @@ where
 
         if self.dump_rules {
             for r in &rules {
-                info!(
+                debug!(
                     "[cd:{:.2?} ca:{:.2?}] {} => {} ({})",
                     cost_fn.cost_differential(r),
                     cost_fn.cost_average(r),

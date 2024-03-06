@@ -270,7 +270,8 @@ pub fn egg_to_z3<'a>(
             | lang::VecLang::Get(_)
             | lang::VecLang::Vec(_)
             | lang::VecLang::LitVec(_)
-            | lang::VecLang::Concat(_) => return None,
+            | lang::VecLang::Concat(_)
+            | lang::VecLang::Let(_) => return None,
         }
     }
     // return the last element
