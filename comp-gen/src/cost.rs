@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use ruler::egg;
+use egg;
 
 use crate::FromPattern;
 

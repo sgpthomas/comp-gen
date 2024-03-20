@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
+use egg;
 use log::{debug, info, warn};
-use ruler::egg;
 
 use crate::{
     compiler,
@@ -16,10 +16,11 @@ pub struct EqSatResult<
     N: egg::Analysis<L>,
     C: egg::CostFunction<L>,
 > {
-    cost: C::Cost,
-    prog: egg::RecExpr<L>,
-    egraph: egg::EGraph<L, N>,
-    time_left: Duration,
+    pub cost: C::Cost,
+    pub prog: egg::RecExpr<L>,
+    pub egraph: egg::EGraph<L, N>,
+    pub time_left: Duration,
+    pub roots: Vec<egg::Id>,
 }
 
 impl<L, N, C> compiler::Compiler<L, N, C>
@@ -84,6 +85,7 @@ where
             prog: old_prog,
             mut egraph,
             time_left,
+            roots: _old_roots,
         } = eqsat;
 
         // update egraph
@@ -184,6 +186,7 @@ where
             egraph: runner.egraph,
             time_left: time_left
                 .saturating_sub(Duration::from_secs_f64(stats.total_time)),
+            roots: runner.roots,
         }
     }
 
@@ -237,10 +240,7 @@ where
         eqsat
     }
 
-    pub fn compile(
-        &mut self,
-        prog: egg::RecExpr<L>,
-    ) -> (C::Cost, egg::RecExpr<L>, egg::EGraph<L, N>) {
+    pub fn compile(&mut self, prog: egg::RecExpr<L>) -> EqSatResult<L, N, C> {
         log::debug!("Phase config: {:#?}", self.phases);
         self.generate_rule_histogram();
 
@@ -251,9 +251,10 @@ where
             prog,
             egraph: self.new_egraph(),
             time_left: Duration::from_secs(self.timeout),
+            roots: vec![],
         };
 
-        let eqsat = self.run_phase(&self.phases, eqsat);
-        (eqsat.cost, eqsat.prog, eqsat.egraph)
+        // (eqsat.cost, eqsat.prog, eqsat.egraph)
+        self.run_phase(&self.phases, eqsat)
     }
 }

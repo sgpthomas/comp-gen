@@ -1,15 +1,12 @@
 use std::collections::HashMap;
 
-use comp_gen::{
-    ruler,
-    ruler::{egg, SynthLanguage},
-};
-use itertools::Itertools;
-
 use crate::{
     lang,
     synthesis::{split_into_halves, vecs_eq},
 };
+use egg;
+use itertools::Itertools;
+use ruler::{self, SynthLanguage};
 
 pub trait FuzzEquals: ruler::SynthLanguage {
     fn fuzz_equals(
@@ -20,7 +17,7 @@ pub trait FuzzEquals: ruler::SynthLanguage {
     ) -> bool;
 }
 
-impl FuzzEquals for lang::VecLang {
+impl FuzzEquals for lang::FlatAst {
     fn fuzz_equals(
         synth: &mut ruler::Synthesizer<Self, ruler::Init>,
         lhs: &egg::Pattern<Self>,

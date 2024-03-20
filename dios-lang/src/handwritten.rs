@@ -1,17 +1,19 @@
-use comp_gen::ruler::egg;
+use egg;
 
-use crate::lang::VecLang;
+use crate::lang;
 
-pub fn build_litvec_rule(vec_width: usize) -> Vec<egg::Rewrite<VecLang, ()>> {
+pub fn build_litvec_rule(
+    vec_width: usize,
+) -> Vec<egg::Rewrite<lang::FlatAst, ()>> {
     let mut gets: Vec<String> = Vec::with_capacity(vec_width);
     for i in 0..vec_width {
         gets.push(format!("(Get ?a ?i{})", i))
     }
     let all_gets = gets.join(" ");
 
-    let searcher: egg::Pattern<VecLang> =
+    let searcher: egg::Pattern<lang::FlatAst> =
         format!("(Vec {})", all_gets).parse().unwrap();
-    let applier: egg::Pattern<VecLang> =
+    let applier: egg::Pattern<lang::FlatAst> =
         format!("(LitVec {})", all_gets).parse().unwrap();
 
     let mut res = vec![egg::rewrite!("litvec"; { searcher } => { applier })];
@@ -23,11 +25,11 @@ pub fn build_litvec_rule(vec_width: usize) -> Vec<egg::Rewrite<VecLang, ()>> {
             let mut all_gets_apply = gets.clone();
             all_gets_search[w] = lit.to_string();
             all_gets_apply[w] = lit.to_string();
-            let searcher: egg::Pattern<VecLang> =
+            let searcher: egg::Pattern<lang::FlatAst> =
                 format!("(Vec {})", all_gets_search.join(" "))
                     .parse()
                     .unwrap();
-            let applier: egg::Pattern<VecLang> =
+            let applier: egg::Pattern<lang::FlatAst> =
                 format!("(LitVec {})", all_gets_apply.join(" "))
                     .parse()
                     .unwrap();

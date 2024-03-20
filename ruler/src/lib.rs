@@ -12,12 +12,9 @@ use egg::{
 use itertools::Itertools;
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
-use std::fs;
 use std::hash::Hash;
-use std::path::Path;
 use std::{
     fmt::{Debug, Display},
     marker::PhantomData,
@@ -41,7 +38,6 @@ pub type HashSet<K> = rustc_hash::FxHashSet<K>;
 pub type IndexMap<K, V> =
     indexmap::IndexMap<K, V, BuildHasherDefault<rustc_hash::FxHasher>>;
 
-pub use egg;
 pub use equality::*;
 pub use util::*;
 
@@ -53,7 +49,7 @@ pub fn letter(i: usize) -> &'static str {
 
 /// Properties of cvecs in `Ruler`; currently onyl their length.
 /// cvecs are stored as [eclass analysis data](https://docs.rs/egg/0.7.1/egg/trait.Analysis.html).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SynthAnalysis {
     /// Length of cvec or characteristic vector.
     /// All cvecs have the same length.    
@@ -72,29 +68,16 @@ impl Default for SynthAnalysis {
 /// `eval` implements an interpreter for the domain. It returns a `Cvec` of length `cvec_len`
 /// where each cvec element is computed using `eval`.
 pub trait SynthLanguage:
-    egg::Language
-    + Send
-    + Sync
-    + Display
-    + egg::FromOp
-    + Serialize
-    + DeserializeOwned
-    + 'static
+    egg::Language + Send + Sync + Display + egg::FromOp + 'static
 {
-    type Constant: Clone
-        + Hash
-        + Eq
-        + Debug
-        + Display
-        + Serialize
-        + DeserializeOwned;
-    type Config: Clone + Serialize + DeserializeOwned;
+    type Constant: Clone + Hash + Eq + Debug + Display;
+    type Config: Clone;
 
     fn eval<'a, F>(&'a self, cvec_len: usize, f: F) -> CVec<Self>
     where
         F: FnMut(&'a Id) -> &'a CVec<Self>;
 
-    fn to_var(&self) -> Option<Symbol>;
+    fn to_var(&self) -> Option<egg::Symbol>;
     fn mk_var(sym: egg::Symbol) -> Self;
     fn is_var(&self) -> bool {
         self.to_var().is_some()
@@ -317,16 +300,16 @@ where
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Uninit;
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Init;
 
 /// A synthesizer for a given [SynthLanguage].
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(bound = "L: SynthLanguage")]
+#[derive(Clone)]
+// #[serde(bound = "L: SynthLanguage")]
 pub struct Synthesizer<L: SynthLanguage, State> {
-    #[serde(skip)]
+    // #[serde(skip)]
     pub params: SynthParams,
     pub lang_config: L::Config,
     pub rng: Pcg32,
@@ -334,19 +317,19 @@ pub struct Synthesizer<L: SynthLanguage, State> {
     initial_egraph: EGraph<L, SynthAnalysis>,
     pub equalities: EqualityMap<L>,
     pub smt_unknown: usize,
-    #[serde(skip, default = "Instant::now")]
+    // #[serde(skip, default = "Instant::now")]
     start_time: Instant,
-    #[serde(skip, default = "Instant::now")]
+    // #[serde(skip, default = "Instant::now")]
     last_checked: Instant,
     outer_iter: usize,
     inner_iter: usize,
     poison_rules: HashSet<Equality<L>>,
-    #[serde(skip)]
+    // #[serde(skip)]
     inner_restored: bool,
     phantom_state: PhantomData<State>,
 }
 
-impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
+impl<L: SynthLanguage> Synthesizer<L, Uninit> {
     pub fn new_with_data(params: SynthParams, data: L::Config) -> Self {
         Synthesizer {
             rng: Pcg32::seed_from_u64(params.seed),
@@ -390,7 +373,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit> {
     }
 }
 
-impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Uninit>
+impl<L: SynthLanguage> Synthesizer<L, Uninit>
 where
     L::Config: Default,
 {
@@ -400,7 +383,7 @@ where
     }
 }
 
-impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
+impl<L: SynthLanguage> Synthesizer<L, Init> {
     fn check_time(&mut self) -> bool {
         let t = self.start_time;
 
@@ -424,6 +407,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
         }
     }
 
+    #[cfg(feature = "serialize")]
     fn save_checkpoint(&self) {
         if self.params.enable_checkpointing {
             let start = Instant::now();
@@ -453,6 +437,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
         }
     }
 
+    #[cfg(feature = "serialize")]
     pub fn load_checkpoint(&mut self, filename: &Path) {
         let start = Instant::now();
         log::info!("Loading checkpoint: {filename:?}");
@@ -778,6 +763,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     // abort if it's been longer than abs_timeout
                     if self.check_time() {
                         // we doing another loop save a checkpoint
+                        #[cfg(feature = "serialize")]
                         self.save_checkpoint();
                         self.inner_iter += 1;
                         break 'outer;
@@ -838,6 +824,7 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                     if eqs.is_empty() {
                         log::info!("Stopping early, no eqs");
                         // we doing another loop save a checkpoint
+                        #[cfg(feature = "serialize")]
                         self.save_checkpoint();
                         self.inner_iter += 1;
                         break 'inner;
@@ -866,12 +853,14 @@ impl<L: SynthLanguage + Serialize + DeserializeOwned> Synthesizer<L, Init> {
                         log::info!("Stopping early, took all eqs");
 
                         // we doing another loop save a checkpoint
+                        #[cfg(feature = "serialize")]
                         self.save_checkpoint();
                         self.inner_iter += 1;
                         break 'inner;
                     }
 
                     // we doing another loop save a checkpoint
+                    #[cfg(feature = "serialize")]
                     self.save_checkpoint();
                     self.inner_iter += 1;
                 }
@@ -1041,8 +1030,8 @@ macro_rules! map {
 }
 
 /// The Signature represents eclass analysis data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(bound = "L: SynthLanguage")]
+#[derive(Debug, Clone)]
+// #[serde(bound = "L: SynthLanguage")]
 pub struct Signature<L: SynthLanguage> {
     pub cvec: CVec<L>,
     pub exact: bool,
@@ -1114,7 +1103,7 @@ impl<L: SynthLanguage> egg::Analysis<L> for SynthAnalysis {
         DidMerge(changed_a, changed_b)
     }
 
-    fn make(egraph: &EGraph<L, Self>, enode: &L) -> Self::Data {
+    fn make(egraph: &mut EGraph<L, Self>, enode: &L) -> Self::Data {
         let get_cvec = |i: &Id| &egraph[*i].data.cvec;
         Signature {
             cvec: enode.eval(egraph.analysis.cvec_len, get_cvec),

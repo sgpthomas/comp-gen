@@ -6,18 +6,24 @@ mod fuzz;
 mod handwritten;
 mod lang;
 mod letify;
+mod library_learning;
 mod rewriteconcats;
 mod smt;
 mod stringconversion;
 mod synthesis;
 
-use crate::{desugar::Desugar, letify::Letify};
+use crate::desugar::Desugar;
 use anyhow::Context;
 use argh::FromArgs;
-use comp_gen::ruler::egg;
+use babble::{
+    ast_node::{self, combine_exprs, AstNode, Expr},
+    co_occurrence::COBuilder,
+    learn::LearnedLibrary,
+    sexp::Sexp,
+};
 pub use error::Res;
-use log::info;
-use std::{fs, io::Write, path::PathBuf, process};
+use log;
+use std::{fs, io::Write, path::PathBuf, process, time::Instant};
 
 /// Generate and run an automatically generated compiler
 /// for the Diospyros vector language.
@@ -167,11 +173,22 @@ fn compile(opts: CompileOpts) -> Res<()> {
     // rewrite into concats of vecs
     let concats =
         rewriteconcats::list_to_concats(opts.vector_width, &converted);
-    // finally parse into a rec expr
-    let prog: egg::RecExpr<lang::VecLang> = concats?.parse()?;
-    // log::debug!("input: {}", prog.pretty(80));
 
-    let mut compiler: comp_gen::Compiler<lang::VecLang, (), _> =
+    // finally parse into a rec expr
+    let exprs: lang::RecAst = babble::sexp::Program::parse(&concats?)
+        .expect("Failed to parse program")
+        .0
+        .into_iter()
+        .map(|x: Sexp<'_>| x.try_into().expect("Not valid list of expressions"))
+        .map(|x: Expr<lang::VecOp>| x.into())
+        .next()
+        .expect("Found empty program");
+
+    let prog: egg::RecExpr<lang::FlatAst> = exprs.into();
+
+    log::info!("{}", prog.pretty(80));
+
+    let mut compiler: comp_gen::Compiler<lang::FlatAst, (), _> =
         comp_gen::Compiler::with_cost_fn(match opts.costfn.as_str() {
             "alternative" => cost::VecCostFn::alternative(),
             "dios" => cost::VecCostFn::dios(),
@@ -179,8 +196,8 @@ fn compile(opts: CompileOpts) -> Res<()> {
             _ => panic!("Not a valid cost function."),
         });
 
-    // add rules to compiler
-    compiler.with_init_node(lang::VecLang::Const(lang::Value::Int(0)));
+    // // add rules to compiler
+    compiler.with_init_node(lang::FlatAst::new_const(lang::Value::Int(0)));
 
     // add predesugared rules
     if opts.pre_desugared {
@@ -204,19 +221,58 @@ fn compile(opts: CompileOpts) -> Res<()> {
     }
 
     // compiler.with_explanations();
-    let (cost, prog, mut _eg) = compiler.compile(prog);
-    info!("cost: {cost}");
+    // let (cost, prog, mut eg) = compiler.compile(prog);
+    let eqsat_res = compiler.compile(prog);
+    log::info!("cost: {}", eqsat_res.cost);
 
-    // test the let intro rewrite rule
-    {
-        println!("test:\n{}", prog.clone().letify().pretty(80));
-    }
+    let astnode_egraph = eqsat_res.egraph.map(|l| l.into_inner());
+
+    // first we have to run the co-occurence analysis
+    log::info!("Running co-occurence analysis...");
+    let co_time = Instant::now();
+    let co_ext: COBuilder<lang::VecOp, ()> =
+        COBuilder::new(&astnode_egraph, &eqsat_res.roots);
+    let co_occurs = co_ext.run();
+    log::info!("Finished in {}ms", co_time.elapsed().as_millis());
+
+    log::info!("Running anti-unification... ");
+    let au_time = Instant::now();
+    let learned_lib =
+        LearnedLibrary::new(&astnode_egraph, false, None, co_occurs);
+    log::info!(
+        "Found {} patterns in {}ms",
+        learned_lib.size(),
+        au_time.elapsed().as_millis()
+    );
+
+    let _all_libs: Vec<_> =
+        learned_lib.libs().inspect(|l| log::info!("{l}")).collect();
+
+    // // test reading in as the library learning thing
+    // // I guess that at some point, I'm going to have to implement this so that the
+    // // egraph operates over a different type of term. but we'll worry about that later
+    // // let's just see if the parsing works the way that I think that it might.
+    // {
+    //     // let str_prog = prog.pretty(80);
+    //     // let program: Vec<Expr<VecOp>> = Program::parse(&str_prog)
+    //     //     .expect("Failed to parse")
+    //     //     .0
+    //     //     .into_iter()
+    //     //     .map(|x| x.try_into().unwrap())
+    //     //     .collect();
+    //     // println!("{program:#?}");
+    // }
+
+    // // // test the let intro rewrite rule
+    // // {
+    // //     println!("test:\n{}", prog.clone().letify().pretty(80));
+    // // }
 
     // write to spec.rkt
     let path = output_dir.join("res.rkt");
     let mut spec_file = fs::File::create(&path)?;
     log::debug!("writing to {path:?}");
-    writeln!(spec_file, "{}", prog)?;
+    writeln!(spec_file, "{}", eqsat_res.prog)?;
 
     // call ./dios -w <vec_width> --egg --suppress-git -o <dir>/kernel.c <dir>
     // this generates the kernel.c file

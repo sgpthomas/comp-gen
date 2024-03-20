@@ -1,159 +1,96 @@
 use std::str::FromStr;
 
-use comp_gen::{ruler::egg, FromPattern};
-use itertools::Itertools;
-
-use crate::{alpha_rename::AlphaRenamable, lang};
+use crate::{
+    alpha_rename::AlphaRenamable,
+    lang::{self, FlatAst},
+};
+use babble::ast_node::{AstNode, Expr};
+use comp_gen::FromPattern;
+use egg;
 
 pub trait Desugar {
     fn desugar(self, n_lanes: usize) -> Self;
 }
 
-impl Desugar for egg::Pattern<lang::VecLang> {
+impl Desugar for egg::Pattern<lang::FlatAst> {
+    /// Extend single-lane Vec patterns into `n_lanes` vector patterns.
+    /// For example,
+    ///   (Vec (+ ?a ?b)) => (VecAdd (Vec ?a) (Vec ?b))
+    /// is extended to (with `n_lanes == 2`):
+    ///   (Vec (+ ?a0 ?b0) (+ ?a1 ?b1)) => (VecAdd (Vec ?a0 ?a1) (Vec ?b0 ?b1))
     fn desugar(self, n_lanes: usize) -> Self {
-        let l: lang::VecAst = lang::VecLang::from_pattern(&self.ast).into();
-        let desugared: lang::VecAst = l.desugar(n_lanes);
-        let vl: egg::RecExpr<lang::VecLang> = desugared.into();
+        // start by translating pattern variables into lang::VecOp variables
+        let rec_expr: egg::RecExpr<lang::FlatAst> =
+            lang::FlatAst::from_pattern(&self.ast);
 
-        // map symbols to vars, everything else to enodes
-        let p: egg::RecExpr<egg::ENodeOrVar<lang::VecLang>> = vl
+        // lang::FlatAst is a newtype wrapper over AstNode<lang::VecOp>
+        // so we need to map over the rec_expr, calling `.inner()` on
+        // all children
+        let fixed_rec_expr: egg::RecExpr<AstNode<lang::VecOp>> = rec_expr
             .as_ref()
-            .iter()
-            .map(|l: &lang::VecLang| match l {
-                lang::VecLang::Symbol(s) => egg::ENodeOrVar::Var(
-                    egg::Var::from_str(s.as_str())
-                        .expect(&format!("Couldn't varify '{s}' in {self}")),
-                ),
-                x => egg::ENodeOrVar::ENode(x.clone()),
-            })
-            .collect_vec()
+            .into_iter()
+            .map(|fa| fa.inner())
+            .cloned()
+            .collect::<Vec<_>>()
             .into();
 
-        p.into()
+        // translate to a babble::Expr which turns the flat ast into a recursive one
+        let expr = Expr::from(fixed_rec_expr);
+
+        // move into our local wrapper over Expr, and then call desugar on it
+        let rec_ast = lang::RecAst::from(expr).desugar(n_lanes);
+
+        // translate back into a recexpr
+        let desugared_expr: egg::RecExpr<AstNode<lang::VecOp>> =
+            rec_ast.into_inner().into();
+
+        // convert back to a pattern ast
+        let x: egg::PatternAst<_> = desugared_expr
+            .as_ref()
+            .iter()
+            .map(|node| match node.clone().into_parts() {
+                (lang::VecOp::Symbol(s), _) => egg::ENodeOrVar::Var(
+                    egg::Var::from_str(s.as_str()).unwrap(),
+                ),
+                (op, args) => {
+                    egg::ENodeOrVar::ENode(FlatAst::new_from_parts(op, args))
+                }
+            })
+            .collect::<Vec<_>>()
+            .into();
+
+        // and finally back to a pattern
+        x.into()
     }
 }
 
-impl Desugar for lang::VecAst {
-    /// Expand single-lane vector instructions to some number of lanes.
+impl Desugar for lang::RecAst {
     fn desugar(self, n_lanes: usize) -> Self {
-        match self {
-            lang::VecAst::Vec(items) if items.len() == 1 => lang::VecAst::Vec(
-                (0..n_lanes)
-                    .into_iter()
-                    .map(|n| items[0].clone().rename(&format!("{n}")))
-                    .collect_vec(),
-            ),
-            lang::VecAst::List(l) => lang::VecAst::List(
-                l.into_iter().map(|i| i.desugar(n_lanes)).collect(),
-            ),
-            x @ lang::VecAst::Vec(_) => {
-                panic!("Can't desugar Vecs with more than one lane.\n{:?}", x)
-            }
-            x @ lang::VecAst::LitVec(_) => {
-                panic!(
-                    "Can't desugar LitVecs with more than one lane.\n{:?}",
-                    x
-                )
-            }
-            lang::VecAst::Add(left, right) => lang::VecAst::Add(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Mul(left, right) => lang::VecAst::Mul(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Minus(left, right) => lang::VecAst::Minus(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Div(left, right) => lang::VecAst::Div(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Or(left, right) => lang::VecAst::Or(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::And(left, right) => lang::VecAst::And(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Ite(_, _, _) => todo!(),
-            lang::VecAst::Lt(left, right) => lang::VecAst::Lt(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::SqrtSgn(left, right) => lang::VecAst::SqrtSgn(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Sqrt(inner) => {
-                lang::VecAst::Sqrt(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::Sgn(inner) => {
-                lang::VecAst::Sgn(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::Neg(inner) => {
-                lang::VecAst::Neg(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::VecAdd(left, right) => lang::VecAst::VecAdd(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecMul(left, right) => lang::VecAst::VecMul(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecMinus(left, right) => lang::VecAst::VecMinus(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecDiv(left, right) => lang::VecAst::VecDiv(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecMulSgn(left, right) => lang::VecAst::VecMulSgn(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecSqrtSgn(left, right) => lang::VecAst::VecSqrtSgn(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecNeg(inner) => {
-                lang::VecAst::VecNeg(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::VecSqrt(inner) => {
-                lang::VecAst::VecSqrt(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::VecSgn(inner) => {
-                lang::VecAst::VecSgn(Box::new(inner.desugar(n_lanes)))
-            }
-            lang::VecAst::VecMAC(a, b, c) => lang::VecAst::VecMAC(
-                Box::new(a.desugar(n_lanes)),
-                Box::new(b.desugar(n_lanes)),
-                Box::new(c.desugar(n_lanes)),
-            ),
-            lang::VecAst::VecMULS(a, b, c) => lang::VecAst::VecMULS(
-                Box::new(a.desugar(n_lanes)),
-                Box::new(b.desugar(n_lanes)),
-                Box::new(c.desugar(n_lanes)),
-            ),
-            lang::VecAst::Let(a, b) => {
-                lang::VecAst::Let(a, Box::new(b.desugar(n_lanes)))
-            }
-            lang::VecAst::Concat(left, right) => lang::VecAst::Concat(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
-            lang::VecAst::Get(left, right) => lang::VecAst::Get(
-                Box::new(left.desugar(n_lanes)),
-                Box::new(right.desugar(n_lanes)),
-            ),
+        let (op, args) = self.into_parts();
 
-            x @ lang::VecAst::Const(_) => x,
-            x @ lang::VecAst::Symbol(_) => x,
-        }
+        // expand LitVec and Vec constructs to be `n_lanes` by renaming
+        // variables to be suffixed with their lane number
+        // for anything else, we recursively call `.desguar(n_lanes)` on their children
+        let new_args = match op {
+            lang::VecOp::LitVec | lang::VecOp::Vec => {
+                if args.len() == 1 {
+                    (0..n_lanes)
+                        .into_iter()
+                        .map(|n| args[0].clone().rename(&format!("{n}")))
+                        .collect()
+                } else {
+                    panic!("Don't support desugaring rules with >1 lanes")
+                }
+            }
+
+            _ => args
+                .into_iter()
+                .map(|it| lang::RecAst::new(it).desugar(n_lanes))
+                .map(|rec_ast| rec_ast.into_inner())
+                .collect(),
+        };
+
+        // return the new expression
+        lang::RecAst::new_from_parts(op, new_args)
     }
 }

@@ -5,12 +5,16 @@ mod phases;
 mod run;
 mod stats;
 
-use ruler::egg;
+// use ruler::egg;
+use egg;
 
 pub use compiler::Compiler;
 pub use cost::{CostMetric, CostMetrics};
 pub use phases::PhaseBuilder;
-pub use ruler;
+// pub use ruler::{
+//     letter, map, self_product, CVec, Equality, Init, Report, SynthAnalysis,
+//     SynthLanguage, SynthParams, Synthesizer, Uninit,
+// };
 
 pub trait Interpreter {
     type Env: Default;

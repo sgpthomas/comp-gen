@@ -1,7 +1,4 @@
-use comp_gen::ruler::{
-    self,
-    egg::{self, EGraph, Id, Language},
-};
+use egg::{self, EGraph, Id, Language};
 use itertools::Itertools;
 use log::debug;
 use num::integer::Roots;
@@ -238,531 +235,44 @@ impl Default for DiosConfig {
     }
 }
 
-impl SynthLanguage for lang::VecLang {
+impl SynthLanguage for lang::FlatAst {
     type Constant = lang::Value;
+
     type Config = DiosConfig;
 
-    fn to_var(&self) -> Option<egg::Symbol> {
-        if let lang::VecLang::Symbol(sym) = self {
-            Some(*sym)
-        } else {
-            None
-        }
-    }
-
-    fn mk_var(sym: egg::Symbol) -> Self {
-        lang::VecLang::Symbol(sym)
-    }
-
-    fn to_constant(&self) -> Option<&Self::Constant> {
-        if let lang::VecLang::Const(n) = self {
-            Some(n)
-        } else {
-            None
-        }
-    }
-
-    fn mk_constant(c: <Self as SynthLanguage>::Constant) -> Option<Self> {
-        Some(lang::VecLang::Const(c))
-    }
-
-    fn eval<'a, F>(&'a self, cvec_len: usize, mut get: F) -> CVec<Self>
+    fn eval<'a, F>(&'a self, cvec_len: usize, f: F) -> CVec<Self>
     where
         F: FnMut(&'a Id) -> &'a CVec<Self>,
     {
-        match self {
-            lang::VecLang::Const(i) => vec![Some(i.clone()); cvec_len],
-            lang::VecLang::Add([l, r]) => map!(get, l, r => {
-                lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
-            }),
-            lang::VecLang::Mul([l, r]) => map!(get, l, r => {
-                lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r))
-            }),
-            lang::VecLang::Minus([l, r]) => map!(get, l, r => {
-                lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r))
-            }),
-            lang::VecLang::Div([l, r]) => get(l)
-                .iter()
-                .zip(get(r).iter())
-                .map(|tup| match tup {
-                    (Some(lang::Value::Int(a)), Some(lang::Value::Int(b))) => {
-                        integer_division(*a, *b).map(lang::Value::Int)
-                    }
-                    _ => None,
-                })
-                .collect::<Vec<_>>(),
-            lang::VecLang::Or([l, r]) => {
-                map!(get, l, r => lang::Value::bool2(l, r, |l, r| lang::Value::Bool(l || r)))
-            }
-            lang::VecLang::And([l, r]) => {
-                map!(get, l, r => lang::Value::bool2(l, r, |l, r| lang::Value::Bool(l && r)))
-            }
-            lang::VecLang::Ite([_b, _t, _f]) => todo!(),
-            lang::VecLang::Lt([l, r]) => {
-                map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Bool(l < r)))
-            }
-            lang::VecLang::SqrtSgn([l, r]) => map!(
-                get,
-                l, r => if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
-                    sqrt_sgn(*lv, *rv).map(lang::Value::Int)
-                } else {
-                    None
-                }
-            ),
-            lang::VecLang::Sgn([x]) => {
-                map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(sgn(x))))
-            }
-            lang::VecLang::Sqrt([x]) => get(x)
-                .iter()
-                .map(|a| match a {
-                    Some(lang::Value::Int(a)) => {
-                        if *a >= 0 {
-                            Some(lang::Value::Int(a.sqrt()))
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                })
-                .collect::<Vec<_>>(),
-            lang::VecLang::Neg([x]) => {
-                map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(-x)))
-            }
-            lang::VecLang::List(l) => l
-                .iter()
-                .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
-                    acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
-                        if let (Some(v), Some(i)) = (&mut v, i) {
-                            v.push(i.clone());
-                        } else {
-                            *v = None;
-                        }
-                    });
-                    acc
-                })
-                .into_iter()
-                .map(|acc| acc.map(lang::Value::List))
-                .collect::<Vec<_>>(),
-            lang::VecLang::Vec(l) => l
-                .iter()
-                .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
-                    acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
-                        if let (Some(v), Some(i)) = (&mut v, i) {
-                            v.push(i.clone());
-                        } else {
-                            *v = None;
-                        }
-                    });
-                    acc
-                })
-                .into_iter()
-                .map(|acc| acc.map(lang::Value::Vec))
-                .collect::<Vec<_>>(),
-            lang::VecLang::LitVec(l) => l
-                .iter()
-                .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
-                    acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
-                        if let (Some(v), Some(i)) = (&mut v, i) {
-                            v.push(i.clone());
-                        } else {
-                            *v = None;
-                        }
-                    });
-                    acc
-                })
-                .into_iter()
-                .map(|acc| acc.map(lang::Value::Vec))
-                .collect::<Vec<_>>(),
-            #[rustfmt::skip]
-            lang::VecLang::Get([l, i]) => map!(get, l, i => {
-                if let (lang::Value::Vec(v), lang::Value::Int(idx)) = (l, i) {
-                    // get index and clone the inner lang::Value if there is one
-                    v.get(*idx as usize).cloned()
-                } else {
-                    None
-                }
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::Concat([l, r]) => map!(get, l, r => {
-                lang::Value::vec2(l, r, |l, r| {
-                    Some(lang::Value::List(
-                        l.iter().chain(r).cloned().collect::<Vec<_>>(),
-                    ))
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecAdd([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| {
-                    lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecMinus([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| {
-                    lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r))
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecMul([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| {
-                    lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r))
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecDiv([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| match (l, r) {
-                    (lang::Value::Int(a), lang::Value::Int(b)) => {
-                        integer_division(*a, *b).map(lang::Value::Int)
-                    }
-                    _ => None,
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecMulSgn([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| {
-                    lang::Value::int2(l, r, |l, r| lang::Value::Int(sgn(l) * r))
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecSqrtSgn([l, r]) => map!(get, l, r => {
-                lang::Value::vec2_op(l, r, |l, r| {
-                    if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
-                        sqrt_sgn(*lv, *rv).map(lang::Value::Int)
-                    } else {
-                        None
-                    }
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecNeg([l]) => map!(get, l => {
-                lang::Value::vec1(l, |l| {
-                    if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
-                        Some(lang::Value::Vec(
-                            l.iter()
-                                .map(|tup| match tup {
-                                    lang::Value::Int(a) => lang::Value::Int(-a),
-                                    x => panic!("NEG: Ill-formed: {}", x),
-                                })
-                                .collect::<Vec<_>>(),
-                        ))
-                    } else {
-                        None
-                    }
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecSqrt([l]) => map!(get, l => {
-                lang::Value::vec1(l, |l| {
-                    if l.iter().all(|x| {
-                        if let lang::Value::Int(i) = x {
-                            *i >= 0
-                        } else {
-                            false
-                        }
-                    }) {
-                        Some(lang::Value::Vec(
-                            l.iter()
-                                .map(|tup| match tup {
-                                    lang::Value::Int(a) => lang::Value::Int(a.sqrt()),
-                                    x => panic!("SQRT: Ill-formed: {}", x),
-                                })
-                                .collect::<Vec<_>>(),
-                        ))
-                    } else {
-                        None
-                    }
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecSgn([l]) => map!(get, l => {
-                lang::Value::vec1(l, |l| {
-                    if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
-                        Some(lang::Value::Vec(
-                            l.iter()
-                                .map(|tup| match tup {
-                                    lang::Value::Int(a) => lang::Value::Int(sgn(*a)),
-                                    x => panic!("SGN: Ill-formed: {}", x),
-                                })
-                                .collect::<Vec<_>>(),
-                        ))
-                    } else {
-                        None
-                    }
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecMAC([acc, v1, v2]) => map!(get, v1, v2, acc => {
-                lang::Value::vec3(v1, v2, acc, |v1, v2, acc| {
-                    v1.iter()
-                        .zip(v2.iter())
-                        .zip(acc.iter())
-                        .map(|tup| match tup {
-                            ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
-				=> Some(lang::Value::Int((v1 * v2) + acc)),
-                            _ => None,
-                        })
-                        .collect::<Option<Vec<lang::Value>>>()
-                        .map(lang::Value::Vec)
-                })
-            }),
-            #[rustfmt::skip]
-            lang::VecLang::VecMULS([acc, v1, v2]) => map!(get, v1, v2, acc => {
-                lang::Value::vec3(v1, v2, acc, |v1, v2, acc| {
-                    v1.iter()
-                        .zip(v2.iter())
-                        .zip(acc.iter())
-                        .map(|tup| match tup {
-                            ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
-				=> Some(lang::Value::Int(acc - (v1 * v2))),
-                            _ => None,
-                        })
-                        .collect::<Option<Vec<lang::Value>>>()
-                        .map(lang::Value::Vec)
-                })
-            }),
-            lang::VecLang::Let(_) => todo!(),
-            lang::VecLang::Symbol(_) => vec![],
-        }
+        todo!()
+    }
+
+    fn to_var(&self) -> Option<egg::Symbol> {
+        todo!()
+    }
+
+    fn mk_var(sym: egg::Symbol) -> Self {
+        todo!()
+    }
+
+    fn to_constant(&self) -> Option<&Self::Constant> {
+        todo!()
+    }
+
+    fn mk_constant(c: Self::Constant) -> Option<Self> {
+        todo!()
     }
 
     fn init_synth(synth: &mut Synthesizer<Self, ruler::Uninit>) {
-        let consts = synth
-            .lang_config
-            .constants
-            .iter()
-            .map(|c| match c.kind.as_str() {
-                "int" => lang::Value::Int(c.value),
-                t => todo!("haven't implemented {t} yet."),
-            })
-            .collect_vec();
-
-        // when we don't have any constants, just use the number of variables
-        // as the cvec size.
-        let cvec_size = if consts.is_empty() {
-            synth.params.variables
-        } else {
-            self_product(
-                &consts.iter().map(|x| Some(x.clone())).collect::<Vec<_>>(),
-                synth.params.variables,
-            )
-            .len()
-        } * 10;
-
-        debug!("cvec size: {cvec_size}");
-
-        // read and add seed rules from config
-        for rule in &synth.lang_config.seed_rules {
-            let rule: Equality<lang::VecLang> = Equality::new(
-                &rule.lhs.parse().unwrap(),
-                &rule.rhs.parse().unwrap(),
-            )
-            .unwrap();
-            synth
-                .equalities
-                .insert(format!("{} <=> {}", rule.lhs, rule.rhs).into(), rule);
-        }
-
-        let mut egraph = egg::EGraph::new(SynthAnalysis {
-            cvec_len: cvec_size,
-        });
-
-        ////// HACK
-        // lol i don't remember why this is a hack. I think I wanted this to be done
-        // inside of ruler?
-        if synth.params.enable_explanations {
-            egraph = egraph.with_explanations_enabled();
-        }
-        ////// HACK
-
-        // add constants to egraph
-        for v in consts {
-            egraph.add(lang::VecLang::Const(v));
-        }
-
-        // add variables
-        // set the initial cvecs of variables. this represents all the possible
-        // values that this variable can have
-        for i in 0..synth.params.variables {
-            let var = egg::Symbol::from(letter(i));
-            let id = egraph.add(lang::VecLang::Symbol(var));
-
-            // make the cvec use real data
-            let mut cvec = vec![];
-
-            let (n_ints, n_vecs) = split_into_halves(cvec_size);
-
-            cvec.extend(
-                lang::Value::sample_int(&mut synth.rng, -100, 100, n_ints)
-                    .into_iter()
-                    .map(Some),
-            );
-
-            cvec.extend(
-                lang::Value::sample_vec(
-                    &mut synth.rng,
-                    -100,
-                    100,
-                    1, // synth.params.vector_size
-                    n_vecs,
-                )
-                .into_iter()
-                .map(Some),
-            );
-
-            log::debug!("cvec for `{var}`: {cvec:?}");
-
-            egraph[id].data.cvec = cvec;
-        }
-
-        // set egraph to the one we just constructed
-        synth.egraph = egraph;
+        todo!()
     }
 
     fn make_layer<'a>(
         ids: Vec<Id>,
-        synth: &'a Synthesizer<Self, ruler::Init>,
-        mut iter: usize,
+        egraph: &'a Synthesizer<Self, ruler::Init>,
+        iter: usize,
     ) -> Box<dyn Iterator<Item = Self> + 'a> {
-        // vd for variable duplication
-        let vd = synth.lang_config.variable_duplication;
-
-        // if iter % 2 == 0 {
-        iter -= 1; // make iter start at 0
-
-        // only do binops for iters < 2
-        let binops = if iter <= 2 && synth.lang_config.use_scalar {
-            let us = ids
-                .clone()
-                .into_iter()
-                .filter(move |x| !synth.egraph[*x].data.exact)
-                .flat_map(move |x| {
-                    synth
-                        .lang_config
-                        .unops
-                        .iter()
-                        .map(|op| match op.as_str() {
-                            "neg" => lang::VecLang::Neg([x]),
-                            "sgn" => lang::VecLang::Sgn([x]),
-                            "sqrt" => lang::VecLang::Sqrt([x]),
-                            _ => panic!("Unknown vec unop"),
-                        })
-                        .collect_vec()
-                });
-            let bs = (0..2)
-                .map(|_| ids.clone())
-                .multi_cartesian_product()
-                .filter(move |ids| {
-                    !ids.iter().all(|x| synth.egraph[*x].data.exact)
-                })
-                .map(|ids| [ids[0], ids[1]])
-                .flat_map(move |x| {
-                    synth
-                        .lang_config
-                        .binops
-                        .iter()
-                        .filter_map(|op| match op.as_str() {
-                            "+" => Some(lang::VecLang::Add(x)),
-                            "*" => Some(lang::VecLang::Mul(x)),
-                            "-" => Some(lang::VecLang::Minus(x)),
-                            "/" => Some(lang::VecLang::Div(x)),
-                            "or" => Some(lang::VecLang::Or(x)),
-                            "&&" => Some(lang::VecLang::And(x)),
-                            "<" => Some(lang::VecLang::Lt(x)),
-                            "sqrtsgn" => Some(lang::VecLang::SqrtSgn(x)),
-                            "~*" => None,
-                            _ => panic!("Unknown binop"),
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .filter(move |node| vd || unique_vars(node, &synth.egraph));
-            Some(us.chain(bs))
-        } else {
-            None
-        };
-
-        let vec_stuff = if iter > 2 && synth.lang_config.use_vector {
-            let vec_unops = ids
-                .clone()
-                .into_iter()
-                .filter(move |x| !synth.egraph[*x].data.exact)
-                .flat_map(move |x| {
-                    let mut v = synth
-                        .lang_config
-                        .unops
-                        .iter()
-                        .map(|op| match op.as_str() {
-                            "neg" => lang::VecLang::VecNeg([x]),
-                            "sgn" => lang::VecLang::VecSgn([x]),
-                            "sqrt" => lang::VecLang::VecSqrt([x]),
-                            _ => panic!("Unknown vec unop"),
-                        })
-                        .collect_vec();
-                    v.extend(vec![lang::VecLang::Vec(
-                        vec![x].into_boxed_slice(),
-                    )]);
-                    v
-                });
-
-            let vec_binops = (0..2)
-                .map(|_| ids.clone())
-                .multi_cartesian_product()
-                .filter(move |ids| {
-                    !ids.iter().all(|x| synth.egraph[*x].data.exact)
-                })
-                .map(|ids| [ids[0], ids[1]])
-                .flat_map(move |x| {
-                    synth
-                        .lang_config
-                        .binops
-                        .iter()
-                        .map(|op| match op.as_str() {
-                            "+" => lang::VecLang::VecAdd(x),
-                            "-" => lang::VecLang::VecMinus(x),
-                            "*" => lang::VecLang::VecMul(x),
-                            "/" => lang::VecLang::VecDiv(x),
-                            "~*" => lang::VecLang::VecMulSgn(x),
-                            "sqrtsgn" => lang::VecLang::VecSqrtSgn(x),
-                            _ => panic!("Unknown vec binop"),
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .filter(move |node| vd || unique_vars(node, &synth.egraph));
-
-            let vec_triops = (0..3)
-                .map(|_| ids.clone())
-                .multi_cartesian_product()
-                .filter(move |ids| {
-                    !ids.iter().all(|x| synth.egraph[*x].data.exact)
-                })
-                .map(|ids| [ids[0], ids[1], ids[2]])
-                .flat_map(move |x| {
-                    synth
-                        .lang_config
-                        .triops
-                        .iter()
-                        .map(|op| match op.as_str() {
-                            "mac" => lang::VecLang::VecMAC(x),
-                            "muls" => lang::VecLang::VecMULS(x),
-                            _ => panic!("Unknown vec triop"),
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .filter(move |node| vd || unique_vars(node, &synth.egraph));
-
-            Some(vec_unops.chain(vec_binops).chain(vec_triops))
-        } else {
-            None
-        };
-
-        match (binops, vec_stuff) {
-            // all are defined
-            (Some(b), Some(v)) => Box::new(b.chain(v)),
-            // two are defined
-            (Some(i), _) => Box::new(i),
-            (_, Some(v)) => Box::new(v),
-            // none are defined
-            (_, _) => panic!("No binops or vector ops defined."),
-        }
+        todo!()
     }
 
     fn is_valid(
@@ -770,124 +280,664 @@ impl SynthLanguage for lang::VecLang {
         lhs: &egg::Pattern<Self>,
         rhs: &egg::Pattern<Self>,
     ) -> bool {
-        let x = if synth.lang_config.always_smt {
-            Self::smt_equals(synth, lhs, rhs)
-        } else {
-            let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
-            // if fuzz succeeds and `smt_fallback` is enabled, run `smt_equals`.
-            if synth.lang_config.smt_fallback && fuzz {
-                debug!("falling back to smt");
-                Self::smt_equals(synth, lhs, rhs)
-            } else {
-                false
-            }
-        };
-        debug!("Checking {lhs} => {rhs}: {x}");
-        x
+        todo!()
     }
-
-    // fn post_process(
-    //     params: &SynthParams,
-    //     mut report: ruler::Report<Self>,
-    // ) -> ruler::Report<Self> {
-    //     let mut new_eqs: Vec<Equality<_>> = vec![];
-    //     for eq in &report.eqs {
-    //         let lhs_pre: Lang = eq.lhs.unpattern().into();
-    //         let lhs: egg::RecExpr<lang::VecLang> =
-    //             lhs_pre.desugar(params.vector_size).into();
-    //         let rhs_pre: Lang = eq.rhs.unpattern().into();
-    //         let rhs: egg::RecExpr<lang::VecLang> =
-    //             rhs_pre.desugar(params.vector_size).into();
-    //         if let Some(new_eq) = Equality::new(&lhs, &rhs) {
-    //             new_eqs.push(new_eq);
-    //         } else {
-    //             eprintln!("Could not make equation for {} <=> {}", lhs, rhs);
-    //         }
-    //     }
-    //     report.eqs = new_eqs;
-    //     report
-    // }
-
-    // fn debug_pre_union(
-    //     egraph: &EGraph<Self, SynthAnalysis>,
-    //     id1: Id,
-    //     id2: Id,
-    //     justification: &Option<egg::Justification>,
-    // ) {
-    //     for (val1, val2) in egraph[id1]
-    //         .data
-    //         .cvec
-    //         .iter()
-    //         .zip(egraph[id2].data.cvec.iter())
-    //     {
-    //         match (val1, val2) {
-    //             (Some(x), Some(y)) if x != y => {
-    //                 let extractor = egg::Extractor::new(egraph, egg::AstDepth);
-    //                 let (_, prog1) = extractor.find_best(id1);
-    //                 let (_, prog2) = extractor.find_best(id2);
-
-    //                 log::error!("Trying to merge:");
-    //                 log::error!(
-    //                     "  {} <=> {}",
-    //                     prog1.pretty(80),
-    //                     prog2.pretty(80)
-    //                 );
-    //                 log::error!("cvec1: {:?}", egraph[id1].data.cvec);
-    //                 log::error!("cvec2: {:?}", egraph[id2].data.cvec);
-    //                 log::error!("just: {justification:?}");
-
-    //                 if let Some(egg::Justification::Rule(s)) = &justification {
-    //                     if let Some((lhs, rhs)) =
-    //                         s.as_str().split(" => ").collect_tuple()
-    //                     {
-    //                         // strip off the ? prefix for variable names
-    //                         let lhs_expr: egg::RecExpr<_> = strip_prefix(
-    //                             &lhs.parse::<egg::RecExpr<_>>().unwrap(),
-    //                         );
-
-    //                         let rhs_expr: egg::RecExpr<_> = strip_prefix(
-    //                             &rhs.parse::<egg::RecExpr<_>>().unwrap(),
-    //                         );
-
-    //                         log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
-
-    //                         // print out ids, plus cannoncial ids
-    //                         let lhs_id = egraph
-    //                             .lookup_expr(&lhs_expr)
-    //                             .map(|x| egraph.find(x));
-    //                         let rhs_id = egraph
-    //                             .lookup_expr(&rhs_expr)
-    //                             .map(|x| egraph.find(x));
-    //                         log::error!(
-    //                             "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
-    //     			egraph.find(id1),
-    //     			egraph.find(id2),
-    //                         );
-
-    //                         // let's get the cvec for a
-    //                         let a_id = egraph
-    //                             .lookup_expr(&egg::RecExpr::from(vec![
-    //                                 lang::VecLang::Symbol("a".into()),
-    //                             ]))
-    //                             .unwrap();
-    //                         log::error!(
-    //                             "'a' cvec: {:?}",
-    //                             egraph[a_id].data.cvec
-    //                         );
-    //                     } else {
-    //                         log::error!("Split failed: '{s}'");
-    //                     }
-    //                 } else {
-    //                     log::error!("No rule justification");
-    //                 }
-
-    //                 panic!("This is going to cause problems. Let's just stop here.");
-    //             }
-    //             _ => (),
-    //         }
-    //     }
-    // }
 }
+
+// impl SynthLanguage for lang::VecLang {
+//     type Constant = lang::Value;
+//     type Config = DiosConfig;
+
+//     fn to_var(&self) -> Option<symbol_table::GlobalSymbol> {
+//         todo!()
+//     }
+
+//     // fn to_var(&self) -> Option<symbol_table::global::GlobalSymbol> {
+//     //     if let lang::VecLang::Symbol(sym) = self {
+//     //         Some(*sym)
+//     //     } else {
+//     //         None
+//     //     }
+//     // }
+
+//     fn mk_var(sym: egg::Symbol) -> Self {
+//         lang::VecLang::Symbol(sym)
+//     }
+
+//     fn to_constant(&self) -> Option<&Self::Constant> {
+//         if let lang::VecLang::Const(n) = self {
+//             Some(n)
+//         } else {
+//             None
+//         }
+//     }
+
+//     fn mk_constant(c: <Self as SynthLanguage>::Constant) -> Option<Self> {
+//         Some(lang::VecLang::Const(c))
+//     }
+
+//     fn eval<'a, F>(&'a self, cvec_len: usize, mut get: F) -> CVec<Self>
+//     where
+//         F: FnMut(&'a Id) -> &'a CVec<Self>,
+//     {
+//         match self {
+//             lang::VecLang::Const(i) => vec![Some(i.clone()); cvec_len],
+//             lang::VecLang::Add([l, r]) => map!(get, l, r => {
+//                 lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
+//             }),
+//             lang::VecLang::Mul([l, r]) => map!(get, l, r => {
+//                 lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r))
+//             }),
+//             lang::VecLang::Minus([l, r]) => map!(get, l, r => {
+//                 lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r))
+//             }),
+//             lang::VecLang::Div([l, r]) => get(l)
+//                 .iter()
+//                 .zip(get(r).iter())
+//                 .map(|tup| match tup {
+//                     (Some(lang::Value::Int(a)), Some(lang::Value::Int(b))) => {
+//                         integer_division(*a, *b).map(lang::Value::Int)
+//                     }
+//                     _ => None,
+//                 })
+//                 .collect::<Vec<_>>(),
+//             lang::VecLang::Or([l, r]) => {
+//                 map!(get, l, r => lang::Value::bool2(l, r, |l, r| lang::Value::Bool(l || r)))
+//             }
+//             lang::VecLang::And([l, r]) => {
+//                 map!(get, l, r => lang::Value::bool2(l, r, |l, r| lang::Value::Bool(l && r)))
+//             }
+//             lang::VecLang::Ite([_b, _t, _f]) => todo!(),
+//             lang::VecLang::Lt([l, r]) => {
+//                 map!(get, l, r => lang::Value::int2(l, r, |l, r| lang::Value::Bool(l < r)))
+//             }
+//             lang::VecLang::SqrtSgn([l, r]) => map!(
+//                 get,
+//                 l, r => if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
+//                     sqrt_sgn(*lv, *rv).map(lang::Value::Int)
+//                 } else {
+//                     None
+//                 }
+//             ),
+//             lang::VecLang::Sgn([x]) => {
+//                 map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(sgn(x))))
+//             }
+//             lang::VecLang::Sqrt([x]) => get(x)
+//                 .iter()
+//                 .map(|a| match a {
+//                     Some(lang::Value::Int(a)) => {
+//                         if *a >= 0 {
+//                             Some(lang::Value::Int(a.sqrt()))
+//                         } else {
+//                             None
+//                         }
+//                     }
+//                     _ => None,
+//                 })
+//                 .collect::<Vec<_>>(),
+//             lang::VecLang::Neg([x]) => {
+//                 map!(get, x => lang::Value::int1(x, |x| lang::Value::Int(-x)))
+//             }
+//             lang::VecLang::List(l) => l
+//                 .iter()
+//                 .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
+//                     acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
+//                         if let (Some(v), Some(i)) = (&mut v, i) {
+//                             v.push(i.clone());
+//                         } else {
+//                             *v = None;
+//                         }
+//                     });
+//                     acc
+//                 })
+//                 .into_iter()
+//                 .map(|acc| acc.map(lang::Value::List))
+//                 .collect::<Vec<_>>(),
+//             lang::VecLang::Vec(l) => l
+//                 .iter()
+//                 .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
+//                     acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
+//                         if let (Some(v), Some(i)) = (&mut v, i) {
+//                             v.push(i.clone());
+//                         } else {
+//                             *v = None;
+//                         }
+//                     });
+//                     acc
+//                 })
+//                 .into_iter()
+//                 .map(|acc| acc.map(lang::Value::Vec))
+//                 .collect::<Vec<_>>(),
+//             lang::VecLang::LitVec(l) => l
+//                 .iter()
+//                 .fold(vec![Some(vec![]); cvec_len], |mut acc, item| {
+//                     acc.iter_mut().zip(get(item)).for_each(|(mut v, i)| {
+//                         if let (Some(v), Some(i)) = (&mut v, i) {
+//                             v.push(i.clone());
+//                         } else {
+//                             *v = None;
+//                         }
+//                     });
+//                     acc
+//                 })
+//                 .into_iter()
+//                 .map(|acc| acc.map(lang::Value::Vec))
+//                 .collect::<Vec<_>>(),
+//             #[rustfmt::skip]
+//             lang::VecLang::Get([l, i]) => map!(get, l, i => {
+//                 if let (lang::Value::Vec(v), lang::Value::Int(idx)) = (l, i) {
+//                     // get index and clone the inner lang::Value if there is one
+//                     v.get(*idx as usize).cloned()
+//                 } else {
+//                     None
+//                 }
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::Concat([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2(l, r, |l, r| {
+//                     Some(lang::Value::List(
+//                         l.iter().chain(r).cloned().collect::<Vec<_>>(),
+//                     ))
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecAdd([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| {
+//                     lang::Value::int2(l, r, |l, r| lang::Value::Int(l + r))
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecMinus([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| {
+//                     lang::Value::int2(l, r, |l, r| lang::Value::Int(l - r))
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecMul([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| {
+//                     lang::Value::int2(l, r, |l, r| lang::Value::Int(l * r))
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecDiv([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| match (l, r) {
+//                     (lang::Value::Int(a), lang::Value::Int(b)) => {
+//                         integer_division(*a, *b).map(lang::Value::Int)
+//                     }
+//                     _ => None,
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecMulSgn([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| {
+//                     lang::Value::int2(l, r, |l, r| lang::Value::Int(sgn(l) * r))
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecSqrtSgn([l, r]) => map!(get, l, r => {
+//                 lang::Value::vec2_op(l, r, |l, r| {
+//                     if let (lang::Value::Int(lv), lang::Value::Int(rv)) = (l, r) {
+//                         sqrt_sgn(*lv, *rv).map(lang::Value::Int)
+//                     } else {
+//                         None
+//                     }
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecNeg([l]) => map!(get, l => {
+//                 lang::Value::vec1(l, |l| {
+//                     if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
+//                         Some(lang::Value::Vec(
+//                             l.iter()
+//                                 .map(|tup| match tup {
+//                                     lang::Value::Int(a) => lang::Value::Int(-a),
+//                                     x => panic!("NEG: Ill-formed: {}", x),
+//                                 })
+//                                 .collect::<Vec<_>>(),
+//                         ))
+//                     } else {
+//                         None
+//                     }
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecSqrt([l]) => map!(get, l => {
+//                 lang::Value::vec1(l, |l| {
+//                     if l.iter().all(|x| {
+//                         if let lang::Value::Int(i) = x {
+//                             *i >= 0
+//                         } else {
+//                             false
+//                         }
+//                     }) {
+//                         Some(lang::Value::Vec(
+//                             l.iter()
+//                                 .map(|tup| match tup {
+//                                     lang::Value::Int(a) => lang::Value::Int(a.sqrt()),
+//                                     x => panic!("SQRT: Ill-formed: {}", x),
+//                                 })
+//                                 .collect::<Vec<_>>(),
+//                         ))
+//                     } else {
+//                         None
+//                     }
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecSgn([l]) => map!(get, l => {
+//                 lang::Value::vec1(l, |l| {
+//                     if l.iter().all(|x| matches!(x, lang::Value::Int(_))) {
+//                         Some(lang::Value::Vec(
+//                             l.iter()
+//                                 .map(|tup| match tup {
+//                                     lang::Value::Int(a) => lang::Value::Int(sgn(*a)),
+//                                     x => panic!("SGN: Ill-formed: {}", x),
+//                                 })
+//                                 .collect::<Vec<_>>(),
+//                         ))
+//                     } else {
+//                         None
+//                     }
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecMAC([acc, v1, v2]) => map!(get, v1, v2, acc => {
+//                 lang::Value::vec3(v1, v2, acc, |v1, v2, acc| {
+//                     v1.iter()
+//                         .zip(v2.iter())
+//                         .zip(acc.iter())
+//                         .map(|tup| match tup {
+//                             ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
+// 				=> Some(lang::Value::Int((v1 * v2) + acc)),
+//                             _ => None,
+//                         })
+//                         .collect::<Option<Vec<lang::Value>>>()
+//                         .map(lang::Value::Vec)
+//                 })
+//             }),
+//             #[rustfmt::skip]
+//             lang::VecLang::VecMULS([acc, v1, v2]) => map!(get, v1, v2, acc => {
+//                 lang::Value::vec3(v1, v2, acc, |v1, v2, acc| {
+//                     v1.iter()
+//                         .zip(v2.iter())
+//                         .zip(acc.iter())
+//                         .map(|tup| match tup {
+//                             ((lang::Value::Int(v1), lang::Value::Int(v2)), lang::Value::Int(acc))
+// 				=> Some(lang::Value::Int(acc - (v1 * v2))),
+//                             _ => None,
+//                         })
+//                         .collect::<Option<Vec<lang::Value>>>()
+//                         .map(lang::Value::Vec)
+//                 })
+//             }),
+//             lang::VecLang::Let(_) => todo!(),
+//             lang::VecLang::Symbol(_) => vec![],
+//         }
+//     }
+
+//     fn init_synth(synth: &mut Synthesizer<Self, ruler::Uninit>) {
+//         let consts = synth
+//             .lang_config
+//             .constants
+//             .iter()
+//             .map(|c| match c.kind.as_str() {
+//                 "int" => lang::Value::Int(c.value),
+//                 t => todo!("haven't implemented {t} yet."),
+//             })
+//             .collect_vec();
+
+//         // when we don't have any constants, just use the number of variables
+//         // as the cvec size.
+//         let cvec_size = if consts.is_empty() {
+//             synth.params.variables
+//         } else {
+//             self_product(
+//                 &consts.iter().map(|x| Some(x.clone())).collect::<Vec<_>>(),
+//                 synth.params.variables,
+//             )
+//             .len()
+//         } * 10;
+
+//         debug!("cvec size: {cvec_size}");
+
+//         // read and add seed rules from config
+//         for rule in &synth.lang_config.seed_rules {
+//             let rule: Equality<lang::VecLang> = Equality::new(
+//                 &rule.lhs.parse().unwrap(),
+//                 &rule.rhs.parse().unwrap(),
+//             )
+//             .unwrap();
+//             synth
+//                 .equalities
+//                 .insert(format!("{} <=> {}", rule.lhs, rule.rhs).into(), rule);
+//         }
+
+//         let mut egraph = egg::EGraph::new(SynthAnalysis {
+//             cvec_len: cvec_size,
+//         });
+
+//         ////// HACK
+//         // lol i don't remember why this is a hack. I think I wanted this to be done
+//         // inside of ruler?
+//         if synth.params.enable_explanations {
+//             egraph = egraph.with_explanations_enabled();
+//         }
+//         ////// HACK
+
+//         // add constants to egraph
+//         for v in consts {
+//             egraph.add(lang::VecLang::Const(v));
+//         }
+
+//         // add variables
+//         // set the initial cvecs of variables. this represents all the possible
+//         // values that this variable can have
+//         for i in 0..synth.params.variables {
+//             let var = egg::Symbol::from(letter(i));
+//             let id = egraph.add(lang::VecLang::Symbol(var));
+
+//             // make the cvec use real data
+//             let mut cvec = vec![];
+
+//             let (n_ints, n_vecs) = split_into_halves(cvec_size);
+
+//             cvec.extend(
+//                 lang::Value::sample_int(&mut synth.rng, -100, 100, n_ints)
+//                     .into_iter()
+//                     .map(Some),
+//             );
+
+//             cvec.extend(
+//                 lang::Value::sample_vec(
+//                     &mut synth.rng,
+//                     -100,
+//                     100,
+//                     1, // synth.params.vector_size
+//                     n_vecs,
+//                 )
+//                 .into_iter()
+//                 .map(Some),
+//             );
+
+//             log::debug!("cvec for `{var}`: {cvec:?}");
+
+//             egraph[id].data.cvec = cvec;
+//         }
+
+//         // set egraph to the one we just constructed
+//         synth.egraph = egraph;
+//     }
+
+//     fn make_layer<'a>(
+//         ids: Vec<Id>,
+//         synth: &'a Synthesizer<Self, ruler::Init>,
+//         mut iter: usize,
+//     ) -> Box<dyn Iterator<Item = Self> + 'a> {
+//         // vd for variable duplication
+//         let vd = synth.lang_config.variable_duplication;
+
+//         // if iter % 2 == 0 {
+//         iter -= 1; // make iter start at 0
+
+//         // only do binops for iters < 2
+//         let binops = if iter <= 2 && synth.lang_config.use_scalar {
+//             let us = ids
+//                 .clone()
+//                 .into_iter()
+//                 .filter(move |x| !synth.egraph[*x].data.exact)
+//                 .flat_map(move |x| {
+//                     synth
+//                         .lang_config
+//                         .unops
+//                         .iter()
+//                         .map(|op| match op.as_str() {
+//                             "neg" => lang::VecLang::Neg([x]),
+//                             "sgn" => lang::VecLang::Sgn([x]),
+//                             "sqrt" => lang::VecLang::Sqrt([x]),
+//                             _ => panic!("Unknown vec unop"),
+//                         })
+//                         .collect_vec()
+//                 });
+//             let bs = (0..2)
+//                 .map(|_| ids.clone())
+//                 .multi_cartesian_product()
+//                 .filter(move |ids| {
+//                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
+//                 })
+//                 .map(|ids| [ids[0], ids[1]])
+//                 .flat_map(move |x| {
+//                     synth
+//                         .lang_config
+//                         .binops
+//                         .iter()
+//                         .filter_map(|op| match op.as_str() {
+//                             "+" => Some(lang::VecLang::Add(x)),
+//                             "*" => Some(lang::VecLang::Mul(x)),
+//                             "-" => Some(lang::VecLang::Minus(x)),
+//                             "/" => Some(lang::VecLang::Div(x)),
+//                             "or" => Some(lang::VecLang::Or(x)),
+//                             "&&" => Some(lang::VecLang::And(x)),
+//                             "<" => Some(lang::VecLang::Lt(x)),
+//                             "sqrtsgn" => Some(lang::VecLang::SqrtSgn(x)),
+//                             "~*" => None,
+//                             _ => panic!("Unknown binop"),
+//                         })
+//                         .collect::<Vec<_>>()
+//                 })
+//                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
+//             Some(us.chain(bs))
+//         } else {
+//             None
+//         };
+
+//         let vec_stuff = if iter > 2 && synth.lang_config.use_vector {
+//             let vec_unops = ids
+//                 .clone()
+//                 .into_iter()
+//                 .filter(move |x| !synth.egraph[*x].data.exact)
+//                 .flat_map(move |x| {
+//                     let mut v = synth
+//                         .lang_config
+//                         .unops
+//                         .iter()
+//                         .map(|op| match op.as_str() {
+//                             "neg" => lang::VecLang::VecNeg([x]),
+//                             "sgn" => lang::VecLang::VecSgn([x]),
+//                             "sqrt" => lang::VecLang::VecSqrt([x]),
+//                             _ => panic!("Unknown vec unop"),
+//                         })
+//                         .collect_vec();
+//                     v.extend(vec![lang::VecLang::Vec(
+//                         vec![x].into_boxed_slice(),
+//                     )]);
+//                     v
+//                 });
+
+//             let vec_binops = (0..2)
+//                 .map(|_| ids.clone())
+//                 .multi_cartesian_product()
+//                 .filter(move |ids| {
+//                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
+//                 })
+//                 .map(|ids| [ids[0], ids[1]])
+//                 .flat_map(move |x| {
+//                     synth
+//                         .lang_config
+//                         .binops
+//                         .iter()
+//                         .map(|op| match op.as_str() {
+//                             "+" => lang::VecLang::VecAdd(x),
+//                             "-" => lang::VecLang::VecMinus(x),
+//                             "*" => lang::VecLang::VecMul(x),
+//                             "/" => lang::VecLang::VecDiv(x),
+//                             "~*" => lang::VecLang::VecMulSgn(x),
+//                             "sqrtsgn" => lang::VecLang::VecSqrtSgn(x),
+//                             _ => panic!("Unknown vec binop"),
+//                         })
+//                         .collect::<Vec<_>>()
+//                 })
+//                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
+
+//             let vec_triops = (0..3)
+//                 .map(|_| ids.clone())
+//                 .multi_cartesian_product()
+//                 .filter(move |ids| {
+//                     !ids.iter().all(|x| synth.egraph[*x].data.exact)
+//                 })
+//                 .map(|ids| [ids[0], ids[1], ids[2]])
+//                 .flat_map(move |x| {
+//                     synth
+//                         .lang_config
+//                         .triops
+//                         .iter()
+//                         .map(|op| match op.as_str() {
+//                             "mac" => lang::VecLang::VecMAC(x),
+//                             "muls" => lang::VecLang::VecMULS(x),
+//                             _ => panic!("Unknown vec triop"),
+//                         })
+//                         .collect::<Vec<_>>()
+//                 })
+//                 .filter(move |node| vd || unique_vars(node, &synth.egraph));
+
+//             Some(vec_unops.chain(vec_binops).chain(vec_triops))
+//         } else {
+//             None
+//         };
+
+//         match (binops, vec_stuff) {
+//             // all are defined
+//             (Some(b), Some(v)) => Box::new(b.chain(v)),
+//             // two are defined
+//             (Some(i), _) => Box::new(i),
+//             (_, Some(v)) => Box::new(v),
+//             // none are defined
+//             (_, _) => panic!("No binops or vector ops defined."),
+//         }
+//     }
+
+//     fn is_valid(
+//         synth: &mut Synthesizer<Self, ruler::Init>,
+//         lhs: &egg::Pattern<Self>,
+//         rhs: &egg::Pattern<Self>,
+//     ) -> bool {
+//         let x = if synth.lang_config.always_smt {
+//             Self::smt_equals(synth, lhs, rhs)
+//         } else {
+//             let fuzz = Self::fuzz_equals(synth, lhs, rhs, false);
+//             // if fuzz succeeds and `smt_fallback` is enabled, run `smt_equals`.
+//             if synth.lang_config.smt_fallback && fuzz {
+//                 debug!("falling back to smt");
+//                 Self::smt_equals(synth, lhs, rhs)
+//             } else {
+//                 false
+//             }
+//         };
+//         debug!("Checking {lhs} => {rhs}: {x}");
+//         x
+//     }
+
+//     // fn post_process(
+//     //     params: &SynthParams,
+//     //     mut report: ruler::Report<Self>,
+//     // ) -> ruler::Report<Self> {
+//     //     let mut new_eqs: Vec<Equality<_>> = vec![];
+//     //     for eq in &report.eqs {
+//     //         let lhs_pre: Lang = eq.lhs.unpattern().into();
+//     //         let lhs: egg::RecExpr<lang::VecLang> =
+//     //             lhs_pre.desugar(params.vector_size).into();
+//     //         let rhs_pre: Lang = eq.rhs.unpattern().into();
+//     //         let rhs: egg::RecExpr<lang::VecLang> =
+//     //             rhs_pre.desugar(params.vector_size).into();
+//     //         if let Some(new_eq) = Equality::new(&lhs, &rhs) {
+//     //             new_eqs.push(new_eq);
+//     //         } else {
+//     //             eprintln!("Could not make equation for {} <=> {}", lhs, rhs);
+//     //         }
+//     //     }
+//     //     report.eqs = new_eqs;
+//     //     report
+//     // }
+
+//     // fn debug_pre_union(
+//     //     egraph: &EGraph<Self, SynthAnalysis>,
+//     //     id1: Id,
+//     //     id2: Id,
+//     //     justification: &Option<egg::Justification>,
+//     // ) {
+//     //     for (val1, val2) in egraph[id1]
+//     //         .data
+//     //         .cvec
+//     //         .iter()
+//     //         .zip(egraph[id2].data.cvec.iter())
+//     //     {
+//     //         match (val1, val2) {
+//     //             (Some(x), Some(y)) if x != y => {
+//     //                 let extractor = egg::Extractor::new(egraph, egg::AstDepth);
+//     //                 let (_, prog1) = extractor.find_best(id1);
+//     //                 let (_, prog2) = extractor.find_best(id2);
+
+//     //                 log::error!("Trying to merge:");
+//     //                 log::error!(
+//     //                     "  {} <=> {}",
+//     //                     prog1.pretty(80),
+//     //                     prog2.pretty(80)
+//     //                 );
+//     //                 log::error!("cvec1: {:?}", egraph[id1].data.cvec);
+//     //                 log::error!("cvec2: {:?}", egraph[id2].data.cvec);
+//     //                 log::error!("just: {justification:?}");
+
+//     //                 if let Some(egg::Justification::Rule(s)) = &justification {
+//     //                     if let Some((lhs, rhs)) =
+//     //                         s.as_str().split(" => ").collect_tuple()
+//     //                     {
+//     //                         // strip off the ? prefix for variable names
+//     //                         let lhs_expr: egg::RecExpr<_> = strip_prefix(
+//     //                             &lhs.parse::<egg::RecExpr<_>>().unwrap(),
+//     //                         );
+
+//     //                         let rhs_expr: egg::RecExpr<_> = strip_prefix(
+//     //                             &rhs.parse::<egg::RecExpr<_>>().unwrap(),
+//     //                         );
+
+//     //                         log::error!("{lhs_expr:?} <=> {rhs_expr:?}");
+
+//     //                         // print out ids, plus cannoncial ids
+//     //                         let lhs_id = egraph
+//     //                             .lookup_expr(&lhs_expr)
+//     //                             .map(|x| egraph.find(x));
+//     //                         let rhs_id = egraph
+//     //                             .lookup_expr(&rhs_expr)
+//     //                             .map(|x| egraph.find(x));
+//     //                         log::error!(
+//     //                             "{lhs_id:?} => {rhs_id:?}, {id1}({}) => {id2}({})",
+//     //     			egraph.find(id1),
+//     //     			egraph.find(id2),
+//     //                         );
+
+//     //                         // let's get the cvec for a
+//     //                         let a_id = egraph
+//     //                             .lookup_expr(&egg::RecExpr::from(vec![
+//     //                                 lang::VecLang::Symbol("a".into()),
+//     //                             ]))
+//     //                             .unwrap();
+//     //                         log::error!(
+//     //                             "'a' cvec: {:?}",
+//     //                             egraph[a_id].data.cvec
+//     //                         );
+//     //                     } else {
+//     //                         log::error!("Split failed: '{s}'");
+//     //                     }
+//     //                 } else {
+//     //                     log::error!("No rule justification");
+//     //                 }
+
+//     //                 panic!("This is going to cause problems. Let's just stop here.");
+//     //             }
+//     //             _ => (),
+//     //         }
+//     //     }
+//     // }
+// }
 
 // fn strip_prefix(
 //     expr: &egg::RecExpr<lang::VecLang>,
@@ -906,7 +956,7 @@ impl SynthLanguage for lang::VecLang {
 
 fn get_vars(
     node: &lang::VecLang,
-    egraph: &EGraph<lang::VecLang, SynthAnalysis>,
+    egraph: &EGraph<lang::FlatAst, SynthAnalysis>,
     seen: &mut HashMap<egg::Id, Vec<egg::Symbol>>,
 ) -> Vec<egg::Symbol> {
     node.fold(vec![], |mut acc, id| {
@@ -921,7 +971,8 @@ fn get_vars(
             let vars = if node.is_leaf() {
                 egraph[id].data.vars.clone()
             } else {
-                get_vars(node, egraph, seen)
+                // get_vars(node, egraph, seen)
+                todo!("implement get_vars")
             };
             // save the results in seen
             seen.insert(id, vars.clone());
@@ -933,14 +984,15 @@ fn get_vars(
 
 fn unique_vars(
     node: &lang::VecLang,
-    egraph: &EGraph<lang::VecLang, SynthAnalysis>,
+    egraph: &EGraph<lang::FlatAst, SynthAnalysis>,
 ) -> bool {
     let mut seen: HashMap<egg::Id, Vec<egg::Symbol>> = HashMap::default();
-    let vars: Vec<egg::Symbol> = get_vars(node, egraph, &mut seen);
+    // let vars: Vec<egg::Symbol> = get_vars(node, egraph, &mut seen);
+    let vars: Vec<egg::Symbol> = todo!();
     vars.iter().all_unique()
 }
 
-pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
+pub fn vecs_eq(lvec: &CVec<lang::FlatAst>, rvec: &CVec<lang::FlatAst>) -> bool {
     if lvec.iter().all(|x| x.is_none()) && rvec.iter().all(|x| x.is_none()) {
         false
     } else {
@@ -955,24 +1007,24 @@ pub fn vecs_eq(lvec: &CVec<lang::VecLang>, rvec: &CVec<lang::VecLang>) -> bool {
 pub fn run(
     dios_config: DiosConfig,
     chkpt_path: Option<PathBuf>,
-) -> Res<ruler::Report<lang::VecLang>> {
+) -> Res<ruler::Report<lang::FlatAst>> {
     log::info!("running with config: {dios_config:#?}");
 
     // create the synthesizer
-    let mut syn = ruler::Synthesizer::<lang::VecLang, _>::new_with_data(
+    let mut syn = ruler::Synthesizer::<lang::FlatAst, _>::new_with_data(
         dios_config.ruler_config.clone(),
         dios_config.clone(),
     )
     .init();
 
-    if let Some(chkpt) = chkpt_path {
-        syn.load_checkpoint(&chkpt);
-    }
+    // if let Some(chkpt) = chkpt_path {
+    //     syn.load_checkpoint(&chkpt);
+    // }
 
     // run the synthesizer
     let report = syn.run();
 
-    Ok(lang::VecLang::post_process(
+    Ok(lang::FlatAst::post_process(
         &dios_config.ruler_config,
         report,
     ))

@@ -1,4 +1,4 @@
-use comp_gen::ruler::egg;
+use egg;
 use thiserror::Error;
 
 pub type Res<T> = anyhow::Result<T>;

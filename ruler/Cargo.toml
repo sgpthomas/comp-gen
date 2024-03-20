@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Max Willsey <me@mwillsey.com>", "Chandrakana Nandi <cnandi@cs.washington.edu>"]
 edition = "2018"
 
+[features]
+serialize = []
+default = []
+
 [dependencies]
 log = "0.4"
 env_logger = { version = "0.7", default-features = false }
@@ -24,8 +28,9 @@ rustc-hash = "1"
 symbolic_expressions = "5"
 rayon = "1"
 smallvec = { version = "1.6", features = ["union", "const_generics"] }
+egg = { path = "../../egg", version = "0.9.5"}
 
-[dependencies.egg]
-git = "https://github.com/sgpthomas/egg.git"
-branch = "update_symbol_table"
-features = ["serde-1"]
+# [dependencies.egg]
+# git = "https://github.com/sgpthomas/egg.git"
+# branch = "update_symbol_table"
+# features = ["serde-1"]

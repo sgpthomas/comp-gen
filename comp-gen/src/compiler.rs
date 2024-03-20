@@ -1,11 +1,9 @@
-use ruler::egg::rewrite as rw;
+use egg::{self, rewrite as rw};
 use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
 };
-
-use ruler::egg;
 
 use crate::{
     config,
@@ -163,6 +161,17 @@ where
     pub fn dump_rules(&mut self) -> &mut Self {
         self.dump_rules = true;
         self
+    }
+
+    pub fn display_rules(&self) {
+        for r in &self.rules {
+            log::info!(
+                "{} => {} ({})",
+                r.searcher.get_pattern_ast().unwrap(),
+                r.applier.get_pattern_ast().unwrap(),
+                r.name
+            );
+        }
     }
 
     pub fn output_rule_distribution<P, F>(
