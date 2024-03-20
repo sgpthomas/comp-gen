@@ -27,7 +27,7 @@ thiserror = "1.0.37"
 anyhow = "1.0.65"
 babble = { path = "../babble" }
 babble-macros = { path = "../babble/babble-macros" }
-egg = { path = "../../egg", version = "0.9.5" }
+egg = { git = "https://github.com/sgpthomas/egg.git", branch = "egraph_map" }
 symbol_table = { version = "0.3.0", features = ["global"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
