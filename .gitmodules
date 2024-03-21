@@ -1,4 +1,4 @@
 [submodule "babble"]
 	path = babble
-	url = git@github.com:sgpthomas/babble.git
+	url = https://github.com:sgpthomas/babble.git
         branch = own_egg
