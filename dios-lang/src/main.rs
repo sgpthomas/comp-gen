@@ -21,6 +21,7 @@ use babble::{
     learn::LearnedLibrary,
     sexp::Sexp,
 };
+use egg::LanguageMapper;
 pub use error::Res;
 use log;
 use std::{fs, io::Write, path::PathBuf, process, time::Instant};
@@ -225,7 +226,8 @@ fn compile(opts: CompileOpts) -> Res<()> {
     let eqsat_res = compiler.compile(prog);
     log::info!("cost: {}", eqsat_res.cost);
 
-    let astnode_egraph = eqsat_res.egraph.map(|l| l.into_inner());
+    let astnode_egraph =
+        egg::SimpleLanguageMapper::default().map_egraph(eqsat_res.egraph);
 
     // first we have to run the co-occurence analysis
     log::info!("Running co-occurence analysis...");

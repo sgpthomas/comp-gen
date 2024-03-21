@@ -197,70 +197,70 @@ impl Display for VecOp {
     }
 }
 
-egg::define_language! {
-    #[derive(Serialize, Deserialize)]
-    pub enum VecLang {
-        // Id is a key to identify EClasses within an EGraph, represents
-        // children nodes
-        "+" = Add([egg::Id; 2]),
-        "*" = Mul([egg::Id; 2]),
-        "-" = Minus([egg::Id; 2]),
-        "/" = Div([egg::Id; 2]),
+// egg::define_language! {
+//     #[derive(Serialize, Deserialize)]
+//     pub enum VecLang {
+//         // Id is a key to identify EClasses within an EGraph, represents
+//         // children nodes
+//         "+" = Add([egg::Id; 2]),
+//         "*" = Mul([egg::Id; 2]),
+//         "-" = Minus([egg::Id; 2]),
+//         "/" = Div([egg::Id; 2]),
 
-        "or" = Or([egg::Id; 2]),
-        "&&" = And([egg::Id; 2]),
-        "ite" = Ite([egg::Id; 3]),
-        "<" = Lt([egg::Id; 2]),
-        "sqrtsgn" = SqrtSgn([egg::Id; 2]),
+//         "or" = Or([egg::Id; 2]),
+//         "&&" = And([egg::Id; 2]),
+//         "ite" = Ite([egg::Id; 3]),
+//         "<" = Lt([egg::Id; 2]),
+//         "sqrtsgn" = SqrtSgn([egg::Id; 2]),
 
-        "sgn" = Sgn([egg::Id; 1]),
-        "sqrt" = Sqrt([egg::Id; 1]),
-        "neg" = Neg([egg::Id; 1]),
+//         "sgn" = Sgn([egg::Id; 1]),
+//         "sqrt" = Sqrt([egg::Id; 1]),
+//         "neg" = Neg([egg::Id; 1]),
 
-        // Lists have a variable number of elements
-        "List" = List(Box<[egg::Id]>),
+//         // Lists have a variable number of elements
+//         "List" = List(Box<[egg::Id]>),
 
-        // Vectors have width elements
-        "Vec" = Vec(Box<[egg::Id]>),
+//         // Vectors have width elements
+//         "Vec" = Vec(Box<[egg::Id]>),
 
-        // Vector with all literals
-        "LitVec" = LitVec(Box<[egg::Id]>),
+//         // Vector with all literals
+//         "LitVec" = LitVec(Box<[egg::Id]>),
 
-        "Get" = Get([egg::Id; 2]),
+//         "Get" = Get([egg::Id; 2]),
 
-        // Used for partitioning and recombining lists
-        "Concat" = Concat([egg::Id; 2]),
+//         // Used for partitioning and recombining lists
+//         "Concat" = Concat([egg::Id; 2]),
 
-        // Vector operations that take 2 vectors of inputs
-        "VecAdd" = VecAdd([egg::Id; 2]),
-        "VecMinus" = VecMinus([egg::Id; 2]),
-        "VecMul" = VecMul([egg::Id; 2]),
-        "VecDiv" = VecDiv([egg::Id; 2]),
-        "VecMulSgn" = VecMulSgn([egg::Id; 2]),
-        "VecSqrtSgn" = VecSqrtSgn([egg::Id; 2]),
+//         // Vector operations that take 2 vectors of inputs
+//         "VecAdd" = VecAdd([egg::Id; 2]),
+//         "VecMinus" = VecMinus([egg::Id; 2]),
+//         "VecMul" = VecMul([egg::Id; 2]),
+//         "VecDiv" = VecDiv([egg::Id; 2]),
+//         "VecMulSgn" = VecMulSgn([egg::Id; 2]),
+//         "VecSqrtSgn" = VecSqrtSgn([egg::Id; 2]),
 
-        // Vector operations that take 1 vector of inputs
-        "VecNeg" = VecNeg([egg::Id; 1]),
-        "VecSqrt" = VecSqrt([egg::Id; 1]),
-        "VecSgn" = VecSgn([egg::Id; 1]),
-        // "VecRAdd" = VecRAdd([egg::Id; 1]),
+//         // Vector operations that take 1 vector of inputs
+//         "VecNeg" = VecNeg([egg::Id; 1]),
+//         "VecSqrt" = VecSqrt([egg::Id; 1]),
+//         "VecSgn" = VecSgn([egg::Id; 1]),
+//         // "VecRAdd" = VecRAdd([egg::Id; 1]),
 
-        // MAC takes 3 lists: acc, v1, v2
-        "VecMAC" = VecMAC([egg::Id; 3]),
-        "VecMULS" = VecMULS([egg::Id; 3]),
+//         // MAC takes 3 lists: acc, v1, v2
+//         "VecMAC" = VecMAC([egg::Id; 3]),
+//         "VecMULS" = VecMULS([egg::Id; 3]),
 
-        // let binding
-        "let" = Let([egg::Id; 2]),
+//         // let binding
+//         "let" = Let([egg::Id; 2]),
 
-        // constant value
-        Const(Value),
+//         // constant value
+//         Const(Value),
 
-        // language items are parsed in order, and we want symbol to
-        // be a fallback, so we put it last.
-        // `Symbol` is an egg-provided interned string type
-        Symbol(egg::Symbol),
-    }
-}
+//         // language items are parsed in order, and we want symbol to
+//         // be a fallback, so we put it last.
+//         // `Symbol` is an egg-provided interned string type
+//         Symbol(egg::Symbol),
+//     }
+// }
 
 impl Arity for VecOp {
     fn min_arity(&self) -> usize {
@@ -827,6 +827,12 @@ impl RecAst {
     #[allow(unused)]
     pub fn into_args(self) -> Vec<Expr<VecOp>> {
         self.into_parts().1
+    }
+}
+
+impl From<FlatAst> for AstNode<VecOp> {
+    fn from(value: FlatAst) -> Self {
+        value.0
     }
 }
 

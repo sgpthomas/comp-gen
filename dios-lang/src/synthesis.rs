@@ -955,7 +955,7 @@ impl SynthLanguage for lang::FlatAst {
 // }
 
 fn get_vars(
-    node: &lang::VecLang,
+    node: &lang::FlatAst,
     egraph: &EGraph<lang::FlatAst, SynthAnalysis>,
     seen: &mut HashMap<egg::Id, Vec<egg::Symbol>>,
 ) -> Vec<egg::Symbol> {
@@ -983,7 +983,7 @@ fn get_vars(
 }
 
 fn unique_vars(
-    node: &lang::VecLang,
+    node: &lang::FlatAst,
     egraph: &EGraph<lang::FlatAst, SynthAnalysis>,
 ) -> bool {
     let mut seen: HashMap<egg::Id, Vec<egg::Symbol>> = HashMap::default();
