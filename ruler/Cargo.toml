@@ -28,7 +28,7 @@ rustc-hash = "1"
 symbolic_expressions = "5"
 rayon = "1"
 smallvec = { version = "1.6", features = ["union", "const_generics"] }
-egg = { git = "https://github.com/sgpthomas/egg.git", branch = "egraph_map" }
+egg = { git = "https://github.com/egraphs-good/egg.git" }
 
 # [dependencies.egg]
 # git = "https://github.com/sgpthomas/egg.git"
